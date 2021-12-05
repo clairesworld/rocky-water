@@ -1,0 +1,80 @@
+\begin{thebibliography}{}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\href{#1}{#1}}
+\providecommand{\dodoi}[1]{doi:~\href{http://doi.org/#1}{\nolinkurl{#1}}}
+\providecommand{\doeprint}[1]{\href{http://ascl.net/#1}{\nolinkurl{http://ascl.net/#1}}}
+\providecommand{\doarXiv}[1]{\href{https://arxiv.org/abs/#1}{\nolinkurl{https://arxiv.org/abs/#1}}}
+
+\bibitem[{Bolfan-Casanova(2005)}]{bolfan-casanovaWaterEarthMantle2005}
+Bolfan-Casanova, N. 2005, Mineralogical Magazine, 69, 229,
+  \dodoi{10.1180/0026461056930248}
+
+\bibitem[{Cowan \& Abbot(2014)}]{cowanWATERCYCLINGOCEAN2014}
+Cowan, N.~B., \& Abbot, D.~S. 2014, The Astrophysical Journal, 781, 27,
+  \dodoi{10.1088/0004-637X/781/1/27}
+
+\bibitem[{Dyck {et~al.}(2021)Dyck, Wade, \&
+  Palin}]{dyckEffectCoreFormation2021}
+Dyck, B., Wade, J., \& Palin, R. 2021, arXiv:2104.10612 [astro-ph].
+\newblock \url{http://arxiv.org/abs/2104.10612}
+
+\bibitem[{Elkins-Tanton(2008)}]{elkins-tantonLinkedMagmaOcean2008}
+Elkins-Tanton, L.~T. 2008, Earth and Planetary Science Letters, 271, 181,
+  \dodoi{10.1016/j.epsl.2008.03.062}
+
+\bibitem[{Elkins-Tanton(2011)}]{elkins-tantonFormationEarlyWater2011}
+---. 2011, Astrophysics and Space Science, 332, 359,
+  \dodoi{10.1007/s10509-010-0535-3}
+
+\bibitem[{Grasset {et~al.}(2009)Grasset, Schneider, \&
+  Sotin}]{grassetStudyAccuracyMassRadius2009}
+Grasset, O., Schneider, J., \& Sotin, C. 2009, The Astrophysical Journal,
+  Volume 693, Issue 1, pp. 722-733 (2009)., 693, 722,
+  \dodoi{10.1088/0004-637X/693/1/722}
+
+\bibitem[{Harrison {et~al.}(2021)Harrison, Bonsor, Kama, Buchan, Blouin, \&
+  Koester}]{2021MNRAS.504.2853H}
+Harrison, J. H.~D., Bonsor, A., Kama, M., {et~al.} 2021, Monthly Notices of the
+  Royal Astronomical Society, 504, 2853, \dodoi{10.1093/mnras/stab736}
+
+\bibitem[{Hauri {et~al.}(2006)Hauri, Gaetani, \&
+  Green}]{hauriPartitioningWaterMelting2006a}
+Hauri, E.~H., Gaetani, G.~A., \& Green, T.~H. 2006, Earth and Planetary Science
+  Letters, 248, 715, \dodoi{10.1016/j.epsl.2006.06.014}
+
+\bibitem[{Herbort {et~al.}(2020)Herbort, Woitke, Helling, \&
+  Zerkle}]{herbortAtmospheresRockyExoplanets2020}
+Herbort, O., Woitke, P., Helling, C., \& Zerkle, A. 2020, Astronomy \&
+  Astrophysics, 636, A71, \dodoi{10.1051/0004-6361/201936614}
+
+\bibitem[{Höning \& Spohn(2016)}]{honingContinentalGrowthMantle2016}
+Höning, D., \& Spohn, T. 2016, Physics of the Earth and Planetary Interiors,
+  255, 27, \dodoi{10.1016/j.pepi.2016.03.010}
+
+\bibitem[{Inoue {et~al.}(2010)Inoue, Wada, Sasaki, \&
+  Yurimoto}]{2010PEPI..183..245I}
+Inoue, T., Wada, T., Sasaki, R., \& Yurimoto, H. 2010, Physics of the Earth and
+  Planetary Interiors, 183, 245, \dodoi{10.1016/j.pepi.2010.08.003}
+
+\bibitem[{Putirka {et~al.}(2021)Putirka, Dorn, Hinkel, \&
+  Unterborn}]{putirkaCompositionalDiversityRocky2021}
+Putirka, K., Dorn, C., Hinkel, N., \& Unterborn, C. 2021, arXiv:2108.08383
+  [astro-ph, physics:physics].
+\newblock \url{http://arxiv.org/abs/2108.08383}
+
+\bibitem[{Shah {et~al.}(2021)Shah, Alibert, Helled, \&
+  Mezger}]{shahInternalWaterStorage2021}
+Shah, O., Alibert, Y., Helled, R., \& Mezger, K. 2021, arXiv:2012.06455
+  [astro-ph].
+\newblock \url{http://arxiv.org/abs/2012.06455}
+
+\bibitem[{Tikoo \& Elkins-Tanton(2017)}]{tikooFateWaterEarth2017}
+Tikoo, S.~M., \& Elkins-Tanton, L.~T. 2017, Philosophical Transactions of the
+  Royal Society A: Mathematical, Physical and Engineering Sciences, 375,
+  20150394, \dodoi{10.1098/rsta.2015.0394}
+
+\bibitem[{Xu \& Bonsor(2021)}]{xuExogeologyPollutedWhite2021}
+Xu, S., \& Bonsor, A. 2021, arXiv:2108.08384 [astro-ph].
+\newblock \url{http://arxiv.org/abs/2108.08384}
+
+\end{thebibliography}

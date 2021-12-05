@@ -1,0 +1,140 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage{url}
+
+\title{Estimating exoplanet mantle water capacities}
+\date{\today}
+
+\begin{document} 
+\maketitle
+
+\section{Some published estimates of mantle water storage}
+
+\subsection{\citet{shahInternalWaterStorage2021}} 
+
+\begin{itemize}
+\item Models water saturation of mantle assuming it is composed entirely of olivine polymorphs in the upper mantle, and brucite + perovskite or post-perovskite in the lower mantle. Only includes Fe, Si, Mg, O
+and H.
+\item Key goal is computing the effect of hydration on equations of state and therefore M-R relationships.
+\item Includes sophisticated thermal model that self-consistently adapts the mantle adiabat such that mineral phase transitions in $p, T$ occur at the correct depth.
+\item Detailed tabulations of saturation water content per olivine phase at various experimental $p, T$, and Fe contents in Appendix E.
+\item Predicts 1.4 wt\% water capacity for Earth; compare recent estimates of less than about 0.05 wt\% for actual Earth mantle water content \citep{ohtaniRoleWaterEarth2020}.
+
+\item Model overview
+\begin{itemize}
+\item  Iteratively solve interior structure equations $dP/dr$, $dT/dr$, $dm/dr$, $d\rho/dr$ with ODE, considering $X_{H_2O}$ effect on EoS in latter, and EoS effect on adiabatic parameters and thermal expansion coefficient in $dT/dr$. If multiple components, do linear mixtures weighted by mass for $d\rho/dr$, but do not account for compositional gradients.
+\item Boundary conditions: total Mg number (core \& mantle) $\in$ 0.2--0.7 \citep[sample]{grassetStudyAccuracyMassRadius2009}, $p_s$ = 1 bar, $T_s$ = 300 K, $M_p$ variable (complicated iterative method tries to match these). Additional free parameter in the temperature contrast over the upper TBL which is relevant for calculating the temperature profile.
+\item Hydrogen content of core assumed homogeneous, water content (at sat) of mantle set by $T, p$ profile. In lower mantle, stoichiometry of magnetowustite and perovskite adjusts according to water content (I assume this is because Mg is replaced but not Si, so Mg/Si ratio changes).
+\item In hydration model, water saturation content---as function of $T, p$, Fe mole fraction---is a polynomial fit to published data. Fit is noted to be a bit shaky and extrapolations can lead to unphysical behaviour. Mantle water content is discretised by shells.
+\item Hydrogen content of core determined assuming chemical equilibrium between FeH$_x$ and Mg-silicates at CMB. Implies core hydrogen content would adapt if mantle water content changes lower mantle stoichiometry.
+\item Can't follow how they calculate the core size for the hydrated mantle case but I think it requires assuming a fixed iron content of 0.1 for the mantle Mg-silicates.
+\end{itemize}
+
+\item Room for improvement
+\begin{itemize}
+\item Main simplification is that the upper mantle is entirely olivine, but pyroxenes and garnet will be important (and silica?). Should also include C, Ni, Ca, S, and Al in composition because these could affect saturation water content, assuming that this wouldn't be overly complicated for the thermodynamics code. \textbf{However, the authors imply that they intend to do some of this in a future paper...}
+\item Treat the temperature contrast over the upper TBL as a free (unknown) parameter, yet the saturation water content will be quite sensitive to the mantle temperature profile. Could couple with thermal history? (this would require updating your existing thermal history model to vary thermodynamic parameters according to mineralogy...)
+\item Seems like there will be notable uncertainty in the stability limits of certain minerals (especially postperovskite, but also brucite, and what even is Mg-silicate Phase D and Phase H?) which should be accounted for, even if bulk element ratios are known.
+\item In addition to the Fe-content dependence included by \citet{shahInternalWaterStorage2021}, the olivine-wadsleyite transition might also depend on the presence of garnet. Further, high partitioning of water into wadsleyite would extend its stability field to lower pressures---see \citet{bolfan-casanovaWaterEarthMantle2005}---although hydration wouldn't come up as an unknown parameter if we are only considering fully-saturated mantles. Either way, implies that we need to make sure the (Mg, Fe)$_2$SiO$_4$ phase diagram is for saturated conditions.
+%\item Appendix E also contains tabulations for anhydrous Mg-olivine phase transitions depending on $p, T$---how would water or Fe contents affect the locations of these transitions? 
+\item Bonus: could one self-consistently account for a ``dewatered'' surface layer which might push the mantle adiabat to higher pressures (given some total water mass fraction)? They only look at endmembers where all water is either in the interior or on the surface.
+\end{itemize}
+
+
+
+\item Appendix C (estimations of ocean depth) seems interesting but I don't fully understand it.
+\end{itemize}
+
+\subsection{\citet{nisrLargeH2OSolubility2020}}
+\begin{itemize}
+\item Experiments showing high mutual solubility for water and SiO$_2$.
+\item Focused mostly on interiors of Neptune-sized planets, but could silica be an important water reservoir for smaller planets?
+\end{itemize}
+
+
+\subsection{\citet{tikooFateWaterEarth2017}}
+
+\begin{itemize}
+\item Calculates amount of water released into the upper mantle from sinking cumulates during magma ocean overturn and crystallisation, assuming an \textit{a priori} fixed mineral assemblage (figure 1). Solid mineral compositions are calculated assuming equilibrium with the magma ocean using experimental distribution coefficients.
+\begin{itemize}
+\item How much would their post-MO mineral assemblages be homogenised with further processing \citep[e.g.,][]{mauriceOnsetSolidstateMantle2017}? Is it this ``steady state" mineralogy that we care about as the most representative? On the other hand, for an SL planet, the evolved mantle would be more degassed and less likely to be at water saturation.
+\end{itemize}
+\item Showed that mantle water can be retained at saturation after MO crystallisation. This should be an important point---upper mantle can be wet, but does it start this way necessarily? Will the cooling MO degas more than dictated by the solid-state saturation limit?)
+\item Table 1 lists water saturations in wt\% for different minerals (but no inclusion of $p, T$ variations).
+\item Note that experimental water storage capacities of olivine, orthopyroxene, clinopyroxene, and garnet plotted as a function of pressure can be found in \citet{hauriPartitioningWaterMelting2006a}, for different molecular substitution mechanisms (2H$^+$ $\rightarrow$ Mg$^{2+}$ and H$^+$ + Al$^{3+}$ $\rightarrow$ Si$^{4+}$).
+\item See also \citet{elkins-tantonFormationEarlyWater2011} figure 2.
+\end{itemize}
+
+\subsection{Some other work on mantle hydration}
+
+\begin{itemize}
+
+\item \citet{2010PEPI..183..245I}
+\begin{itemize}
+\item Calculates partitioning of water between olivine phases, and therefore the saturation water content of $\alpha$-olivine and ringwoodite phases given the value for wadsleyite.
+\item The important parts seem already included in Appendix E of \citet{shahInternalWaterStorage2021}, however from what I can tell the latter only considers the saturation contents corresponding to 3.3 wt\% for wadsleyite, but not the much lower estimate of 0.2 wt\% from \citet{daiElectricalConductivityWadsleyite2009} (the low value is inconsistent with the rest of the literature). The 3.3 wt\% H$_2$O value corresponds to the theoretical full protonation of O1 in wadsleyite with the formula Mg$_{2-x}$SiH$_{2x}$O$_4$. However, there is evidence for hydroxylation of oxygens other than O1.
+\item These are the values used in the \citet{cowanWATERCYCLINGOCEAN2014} mantle water cycle model, who from what I can parse are assuming the same mantle water capacity mass fraction as Earth (i.e., not scaling mineralogical phase transitions and associated layer volumes with mass).
+\end{itemize}
+
+\item \citet{bolfan-casanovaWaterEarthMantle2005}
+\begin{itemize}
+\item Figure 2 shows water saturation of wadsleyite and ringwoodite as a function of Mg/Si ratio (?)
+\item Compiles some important effects that water content has on mantle processes: enhances diffusion creep, enhances differentiation by speeding up melting, changes melt composition towards more silica-rich
+\item Additional discussion of the references cited in Appendix E of \citet{shahInternalWaterStorage2021} for their water saturation values. Claims that H$_2$O saturation of wadsleyite and ringwoodite decreases with temperature but is pressure-independent (meanwhile solubility increases with temperature for $\alpha$-olivine and enstatite). Note that in 2005 the data were not conclusive, especially for Fe- and Al-bearing minerals, but this has certainly been updated.
+\item Perovskite is virtually dry with the possible exception of Al-bearing perovskite, but the most (only?) important sink of water in the lower mantle could be ferropericlase, up to 20 ppm.
+\end{itemize}
+
+\end{itemize}
+
+
+\subsection{What is missing}
+
+\begin{itemize}
+\item Extension of mantle water capacities for pure (Mg, Fe)$_2$SiO$_4$ calculated in \citet{shahInternalWaterStorage2021} to arbitrary mixtures with other minerals. 
+\item Additional framework of converting stellar abundances to mantle mineralogies, such that mantle water capacity results can be presented in terms of stellar refractory element ratios. The fixed, simplified mineralogies used in \citet{shahInternalWaterStorage2021} imply Si/Mg = 2/3, whereas solar value is more like 0.9.
+\item Possibility of more rigorous thermal history coupling
+%\item I don't really understand how/whether \citet{shahInternalWaterStorage2021} estimate ocean depths for the hydrated-mantle case, but maybe we could give this a more rigorous upper limit which considers the maximum amount of ``dewatering" given total accreted water (might be too much to try to include a sophisticated melting model, which would feed back into the upper mantle $T, p$...)
+\end{itemize}
+
+\section{How to obtain rocky exoplanet composition information}
+
+\begin{itemize}
+\item Is there some existing thermodynamics code that can convert elemental abundances into mineralogy profiles? 
+\begin{itemize}
+\item \citep{sotinMassRadiusCurve2007} section 2.2 mentions their (analytical?) model of estimating bulk composition (olivine and pyroxene in the upper mantle; perovskite and magnetowustite in the lower mantle), with inputs (1) Mg/Si mole fraction; (2) Fe/Si mole fraction; (3)  Mg number of silicate portion. Also in \citet{grassetStudyAccuracyMassRadius2009}. Assumes Mg number and Mg/Si are constant between upper and lower mantle. Mentions that including Ca, Al, Ni, S leads to 1\% error on mass---what about error on water capacity, do the point defect replacements of Ca, Al etc. behave the same way as Mg?
+\item Since the silicate Mg number depends on CMF, can we also self-consistently estimate CMF? Think I have seem some attempts at this.
+\end{itemize}
+\item How would the accreted bulk ratios be affected by magma ocean processes/differentiation? 
+\begin{itemize}
+\item The Mg number of the mantle would be modified from the observed stellar Mg/Fe since lots of that iron will go into the core, but should also consider the end member case of a coreless planet where all the Fe exists as FeO in the mantle. \citep[see, e.g.,][]{putirkaCompositionalDiversityRocky2021}
+\end{itemize}
+\end{itemize}
+
+\subsection{Spectra of main sequence stars}
+
+\subsection{White dwarfs}
+\begin{itemize}
+\item Ideally want to be looking for samples which are likely in the ``build-up phase" (composition as measured in stellar atmosphere is unaltered by diffusion), although sinking effects may be modelled out \citep{2021MNRAS.504.2853H}.
+\item Can tell if the accreted pollutant represents a mantle-rich fragment if its Mg/Fe and Ca/Fe is high, but such a situation could not be distinguished from the accreted object being undifferentiated but diffusion in the stellar atmosphere matches or dominates the rate of accretion \citep{2021MNRAS.504.2853H}.
+\item \citet{2021MNRAS.504.2853H} figure 7 gives Mg/Fe inferred for their sample of white dwarfs, but can't be sure that any of these are accreting mantle-rich fragments. 
+\item Can't measure water indirectly because it dissociates, but excess O after accounting for metal oxides may represent water \citep{xuExogeologyPollutedWhite2021}.
+\end{itemize}
+
+
+\section{Other considerations}
+
+\begin{itemize}
+\item Do we care about crust water storage? Hydrous minerals in the crust (serpentine, chlorite etc.) would be important for sequestering water and transporting it to the mantle \citep[see e.g.,][]{herbortAtmospheresRockyExoplanets2020, dyckEffectCoreFormation2021}, but this is a small volume fraction of the total planet, and also the crustal thickness would be unconstrained or dependent on thermal history. \citep{honingContinentalGrowthMantle2016}
+\item Can these saturation water capacities be used to estimate the maximum surface ocean mass of a stagnant lid planet, given an accreted mass fraction of water? This is where crustal water storage might become important... Note that the maximum ocean would also be diminished by atmospheric escape.
+\item How likely is a mantle to actually be saturated with water, given that it would have degassed most of its volatiles (60--99\%) into the primordial atmosphere during magma ocean crystallisation \citep{elkins-tantonLinkedMagmaOcean2008, elkins-tantonFormationEarlyWater2011}? Do we need plate tectonics or some other ingassing mechanism to saturate the mantle for older planets?
+%\item How wrong would we be if we simplified the problem by only caring about the water capacity of $\beta$- and $\gamma$-olivine (i.e. transition zone minerals on Earth)? 
+\end{itemize}
+
+\bibliographystyle{aasjournal}
+\bibliography{exogeodynamics.bib}
+ 
+\end{document}

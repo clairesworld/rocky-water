@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: notes.aux
+The style file: aasjournal.bst
+Database file #1: exogeodynamics.bib
+Warning--I didn't find a database entry for "ohtaniRoleWaterEarth2020"
+Warning--I didn't find a database entry for "nisrLargeH2OSolubility2020"
+Warning--I didn't find a database entry for "mauriceOnsetSolidstateMantle2017"
+Warning--I didn't find a database entry for "daiElectricalConductivityWadsleyite2009"
+Warning--I didn't find a database entry for "sotinMassRadiusCurve2007"
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+You've used 15 entries,
+            3168 wiz_defined-function locations,
+            794 strings with 9475 characters,
+and the built_in function-call counts, 6275 in all, are:
+= -- 557
+> -- 414
+< -- 7
++ -- 139
+- -- 149
+* -- 522
+:= -- 1154
+add.period$ -- 19
+call.type$ -- 15
+change.case$ -- 87
+chr.to.int$ -- 15
+cite$ -- 15
+duplicate$ -- 245
+empty$ -- 394
+format.name$ -- 171
+if$ -- 1266
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 15
+newline$ -- 57
+num.names$ -- 60
+pop$ -- 96
+preamble$ -- 1
+purify$ -- 87
+quote$ -- 0
+skip$ -- 199
+stack$ -- 0
+substring$ -- 227
+swap$ -- 0
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 135
+warning$ -- 0
+while$ -- 56
+width$ -- 0
+write$ -- 172
+(There were 5 warnings)
