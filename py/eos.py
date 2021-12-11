@@ -1,10 +1,7 @@
 import numpy as np
 import math
 import warnings
-
-R = 8.3144621  # gas constant
-G = 6.67384e-11  # gravitational constant in m^3 / (kg s^2)
-
+from parameters import R_b, G
 
 def debye(thetaT):
     """ from Lena Noack """
@@ -33,8 +30,8 @@ def BM3(V, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, q0, etaS0):
     theta = theta0 * np.sqrt(1.0 + 6.0 * f * gamma0 + 3.0 * f ** 2 * gamma0 * (-2.0 + 6.0 * gamma0 - 3.0 * q0))
     gamma = (1.0 + 2.0 * f) * gamma0 * (1.0 + f * (-2.0 + 6.0 * gamma0 - 3.0 * q0)) * (theta0 / theta) ** 2
 
-    Eth = 3 * n * R * T * debye(theta / T)
-    Eth0 = 3 * n * R * T * debye(theta / T0)
+    Eth = 3 * n * R_b * T * debye(theta / T)
+    Eth0 = 3 * n * R_b * T * debye(theta / T0)
     E = gamma / V * (Eth - Eth0)
     P = 1.5 * K0 * (x ** (7.0 / 3.0) - x ** (5.0 / 3.0)) * (1 + 0.75 * (KP0 - 4) * (x ** (2.0 / 3.0) - 1)) + E
 
@@ -52,11 +49,11 @@ def Holz(V, T, Z, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g):
     theta = theta0 * zeta3 ** (-gammaInf) * np.exp((1 - zeta3 ** beta) * (gamma0 - gammaInf) / beta)
     gamma = (gamma0 - gammaInf) * zeta3 ** beta + gammaInf
 
-    E = gamma / V * (3 * R * (0.5 * theta + theta / (np.exp(theta / T) - 1)) - 3 * R * (
-                0.5 * theta + theta / (np.exp(theta / T0) - 1)))
+    E = gamma / V * (3 * R_b * (0.5 * theta + theta / (np.exp(theta / T) - 1)) - 3 * R_b * (
+            0.5 * theta + theta / (np.exp(theta / T0) - 1)))
 
     P = 3.0 * K0 * zeta ** (-5) * (1 - zeta) * np.exp(c0 * (1 - zeta)) * (1 + c2 * (zeta - zeta ** 2)) + E
-    P = P + 1.5 * R / V * m * a0 * zeta ** (3.0 * m) * T ** 2
+    P = P + 1.5 * R_b / V * m * a0 * zeta ** (3.0 * m) * T ** 2
 
     return P
 
@@ -144,13 +141,13 @@ def EOS_all(P, T, material):
         theta = theta0 * np.sqrt(1.0 + 6.0 * f * gamma0 + 3.0 * f ** 2 * gamma0 * (-2.0 + 6.0 * gamma0 - 3.0 * q0))
         gamma = (1.0 + 2.0 * f) * gamma0 * (1.0 + f * (-2.0 + 6.0 * gamma0 - 3.0 * q0)) * (theta0 / theta) ** 2
 
-        Cv = 3 * n * R * (4 * debye(theta / T) - (theta / T) * 3 / (np.exp(theta / T) - 1))
-        Cv0 = 3 * n * R * (4 * debye(theta / T0) - (theta / T0) * 3 / (np.exp(theta / T0) - 1))
+        Cv = 3 * n * R_b * (4 * debye(theta / T) - (theta / T) * 3 / (np.exp(theta / T) - 1))
+        Cv0 = 3 * n * R_b * (4 * debye(theta / T0) - (theta / T0) * 3 / (np.exp(theta / T0) - 1))
         q = (-2 * gamma + 6. * gamma ** 2 + (1 + 2 * f) ** 2 * gamma0 * (2 - 6 * gamma0 + 3 * q0) * (
                 theta0 / theta) ** 2) / (3 * gamma)
         KT = (1 + 2 * f) ** (5 / 2) * K0 * (1 + f * (-5 + 3 * KP0) + 27 / 2 * f ** 2 * (-4 + KP0))
         KT = KT + (-gamma ** 2 / V * (Cv * T - Cv0 * T0) + gamma / V * (1 - q + gamma) * (
-                3 * n * R * T * debye(theta / T) - 3 * n * R * T0 * debye(theta / T0)))
+                3 * n * R_b * T * debye(theta / T) - 3 * n * R_b * T0 * debye(theta / T0)))
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1 + alpha * gamma * T) / (1e-3 * M)  # divide by mol mass
         rho = 1e6 * M / V
@@ -180,13 +177,13 @@ def EOS_all(P, T, material):
         theta = theta0 * np.sqrt(1.0 + 6.0 * f * gamma0 + 3.0 * f ** 2 * gamma0 * (-2.0 + 6.0 * gamma0 - 3.0 * q0))
         gamma = (1.0 + 2.0 * f) * gamma0 * (1.0 + f * (-2.0 + 6.0 * gamma0 - 3.0 * q0)) * (theta0 / theta) ** 2
 
-        Cv = 3 * n * R * (4 * debye(theta / T) - (theta / T) * 3 / (np.exp(theta / T) - 1))
-        Cv0 = 3 * n * R * (4 * debye(theta / T0) - (theta / T0) * 3 / (np.exp(theta / T0) - 1))
+        Cv = 3 * n * R_b * (4 * debye(theta / T) - (theta / T) * 3 / (np.exp(theta / T) - 1))
+        Cv0 = 3 * n * R_b * (4 * debye(theta / T0) - (theta / T0) * 3 / (np.exp(theta / T0) - 1))
         q = (-2 * gamma + 6 * gamma ** 2 + (1 + 2 * f) ** 2 * gamma0 * (2 - 6 * gamma0 + 3 * q0) * (
                 theta0 / theta) ** 2) / (3 * gamma)
         KT = (1 + 2 * f) ** (5 / 2) * K0 * (1 + f * (-5 + 3 * KP0) + 27 / 2 * f ** 2 * (-4 + KP0))
         KT = KT + (-gamma ** 2 / V * (Cv * T - Cv0 * T0) + gamma / V * (1 - q + gamma) * (
-                3 * n * R * T * debye(theta / T) - 3 * n * R * T0 * debye(theta / T0)))
+                3 * n * R_b * T * debye(theta / T) - 3 * n * R_b * T0 * debye(theta / T0)))
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1 + alpha * gamma * T) / (1e-3 * M)  # divide by mol mass
         rho = 1e6 * M / V
@@ -220,13 +217,13 @@ def EOS_all(P, T, material):
         theta = theta0 * np.sqrt(1.0 + 6.0 * f * gamma0 + 3.0 * f ** 2 * gamma0 * (-2.0 + 6.0 * gamma0 - 3.0 * q0))
         gamma = (1.0 + 2.0 * f) * gamma0 * (1.0 + f * (-2.0 + 6.0 * gamma0 - 3.0 * q0)) * (theta0 / theta) ** 2
 
-        Cv = 3 * n * R * (4 * debye(theta / T) - (theta / T) * 3 / (math.exp(theta / T) - 1))
-        Cv0 = 3 * n * R * (4 * debye(theta / T0) - (theta / T0) * 3 / (math.exp(theta / T0) - 1))
+        Cv = 3 * n * R_b * (4 * debye(theta / T) - (theta / T) * 3 / (math.exp(theta / T) - 1))
+        Cv0 = 3 * n * R_b * (4 * debye(theta / T0) - (theta / T0) * 3 / (math.exp(theta / T0) - 1))
         q = (-2 * gamma + 6 * gamma ** 2 + (1 + 2 * f) ** 2 * gamma0 * (2 - 6 * gamma0 + 3 * q0) * (
                 theta0 / theta) ** 2) / (3 * gamma)
         KT = (1 + 2 * f) ** (5 / 2) * K0 * (1 + f * (-5 + 3 * KP0) + 27 / 2 * f ** 2 * (-4 + KP0))
         KT = KT + (-gamma ** 2 / V * (Cv * T - Cv0 * T0) + gamma / V * (1 - q + gamma) * (
-                3 * n * R * T * debye(theta / T) - 3 * n * R * T0 * debye(theta / T0)))
+                3 * n * R_b * T * debye(theta / T) - 3 * n * R_b * T0 * debye(theta / T0)))
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1 + alpha * gamma * T) / (1e-3 * M)  # divide by mol mass
         rho = 1e6 * M / V
@@ -267,13 +264,13 @@ def EOS_all(P, T, material):
         theta = theta0 * math.sqrt(1.0 + 6.0 * f * gamma0 + 3.0 * f ** 2 * gamma0 * (-2.0 + 6.0 * gamma0 - 3.0 * q0))
         gamma = (1.0 + 2.0 * f) * gamma0 * (1.0 + f * (-2.0 + 6.0 * gamma0 - 3.0 * q0)) * (theta0 / theta) ** 2
 
-        Cv = 3 * n * R * (4 * debye(theta / T) - (theta / T) * 3 / (math.exp(theta / T) - 1))
-        Cv0 = 3 * n * R * (4 * debye(theta / T0) - (theta / T0) * 3 / (math.exp(theta / T0) - 1))
+        Cv = 3 * n * R_b * (4 * debye(theta / T) - (theta / T) * 3 / (math.exp(theta / T) - 1))
+        Cv0 = 3 * n * R_b * (4 * debye(theta / T0) - (theta / T0) * 3 / (math.exp(theta / T0) - 1))
         q = (-2 * gamma + 6 * gamma ** 2 + (1 + 2 * f) ** 2 * gamma0 * (2 - 6 * gamma0 + 3 * q0) * (
                 theta0 / theta) ** 2) / (3 * gamma)
         KT = (1 + 2 * f) ** (5 / 2) * K0 * (1 + f * (-5 + 3 * KP0) + 27 / 2 * f ** 2 * (-4 + KP0))
         KT = KT + (-gamma ** 2 / V * (Cv * T - Cv0 * T0) + gamma / V * (1 - q + gamma) * (
-                3 * n * R * T * debye(theta / T) - 3 * n * R * T0 * debye(theta / T0)))
+                3 * n * R_b * T * debye(theta / T) - 3 * n * R_b * T0 * debye(theta / T0)))
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1 + alpha * gamma * T) / (1e-3 * M)  # divide by mol mass
         rho = 1e6 * M / V
@@ -307,13 +304,13 @@ def EOS_all(P, T, material):
         theta = theta0 * math.sqrt(1.0 + 6.0 * f * gamma0 + 3.0 * f ** 2 * gamma0 * (-2.0 + 6.0 * gamma0 - 3.0 * q0))
         gamma = (1.0 + 2.0 * f) * gamma0 * (1.0 + f * (-2.0 + 6.0 * gamma0 - 3.0 * q0)) * (theta0 / theta) ** 2
 
-        Cv = 3 * n * R * (4 * debye(theta / T) - (theta / T) * 3 / (math.exp(theta / T) - 1))
-        Cv0 = 3 * n * R * (4 * debye(theta / T0) - (theta / T0) * 3 / (math.exp(theta / T0) - 1))
+        Cv = 3 * n * R_b * (4 * debye(theta / T) - (theta / T) * 3 / (math.exp(theta / T) - 1))
+        Cv0 = 3 * n * R_b * (4 * debye(theta / T0) - (theta / T0) * 3 / (math.exp(theta / T0) - 1))
         q = (-2 * gamma + 6 * gamma ** 2 + (1 + 2 * f) ** 2 * gamma0 * (2 - 6 * gamma0 + 3 * q0) * (
                 theta0 / theta) ** 2) / (3 * gamma)
         KT = (1 + 2 * f) ** (5 / 2) * K0 * (1 + f * (-5 + 3 * KP0) + 27 / 2 * f ** 2 * (-4 + KP0))
         KT = KT + (-gamma ** 2 / V * (Cv * T - Cv0 * T0) + gamma / V * (1 - q + gamma) * (
-                3 * n * R * T * debye(theta / T) - 3 * n * R * T0 * debye(theta / T0)))
+                3 * n * R_b * T * debye(theta / T) - 3 * n * R_b * T0 * debye(theta / T0)))
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1 + alpha * gamma * T) / (1e-3 * M)  # divide by mol mass
         rho = 1e6 * M / V
@@ -361,23 +358,55 @@ def EOS_all(P, T, material):
         rho = M / V
         gamma = (gamma0 - gammaInf) * zeta3 ** beta + gammaInf
         theta = theta0 * zeta3 ** (-gammaInf) * math.exp((1 - zeta3 ** beta) * (gamma0 - gammaInf) / beta)
-        Cv = 3.0 * R * theta ** 2 * math.exp(theta / T) / ((-1.0 + math.exp(theta / T)) ** 2 * T ** 2)
-        Cv0 = 3.0 * R * theta ** 2 * math.exp(theta / T0) / ((-1.0 + math.exp(theta / T0)) ** 2 * T0 ** 2)
-        Eth = 3.0 * R * (theta / 2.0 + theta / (math.exp(theta / T) - 1.0))
-        Eth0 = 3.0 * R * (theta / 2.0 + theta / (math.exp(theta / T0) - 1.0))
-        dEeadx = 1.5 * R * m ** 2 * a0 * zeta3 ** (m - 1) * T ** 2
-        dEeadx0 = 1.5 * R * m ** 2 * a0 * zeta3 ** (m - 1) * T0 ** 2
-        Eea = 1.5 * R * m * a0 * zeta3 ** m * T ** 2
-        Eea0 = 1.5 * R * m * a0 * zeta3 ** m * T0 ** 2
+        Cv = 3.0 * R_b * theta ** 2 * math.exp(theta / T) / ((-1.0 + math.exp(theta / T)) ** 2 * T ** 2)
+        Cv0 = 3.0 * R_b * theta ** 2 * math.exp(theta / T0) / ((-1.0 + math.exp(theta / T0)) ** 2 * T0 ** 2)
+        Eth = 3.0 * R_b * (theta / 2.0 + theta / (math.exp(theta / T) - 1.0))
+        Eth0 = 3.0 * R_b * (theta / 2.0 + theta / (math.exp(theta / T0) - 1.0))
+        dEeadx = 1.5 * R_b * m ** 2 * a0 * zeta3 ** (m - 1) * T ** 2
+        dEeadx0 = 1.5 * R_b * m ** 2 * a0 * zeta3 ** (m - 1) * T0 ** 2
+        Eea = 1.5 * R_b * m * a0 * zeta3 ** m * T ** 2
+        Eea0 = 1.5 * R_b * m * a0 * zeta3 ** m * T0 ** 2
         KT = (math.exp(c0 - c0 * zeta) * K0 * (5.0 + zeta * (
                 -4.0 + 2.0 * c2 * (-2.0 + zeta) * (-1.0 + zeta) + c0 * (-1.0 + zeta) * (
                 -1.0 + c2 * (-1.0 + zeta) * zeta)))) / zeta ** 5
         KT = KT + (-(gamma ** 2 * (T * Cv - T0 * Cv0)) + (gamma * (1.0 - beta + gamma) + beta * gammaInf) * (
                 Eth - Eth0)) / V
         KT = KT - (dEeadx - dEeadx) / V0 + (Eea - Eea0) / V
-        Cv = Cv + 3.0 * R * m * a0 * zeta3 ** m * T
+        Cv = Cv + 3.0 * R_b * m * a0 * zeta3 ** m * T
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1.0 + alpha * gamma * T) / (M * 1.0e-9)  # from J/mol K to J/kg K: division by mol mass
 
     return [V, rho, alpha, Cp]
 
+
+def g_profile(n, radius, density):
+    # gravity has boundary condition 0 in center (and not at surface)
+    # analogously, a surface gravity can be determind from M and
+    # guessed R, and gravity can be interpolated from surface downwards
+    # Problem with that approach: neg. gravity values in center possible
+    gravity = np.zeros(n)
+    for i in range(1, n):
+        dr = radius[i] - radius[i - 1]
+        gravity[i] = gravity[i - 1] + dr * (
+                4 * math.pi * G * density[i - 1] - 2 * gravity[i - 1] / radius[i - 1])
+    return gravity
+
+
+def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf):
+    # input psurf in bar
+    # pressure and temperature are interpolated from surface downwards
+    pressure = np.zeros(n)
+    temperature = np.zeros(n)
+    pressure[-1] = psurf * 1e5  # surface pressure in Pa
+    temperature[-1] = tsurf  # potential surface temperature, not real surface temperature
+    for i in range(2, n + 1):  # M: 1:n-1; n-i from n-1...1; P: from n-2...0 -> i from 2...n
+        dr = radius[n - i + 1] - radius[n - i]
+        pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
+        temperature[n - i] = temperature[n - i + 1] + dr * alpha[n - i] / cp[n - i] * gravity[n - i] * temperature[n - i + 1]
+    return pressure, temperature
+
+
+def core_planet_radii(CMF, Mp, rho_c, rho_m):
+    Rc = (3 * CMF * Mp / (4 * math.pi * rho_c)) ** (1 / 3)
+    Rp = (Rc ** 3 + 3 * (1 - CMF) * Mp / (4 * math.pi * rho_m)) ** (1 / 3)
+    return Rc, Rp

@@ -1,45 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from useful_and_bespoke import colorize
-from model_1D.parameterised_interior import InteriorStructure
-from model_1D import parameters as p
+from useful_and_bespoke import colorize, iterable_not_string
+import parameters as p
 import os
 import subprocess
 
-data_path = '/home/claire/Works/perple_x/'
-fig_path = '/home/claire/Works/rocky-water/figs_scratch/'
+perplex_path = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
+fig_path = '/home/claire/Works/rocky-water/figs_scratch/'  # path to save figures
 
-M_O = 15.999
-M_Si = 28.0855
-M_Mg = 24.305
-M_Ca = 40.078
-M_Al = 26.981539
-M_Fe = 55.845
-
-# molar masses of oxides
-M_SiO2 = M_Si + 2 * M_O
-M_CaO = M_Ca + M_O
-M_MgO = M_Mg + M_O
-M_Al2O3 = 2 * M_Al + 3 * M_O
-M_FeO = M_Fe + M_O
-
-wt_oxides_Mars = [42.71, 31.5, 2.49, 2.31, 18.71]  # nominal Perple_x, for testing
+wt_oxides_Mars = [42.71, 31.5, 2.49, 2.31, 18.71]  # nominal Perple_x SNC meteorite composition, for testing
 
 
 class PerplexData:
     def __init__(self, name='default', core_efficiency=0.5, M_p=p.M_E, oxides=['SIO2', 'MGO', 'CAO', 'AL2O3', 'FEO'],
-                 star='sun', **kwargs):
+                 star='sun', perplex_path=perplex_path, verbose=False, **kwargs):
         self.name = name
         self.oxide_list = oxides
         self.star = star
         self.M_p = M_p  # Holzapfel EoS for hcp iron valid to 2 M_E
         self.core_eff = core_efficiency
+        self.data_path = perplex_path
+        if verbose:
+            print('----------------------\ninitialising PerplexData object with M_p = {:.4e}%'.format(M_p), 'kg,',
+                  'core_eff = {:5.2f}%'.format(core_efficiency))
 
-    def load_composition(self, build_file_end='', data_path=data_path, fig_path=fig_path, fillnan=True,
-                         check_consistent=True,
-                         head=False, **kwargs):
-        file = data_path + self.name + build_file_end + '_comp.tab'
+    def load_composition(self, build_file_end='', fillnan=True, check_consistent=True, head=False, **kwargs):
+        file = self.data_path + self.name + build_file_end + '_comp.tab'
 
         df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
                          # dtype=np.float64
@@ -51,7 +38,8 @@ class PerplexData:
         P = df['P(bar)'].to_numpy() * 1e5  # in Pa
         T = df['T(K)'].to_numpy()
         if check_consistent and hasattr(self, 'pressure_m') and (self.pressure_m != P).any():
-            raise Exception('current pressure inconsistent with loaded composition data')
+            raise Exception('current pressure inconsistent with loaded composition data - probably because you were '
+                            'using thermodynamic output from an older iteration')
         else:
             self.pressure_m = P
         if check_consistent and hasattr(self, 'temperature_m') and (self.temperature_m != T).any():
@@ -61,16 +49,15 @@ class PerplexData:
         self.df_comp = df
 
         phases = df.columns.values.tolist()
+
         # remove df columns that aren't a mineral phase
         phases.remove('node#')
         phases.remove('P(bar)')
         phases.remove('T(K)')
         self.phases = phases
 
-    def load_adiabat(self, build_file_end='', data_path=data_path, fig_path=fig_path, fillnan=True,
-                     check_consistent=True, save=True,
-                     head=False, **kwargs):
-        file = data_path + self.name + build_file_end + '_therm.tab'
+    def load_adiabat(self, build_file_end='', fillnan=True, check_consistent=True, store=False, head=False, **kwargs):
+        file = self.data_path + self.name + build_file_end + '_thermo.tab'
 
         df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
                          # dtype=np.float64
@@ -85,7 +72,8 @@ class PerplexData:
         cp_m = df['cp,J/K/kg'].to_numpy()
         rho_m = df['rho,kg/m3'].to_numpy()
 
-        if save:
+        if store:
+            # update PerplexData object
             if check_consistent and hasattr(self, 'pressure_m') and (self.pressure_m != P).any():
                 raise Exception('current pressure inconsistent with loaded thermodynamic data')
             else:
@@ -101,10 +89,11 @@ class PerplexData:
         return rho_m, alpha_m, cp_m, P, T
 
     def core_mass_fraction(self):
+        # todo: still might want to triple check this is consistent with stellar composition constraints
         # core from leftover iron
         idx = self.oxide_list.index('FEO')
-        x_Fe_mm = self.wt_oxides[idx] * (M_Fe / M_FeO)  # mass fraction Fe in mantle wrt mtl
-        # print('M Fe/FeO', M_Fe / M_FeO)
+        x_Fe_mm = self.wt_oxides[idx] * (p.M_Fe / p.M_FeO)  # mass fraction Fe in mantle wrt mtl
+        # print('M Fe/FeO', p.M_Fe / p.M_FeO)
         # print('x_Fe_m wrt mantle', x_Fe_mm)
         x_Fe_cm = -x_Fe_mm * self.core_eff / (self.core_eff - 1)  # mass fraction Fe in core wrt mantle mass
         # print('x_Fe_c wrt mantle', x_Fe_cm)
@@ -121,7 +110,7 @@ class PerplexData:
         self.x_Fe_pl = x_Fe_c + x_Fe_mm * mantle_mass_fraction
         # print('x_Fe_pl', x_Fe_pl)
 
-        print('\nCMF =', self.CMF, '\n')
+        print('\ncore mass fraction = {:4.2f}\n'.format(self.CMF))
         return self.CMF
 
     def get_hypatia(self, api_key='c53fd88b7e9c7e0c2e719ea4ea3c5e46',
@@ -151,7 +140,7 @@ class PerplexData:
         self.nH_star = nH_star
         return nH_star
 
-    def star_to_oxide(self, M_oxides=[M_SiO2, M_MgO, M_CaO, M_Al2O3, M_FeO]):
+    def star_to_oxide(self, M_oxides=[p.M_SiO2, p.M_MgO, p.M_CaO, p.M_Al2O3, p.M_FeO]):
         """ nH_star is list of the absolute log(N_X/N_H) for the star, in same order
          would need to convert from wrt solar if necessary
          by convention base element (denomenator for oxide wt ratios) is first in list
@@ -186,10 +175,9 @@ class PerplexData:
         return wt_oxides
 
     def write_build(self, build_file_end='', title='Planet', p_min=10000, p_max=245000, adiabat_file='aerotherm.dat',
-                    data_path=data_path,
-                    overwrite=False):
+                    verbose=True, overwrite=False, **kwargs):
         """ write perple_x build file, p in bar """
-        build_file = data_path + self.name + build_file_end + '.dat'
+        build_file = self.data_path + self.name + build_file_end + '.dat'
         if os.path.isfile(build_file) and not overwrite:
             raise Exception('WARNING: build file', build_file, 'already exists, set overwrite=True')
         elif os.path.isfile(build_file):
@@ -241,11 +229,12 @@ class PerplexData:
             s = s + ' 1  2  4  5  3   indices of 1st & 2nd independent & sectioning variables'
 
             file.write(s)
-        print('  wrote to', build_file)
+        if verbose:
+            print('  wrote to', build_file)
 
-    def write_adiabat(self, P, T, file_end='_adiabat', data_path=data_path, overwrite=False):
+    def write_adiabat(self, P, T, file_end='_adiabat', verbose=True, overwrite=False, **kwargs):
         """ write perple_x build file, p in bar """
-        adiabat_file = data_path + self.name + file_end + '.dat'
+        adiabat_file = self.data_path + self.name + file_end + '.dat'
         if os.path.isfile(adiabat_file) and not overwrite:
             raise Exception('WARNING: build file', adiabat_file, 'already exists, set overwrite=True')
         elif os.path.isfile(adiabat_file):
@@ -256,104 +245,93 @@ class PerplexData:
             for p, t in zip(P, T):
                 s = s + "{:.6e}".format(p) + '	' + "{:.6e}".format(t) + '\n'
             file.write(s)
-        print('  wrote to', adiabat_file)
+        if verbose:
+            print('  wrote to', adiabat_file)
 
-    def get_adiabat(self, build_file_end='', data_path=data_path, clean=True, suppress_output=True):
-        os.chdir(data_path)
+    def command_text_composition(self, build_file_end=''):
+        # string for werami command file to get compositional data
+        s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
+        s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
+        s = s + '25\n'  # Select a property: 25 - Modes of all phases
+        s = s + 'n\n'  # Output cumulative modes (y/n)?
+        s = s + '0\n'  # Select operational mode: 0 - EXIT
+        return s
+
+    def command_text_thermo(self, build_file_end=''):
+        # string for werami command file to get thermodynamic data
+        s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
+        s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
+        s = s + '2\n'  # Select a property: 2 - Density (kg/m3)
+        s = s + 'n\n'  # Calculate individual phase properties (y/n)?
+        s = s + '19\n'  # Select an additional property or enter 0 to finish: 19 - Heat Capacity (J/K/kg)
+        s = s + 'n\n'  # Calculate individual phase properties (y/n)?
+        s = s + '4\n'  # Select an additional property or enter 0 to finish: 4 - Expansivity (1/K, for volume)
+        s = s + 'n\n'  # Calculate individual phase properties (y/n)?
+        s = s + '0\n'  # Select an additional property or enter 0 to finish:
+        s = s + '0\n'  # Select operational mode: 0 - EXIT
+        return s
+
+    def run_perplex(self, werami_command_end='_werami_command.txt', build_file_end='', suppress_output=True, clean=True,
+                    verbose=True, werami_command_text_fn=None, output_file_end='.tab', **kwargs):
+        os.chdir(self.data_path)
         if suppress_output:
             stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
         else:
             stderr, stdout = None, None
 
         # create vertex command file
-        with open(data_path + self.name + build_file_end + '_vertex_command.txt', 'w') as file:
+        vertex_command_file = self.name + build_file_end + '_vertex_command.txt'
+        with open(self.data_path + vertex_command_file, 'w') as file:
             s = self.name + build_file_end + '\n0'
             file.write(s)
 
         # run vertex
-        output = subprocess.run('./vertex < ' + self.name + build_file_end + '_vertex_command.txt', shell=True,
+        output = subprocess.run('./vertex < ' + vertex_command_file, shell=True,
                                 stdout=stdout, stderr=stderr)
-        print('  ', output)
+        if verbose:
+            print('  ', output)
         # os.system('./vertex < ' + self.name + build_file_end + '_vertex_command.txt')
 
         # create werami command file
-        with open(data_path + self.name + build_file_end + '_werami_therm_command.txt', 'w') as file:
-            s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
-            s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
-            s = s + '2\n'  # Select a property: 2 - Density (kg/m3)
-            s = s + 'n\n'  # Calculate individual phase properties (y/n)?
-            s = s + '19\n'  # Select an additional property or enter 0 to finish: 19 - Heat Capacity (J/K/kg)
-            s = s + 'n\n'  # Calculate individual phase properties (y/n)?
-            s = s + '4\n'  # Select an additional property or enter 0 to finish: 4 - Expansivity (1/K, for volume)
-            s = s + 'n\n'  # Calculate individual phase properties (y/n)?
-            s = s + '0\n'  # Select an additional property or enter 0 to finish:
-            s = s + '0\n'  # Select operational mode: 0 - EXIT
+        werami_command_file = self.name + build_file_end + werami_command_end
+        with open(self.data_path + werami_command_file, 'w') as file:
+            s = werami_command_text_fn(build_file_end=build_file_end)
             file.write(s)
 
         # run werami
-        output = subprocess.run('./werami < ' + self.name + build_file_end + '_werami_therm_command.txt', shell=True,
+        output = subprocess.run('./werami < ' + werami_command_file, shell=True,
                                 stdout=stdout, stderr=stderr)
-        print('  ', output)
+        if verbose:
+            print('  ', output)
         # os.system('./werami < ' + self.name + build_file_end + '_werami_therm_command.txt')
 
         # delete extra files and rename .tab file to something meaningful
-        os.rename(data_path + self.name + build_file_end + '_1.tab',
-                  data_path + self.name + build_file_end + '_therm.tab')
+        os.rename(self.data_path + self.name + build_file_end + '_1.tab',
+                  self.data_path + self.name + build_file_end + output_file_end)
         if clean:
-            for f in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tof', '.tim', '.plt', '.blk', '.arf']:
-                if os.path.isfile(data_path + self.name + build_file_end + f):
-                    os.remove(data_path + self.name + build_file_end + f)
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tof', '.tim', '.plt', '.blk', '.arf']:
+                if os.path.isfile(self.data_path + self.name + build_file_end + fend):
+                    os.remove(self.data_path + self.name + build_file_end + fend)
+            os.remove(werami_command_file)
+            os.remove(vertex_command_file)
 
-    def get_composition(self, build_file_end='', data_path=data_path, clean=True, suppress_output=True):
-        os.chdir(data_path)
-        if suppress_output:
-            stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
-        else:
-            stderr, stdout = None, None
+    def get_adiabat(self, **kwargs):
+        self.run_perplex(werami_command_end='_werami_command_thermo.txt',
+                         werami_command_text_fn=self.command_text_thermo,
+                         output_file_end='_thermo.tab', **kwargs)
 
-        # create vertex command file
-        with open(data_path + self.name + build_file_end + '_vertex_command.txt', 'w') as file:
-            s = self.name + build_file_end + '\n0'
-            file.write(s)
+    def get_composition(self, **kwargs):
+        self.run_perplex(werami_command_end='_werami_command_comp.txt',
+                         werami_command_text_fn=self.command_text_composition,
+                         output_file_end='_comp.tab', **kwargs)
 
-        # run vertex
-        output = subprocess.run('./vertex < ' + self.name + build_file_end + '_vertex_command.txt', shell=True,
-                                stdout=stdout, stderr=stderr)
-        print(output)
-        # os.system('./vertex < ' + self.name + build_file_end + '_vertex_command.txt')
-
-        # create werami command file
-        with open(data_path + self.name + build_file_end + '_werami_comp_command.txt', 'w') as file:
-            s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
-            s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
-            s = s + '25\n'  # Select a property: 25 - Modes of all phases
-            s = s + 'n\n'  # Output cumulative modes (y/n)?
-            s = s + '0\n'  # Select operational mode: 0 - EXIT
-            file.write(s)
-
-        # run werami
-        output = subprocess.run('./werami < ' + self.name + build_file_end + '_werami_comp_command.txt', shell=True,
-                                stdout=stdout, stderr=stderr)
-        print(output)
-        # os.system('./werami < ' + self.name + build_file_end + '_werami_comp_command.txt')
-
-        # delete extra files and rename .tab file to something meaningful
-        os.rename(data_path + self.name + build_file_end + '_1.tab',
-                  data_path + self.name + build_file_end + '_comp.tab')
-        if clean:
-            for f in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tof', '.tim', '.plt', '.blk', '.arf']:
-                if os.path.isfile(data_path + self.name + build_file_end + f):
-                    os.remove(data_path + self.name + build_file_end + f)
-
-    def iterate_structure(self, Psurf=1000, Tsurf=1300, n=200, maxIter=500, tol=0.1, data_path=data_path, clean=True,
-                          **kwargs):
+    def iterate_structure(self, Psurf=1000, Tsurf=1300, n=200, maxIter=500, tol=0.1, clean=True, **kwargs):
         """ tweaked from Lena Noack - todo find citation
         Tsurf is potential surface temperature in K (was 1600), Psurf is surface pressure in bar
         n is radial resolution from center of planet to surface"""
         import eos
         import math
 
-        G = p.G  # gravitational constant in m^3 / (kg s^2)
         M = self.M_p  # planet mass in kg
         try:
             # x_Fe = self.x_Fe_pl / 100  # wt% planet iron content (here for now without iron in mantle)
@@ -368,33 +346,28 @@ class PerplexData:
         cp_m = 1300  # guess for mantle heat capacity in J/kg K
         alpha_c = 0.00001  # guess for core thermal expansion ceoff. in 1/K
         alpha_m = 0.000025  # guess for mantle thermal expansion ceoff. in 1/K
-        Rc = (3 * x_Fe * M / (4 * math.pi * rho_c)) ** (1 / 3)
-        Rp = (Rc ** 3 + 3 * (1 - x_Fe) * M / (4 * math.pi * rho_m)) ** (1 / 3)
+        Rc, Rp = eos.core_planet_radii(x_Fe, M, rho_c, rho_m)
 
         # Arrays
         radius = np.zeros(n)  # array goes from 0 to 199
-        pressure = np.zeros(n)
-        gravity = np.zeros(n)
-        temperature = np.zeros(n)
         density = np.zeros(n)
         alpha = np.zeros(n)
         cp = np.zeros(n)
         mass = np.zeros(n)
-        mat = np.zeros(n)  # material
 
-        # # Initialization of arrays: surface values
-        # radius[-1] = Rp
-        # density[-1] = rho_m
-        # alpha[-1] = alpha_m
-        # cp[-1] = cp_m
-        # if x_Fe == 1:  # pure iron shell
-        #     density[-1] = rho_c
-        #     alpha[-1] = alpha_c
-        #     cp[-1] = cp_c
-        #     Rc = Rp
+        # Initialization of arrays: surface values
+        radius[-1] = Rp
+        density[-1] = rho_m
+        alpha[-1] = alpha_m
+        cp[-1] = cp_m
+        if x_Fe == 1:  # pure iron shell
+            density[-1] = rho_c
+            alpha[-1] = alpha_c
+            cp[-1] = cp_c
+            Rc = Rp
 
         # Initialization of arrays: interpolation over depth
-        for i in range(2, n + 1):
+        for i in range(2, n + 1):  # goes to i = n-1
             radius[n - i] = radius[n - i + 1] - Rp / n
             if radius[n - i] > Rc:
                 density[n - i] = rho_m
@@ -403,37 +376,19 @@ class PerplexData:
             else:
                 density[n - i] = rho_c
                 alpha[n - i] = alpha_c
-                cp[n - i] = cp_c
+                cp[n - i] = cp_c  ## goes to idx = n - i = n - n
 
-        # gravity has boundary condition 0 in center (and not at surface)
-        # analogously, a surface gravity can be determind from M and
-        # guessed R, and gravity can be interpolated from surface downwards
-        # Problem with that approach: neg. gravity values in center possible
-        gravity[0] = 0
-        for i in range(1, n):  # M 2:n, here 1:n-1
-            dr = radius[i] - radius[i - 1]
-            gravity[i] = gravity[i - 1] + dr * (4 * math.pi * G * density[i - 1] - 2 * gravity[i - 1] / radius[i - 1]);
-
-        # pressure and temperature are interpolated from surface downwards
-        pressure[-1] = Psurf * 1e5  # surface pressure in Pa
-        temperature[-1] = Tsurf  # potential surface temperature, not real surface temperature
-        for i in range(2, n + 1):
-            dr = radius[n - i + 1] - radius[n - i]
-            pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
-            if radius[n - i] > Rc:
-                alp_cp = alpha_m / cp_m
-            else:
-                alp_cp = alpha_c / cp_c
-            temperature[n - i] = temperature[n - i + 1] + dr * alp_cp * gravity[n - i] * temperature[n - i + 1]
+        gravity = eos.g_profile(n, radius, density)
+        pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf)
 
         # Iteration
         print('Iterating interior structure...')
         it = 1
         Rp_old = 0
-        Rp_store = []
+        # Rp_store = []
         while (abs(Rp - Rp_old) > tol) and (it < maxIter):
             # store old Rp value to determine convergence
-            Rp_store.append(Rp * 1e-3)
+            # Rp_store.append(Rp * 1e-3)
             Rp_old = Rp
 
             # average values will be re-determined from material properties
@@ -447,36 +402,31 @@ class PerplexData:
             for i in range(n):  # M: 1:n, P: 0:n-1
                 # get layer
                 if i <= i_cmb:
-                    # iron core
-                    mat[i] = 4
-
-                    # get local thermodynamic properties - core only
-                    _, density[i], alpha[i], cp[i] = eos.EOS_all(pressure[i] * 1e-9, temperature[i], mat[i])
+                    # get local thermodynamic properties - core
+                    _, density[i], alpha[i], cp[i] = eos.EOS_all(pressure[i] * 1e-9, temperature[i], 4)
                 else:
                     if run_flag:
                         p_mantle_bar = pressure[i_cmb + 1:] * 1e-5  # convert Pa to bar
                         T_mantle = temperature[i_cmb + 1:]
 
-                        # run perple_x over mantle p, T
+                        # run perple_x over mantle p, T to calculate thermodynamic properties
                         self.write_adiabat(p_mantle_bar[::-1], T_mantle[::-1], file_end='_temp' + str(it) + '_adiabat',
-                                           overwrite=True, data_path=data_path)
+                                           **kwargs)
                         self.write_build(build_file_end='_temp' + str(it),
                                          p_min=np.min(p_mantle_bar), p_max=np.max(p_mantle_bar),
                                          adiabat_file=self.name + '_temp' + str(it) + '_adiabat.dat',
-                                         data_path=data_path,
-                                         overwrite=True)
-                        self.get_adiabat(build_file_end='_temp' + str(it), data_path=data_path, clean=clean)
+                                         **kwargs)
+                        self.get_adiabat(build_file_end='_temp' + str(it), clean=clean, **kwargs)
 
-                        # then extract density, alpha, cp after running werami...
+                        # then after running vertex & werami, extract density, alpha, cp
                         density_wer, alpha_wer, cp_wer, p_wer, T_wer = self.load_adiabat(
                             build_file_end='_temp' + str(it),
-                            data_path=data_path, head=False,
-                            check_consistent=False, save=False)
+                            head=False, check_consistent=False, store=False)
 
                         density[i:] = density_wer[::-1]
                         alpha[i:] = alpha_wer[::-1]
                         cp[i:] = cp_wer[::-1]
-                        run_flag = False  # only run once per profile
+                        run_flag = False  # only run perple_x once per profile
 
                 # get mass vector
                 if i == 0:
@@ -497,28 +447,25 @@ class PerplexData:
                     rho_m = rho_m + density[i] * vol
                     vol_m = vol_m + vol
 
+                # for ii, rr in zip(range(n), density):
+                #     print(ii, rr)
+
+            # volume-averaged densities
             rho_c = rho_c / vol_c
             rho_m = rho_m / vol_m
 
             # update radius for core and mantle
-            Rc = (3 * x_Fe * M / (4 * math.pi * rho_c)) ** (1 / 3)
-            Rp = (Rc ** 3 + 3 * (1 - x_Fe) * M / (4 * math.pi * rho_m)) ** (1 / 3)
+            Rc, Rp = eos.core_planet_radii(x_Fe, M, rho_c, rho_m)
 
             # update vectors for radius, gravity, pressure and temperature
-            radius[n - 1] = Rp
+            radius[-1] = Rp
             for i in range(2, n + 1):  # M: 1:n-1; n-i from n-1...1; P: from n-2...0 -> i from 2...n
                 radius[n - i] = radius[n - i + 1] - Rp / n  # always a constant divison of Rp
 
-            for i in range(1, n):  # M: 2:n; P: from 1...n-1
-                dr = radius[i] - radius[i - 1]
-                gravity[i] = gravity[i - 1] + dr * (
-                        4 * math.pi * G * density[i - 1] - 2 * gravity[i - 1] / radius[i - 1])
+            gravity = eos.g_profile(n, radius, density)
 
-            for i in range(2, n + 1):  # M: 1:n-1; n-i from n-1...1; P: from n-2...0 -> i from 2...n
-                dr = radius[n - i + 1] - radius[n - i]
-                pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
-                temperature[n - i] = temperature[n - i + 1] + dr * alpha[n - i] / cp[n - i] * gravity[n - i] * \
-                                     temperature[n - i + 1]
+            # pressure and temperature are interpolated from surface downwards
+            pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf)
 
             i_cmb = np.argmax(radius > Rc) - 1  # update index of top of core in profiles
             p_mantle_bar = pressure[i_cmb + 1:] * 1e-5  # convert Pa to bar
@@ -531,9 +478,9 @@ class PerplexData:
                   'mass[i_cmb] = {:.5e}'.format(mass[i_cmb] / p.M_E), 'M_E')
 
             if clean:
-                for f in ['.dat', '_adiabat.dat', '_vertex_command.txt', '_werami_therm_command.txt', '_therm.tab']:
-                    if os.path.isfile(data_path + self.name + '_temp' + str(it) + f):
-                        os.remove(data_path + self.name + '_temp' + str(it) + f)
+                for fend in ['.dat', '_adiabat.dat', '_thermo.tab']:
+                    if os.path.isfile(self.data_path + self.name + '_temp' + str(it) + fend):
+                        os.remove(self.data_path + self.name + '_temp' + str(it) + fend)
 
             it = it + 1
 
@@ -555,8 +502,6 @@ class PerplexData:
         self.mass = mass
         self.R_p = Rp
         self.R_c = Rc
-
-        self.plot_structure()
 
     def plot_structure(self, fig_path=fig_path, save=True):
 
@@ -615,16 +560,46 @@ class PerplexData:
             plt.show()
 
 
-# stars = ["HIP 98355", "sun"]
-stars = ['sun']
-for star in stars:
-    dat = PerplexData(name='marstest', M_p=0.1 * p.M_E,  # star.replace(" ", ""),
-                      star=star, core_efficiency=0.68)
-    dat.get_hypatia()
-    dat.star_to_oxide()
-    dat.core_mass_fraction()
-    dat.iterate_structure(overwrite=True, tol=0.1, n=1000)
-    dat.write_build(overwrite=True, adiabat_file=dat.name + '_adiabat.dat')
-    dat.get_composition()
-    dat.load_composition()
-    dat.plot_composition()
+def start(name=None, M_p=p.M_E, stars='sun', core_efficiency=0.8, clean=True, **kwargs):
+    """ kwargs include
+     overwrite (bool) : auto overwrite build etc files,
+     head (bool) : to print DataFrame headers when reading them
+     n (int) : interior structure radial resolution,
+     tol (float) : iteration tolerance for R_p
+     verbose (bool) : lots of places """
+    if isinstance(stars, str):
+        stars = [stars]
+    if name is None:
+        # name after star by default
+        name = [s.replace(" ", "") for s in stars]
+    elif isinstance(name, str):
+        name = [name]  # just one star given
+
+    for ii, star in enumerate(stars):
+        dat = PerplexData(name=name[ii], M_p=M_p, star=star, core_efficiency=core_efficiency, **kwargs)
+
+        # get interior structure and geotherm
+        dat.get_hypatia()
+        dat.star_to_oxide()
+        dat.core_mass_fraction()
+        dat.iterate_structure(clean=clean, **kwargs)
+
+        # get composition
+        dat.write_build(adiabat_file=dat.name + '_adiabat.dat', **kwargs)
+        dat.get_composition(clean=clean, **kwargs)
+        dat.load_composition(**kwargs)
+
+        # plot
+        dat.plot_structure()
+        dat.plot_composition()
+
+        if clean:
+            # move perplex files to their own folder
+            new_dir = os.path.dirname(dat.data_path + 'output/' + dat.name + '/')
+            if not os.path.exists(new_dir):
+                os.makedirs(new_dir)
+            for fend in ['_comp.tab', '_adiabat.dat', '.dat']:
+                file = dat.name + fend
+                os.rename(dat.data_path + file, new_dir + '/' + file)
+
+
