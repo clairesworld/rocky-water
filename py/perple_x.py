@@ -325,7 +325,7 @@ class PerplexData:
                          werami_command_text_fn=self.command_text_composition,
                          output_file_end='_comp.tab', **kwargs)
 
-    def iterate_structure(self, Psurf=1000, Tsurf=1300, n=200, maxIter=500, tol=0.1, clean=True, **kwargs):
+    def iterate_structure(self, Psurf=1000, Tsurf=1300, n=200, maxIter=100, tol=10, clean=True, **kwargs):
         """ tweaked from Lena Noack - todo find citation
         Tsurf is potential surface temperature in K (was 1600), Psurf is surface pressure in bar
         n is radial resolution from center of planet to surface"""
@@ -386,6 +386,7 @@ class PerplexData:
         it = 1
         Rp_old = 0
         # Rp_store = []
+        # TODO: converge on p_cen or p_cmb instead? shouldn't change results
         while (abs(Rp - Rp_old) > tol) and (it < maxIter):
             # store old Rp value to determine convergence
             # Rp_store.append(Rp * 1e-3)
@@ -404,6 +405,9 @@ class PerplexData:
                 if i <= i_cmb:
                     # get local thermodynamic properties - core
                     _, density[i], alpha[i], cp[i] = eos.EOS_all(pressure[i] * 1e-9, temperature[i], 4)
+                    if cp[i] == 0:
+                        print('i', i, 'cp[i]', cp[i])
+                        raise ZeroDivisionError
                 else:
                     if run_flag:
                         p_mantle_bar = pressure[i_cmb + 1:] * 1e-5  # convert Pa to bar
@@ -427,6 +431,11 @@ class PerplexData:
                         alpha[i:] = alpha_wer[::-1]
                         cp[i:] = cp_wer[::-1]
                         run_flag = False  # only run perple_x once per profile
+
+                    if cp[i] == 0:
+                        # Perple_x EoS error
+                        cp[i] = cp[i+1]
+                        print('warning: correcting cp = 0 at idx', i)
 
                 # get mass vector
                 if i == 0:

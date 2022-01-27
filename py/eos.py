@@ -1,7 +1,9 @@
 import numpy as np
 import math
 import warnings
-from parameters import R_b, G
+
+R_b = 8.3144598  # universal gas constant in J mol −1 K −1
+G = 6.67408e-11
 
 def debye(thetaT):
     """ from Lena Noack """
@@ -38,27 +40,68 @@ def BM3(V, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, q0, etaS0):
     return P
 
 
-def Holz(V, T, Z, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g):
+def Holz(V, T, Z, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g, c0=None, c2=None, P0=None, V0_iso=None):
     """ from Lena Noack """
-    PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # 1003.6e9 -> 0.10036e9 due to V0*1000^5/3=value*10^5
-    c0 = -np.log(3.0 * K0 / PFG0)
-    c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
-    zeta = (V / V0) ** (1.0 / 3.0)  # zetax(p,T,errorCode) ! zeta=(V/V0)**(1./3.)
+    if c0 is None and c2 is None:
+        PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # 1003.6e9 -> 0.10036e9 due to V0*1000^5/3=value*10^5
+        c0 = -np.log(3.0 * K0 / PFG0)
+        c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
+
+    if V0_iso is None:
+        zeta_iso = (V / V0) ** (1.0 / 3.0)  # zetax(p,T,errorCode) ! zeta=(V/V0)**(1./3.)
+        zeta = zeta_iso
+    else:
+        zeta_iso = (V / V0_iso) ** (1.0 / 3.0)
+        zeta = (V / V0) ** (1.0 / 3.0)
     zeta3 = zeta ** 3
+    zeta3_iso = zeta_iso ** 3
 
     theta = theta0 * zeta3 ** (-gammaInf) * np.exp((1 - zeta3 ** beta) * (gamma0 - gammaInf) / beta)
     gamma = (gamma0 - gammaInf) * zeta3 ** beta + gammaInf
 
-    E = gamma / V * (3 * R_b * (0.5 * theta + theta / (np.exp(theta / T) - 1)) - 3 * R_b * (
+    if P0 is None:
+        E = gamma / V * (3 * R_b * (0.5 * theta + theta / (np.exp(theta / T) - 1)) - 3 * R_b * (
             0.5 * theta + theta / (np.exp(theta / T0) - 1)))
+    else:
+        E = P0
 
-    P = 3.0 * K0 * zeta ** (-5) * (1 - zeta) * np.exp(c0 * (1 - zeta)) * (1 + c2 * (zeta - zeta ** 2)) + E
-    P = P + 1.5 * R_b / V * m * a0 * zeta ** (3.0 * m) * T ** 2
+    P_iso = 3.0 * K0 * zeta_iso ** (-5) * (1 - zeta_iso) * np.exp(c0 * (1 - zeta_iso)) * (1 + c2 * (zeta_iso - zeta_iso ** 2)) + E
+    P = P_iso + 1.5 * R_b / V * m * a0 * zeta ** (3.0 * m) * T ** 2
 
     return P
 
 
-def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS):
+def Holz_highP(V, T, V0=4.28575, P0=234.4, K0=1145.7, c0=3.19, c2=2.40,
+               m=1.891, a0=0.2121, theta0=44.574, gammaInf=0.827, gamma0=1.408, b=0.826, V0_B13=6.290):
+    """
+    fit to Holzapfel EoS for high pressures > 234 GPa, valid 0.234 to 10 TPa, from Hakim+ 2018 eq. (5--8)
+    V0 in cm3/mol
+    P0 in GPa
+    K0 (KT0) in GPa, error +- 3.6
+    c0 unitless, error +-0.08
+    c2 unitless, error +-0.05
+    theta0 in K
+    a0 in 1/(10**3 K)
+    """
+    # P0 = P0 * 1e9
+    # K0 = K0 * 1e9
+    # a0 = a0 * 1e3
+    # isothermal pressure
+    x = V/V0
+    P_iso = P0 + 3 * K0 * x ** (-5 / 3) * (1 - x ** (1 / 3)) * (1 + c2 * x ** (1 / 3) * (1 - x ** (1 / 3))) * \
+            np.exp(c0 * (1 - x**(1/3)))
+
+    # thermal pressure
+    x_corr = x * V0/V0_B13
+    R = 83.1446261815324 * 1e5 * 1e-9  #  # cm3 GPa /K /mol
+    gamma = gammaInf + (gamma0 - gammaInf)* x_corr**b  # Gruen
+    theta = theta0 * x**-gammaInf * np.exp((gamma0 - gammaInf)/b * 1/(x_corr - b))
+    P_harm = 3 * R * gamma / V * (theta/2 + theta / (np.exp(theta / T) - 1))
+    P_ae = 3 * R / (2 * V) * m * a0 * x_corr ** m * T ** 2  # anharmonic-electronic thermal pressure
+    return P_iso + P_ae + P_harm  # GPa
+
+
+def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS, **kwargs):
     """ from Lena Noack """
     # get V that fits to P and T
 
@@ -75,7 +118,7 @@ def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, et
     elif EOS == 2:
         P_i = BM3(V_i, T, n, T0, V0, M, K0, 4.0, G0, GP0, theta0, gamma0, q0, etaS0)
     else:
-        P_i = Holz(V_i, T, n, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, q0, a0, m, g)
+        P_i = Holz(V_i, T, n, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, q0, a0, m, g, **kwargs)
 
     while (abs(P_i - P) > tau) and (it < maxIter):
         it = it + 1
@@ -87,6 +130,8 @@ def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, et
 
         if EOS == 3:
             P_i = BM3(V_i, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, q0, etaS0)
+        elif EOS == 4:
+            P_i = Holz_highP(V_i, T, V0=V0, theta0=theta0, gamma0=gamma0, **kwargs)
         elif EOS == 2:
             P_i = BM3(V_i, T, n, T0, V0, M, K0, 4.0, G0, GP0, theta0, gamma0, q0, etaS0)
         else:
@@ -110,6 +155,7 @@ def EOS_all(P, T, material):
     # EOS = 1: Holzapfel EOS
     # EOS = 2: Second-order Birch-Murnaghan EOS
     # EOS = 3: Third-order Birch-Murnaghan EOS
+    # EOS = 4: Holzapfel for high pressure hcp-Fe
 
     # set EOS parameters
     V = 0
@@ -326,33 +372,46 @@ def EOS_all(P, T, material):
         Cp = mf_pv * Ppv_Cp + mf_pe * Pe_Cp
         alpha = mf_pv * Ppv_alpha * rho / Ppv_rho + mf_pe * Pe_alpha * rho / Pe_rho
     else:
-        if P > 10e3:  # 10 TPa
-            warnings.warn("WARNING.........extrapolating Holzapfel EoS to > 10 TPa")
         n = 26  # Z in EOS
         T0 = 300.0
-        V0 = 6290.0
         M = 55.845e6
-        K0 = 253.844
-        KP0 = 4.719
-        theta0 = 44.574
-        gamma0 = 1.408
-        gammaInf = 0.827
         q0 = 0.826  # beta in EOS
         a0 = 0.0002121
+        M = 55.845e6  # molar mass
         m = 1.891
         g = 1.339
         G0 = 0
         GP0 = 0
         etaS0 = 0
+        gamma0 = 1.408
+        gammaInf = 0.827
+        theta0 = 44.574
+        V0 = 6290.0
+        KP0 = 4.719
         EOS = 1  # Holzapfel EOS
-        V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS)
-
+        if P < 234.4:
+            c0, c2 = None, None
+            K0 = 253.844
+            V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS)
+        elif P < 10e3:
+            V0_iso = 4.28575 * 1e3
+            P0 = 234.4
+            K0 = 1145.7
+            c0 = 3.19
+            c2 = 2.40
+            # b = 0.826  # actually the same parameter as q0
+            EOS = 1  # Holzapfel EOS
+            V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS,
+                      P0=P0, c0=c0, c2=c2, V0_iso=V0_iso)
+        else:
+            print('P', P, 'GPa - extrapolation warning')
+            warnings.warn("WARNING.........extrapolating hcp-Fe EoS to > 10 TPa")
         Z = n
         beta = q0
-
-        PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # e9 or e5?
-        c0 = -math.log(3.0 * K0 / PFG0)
-        c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
+        if c0 is None:  # these are already given by Hakim+ 2018
+            PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # e9 or e5?
+            c0 = -math.log(3.0 * K0 / PFG0)
+            c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
         zeta = (V / V0) ** (1.0 / 3.0)  # zetax(p,T,errorCode) ! zeta=(V/V0)**(1./3.)
         zeta3 = zeta ** 3  # V/V0
         rho = M / V
@@ -375,6 +434,9 @@ def EOS_all(P, T, material):
         Cv = Cv + 3.0 * R_b * m * a0 * zeta3 ** m * T
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1.0 + alpha * gamma * T) / (M * 1.0e-9)  # from J/mol K to J/kg K: division by mol mass
+        # if Cp == 0:
+        #     print('Cv', Cv, 'gamma', gamma, 'zeta3', zeta3, 'zeta', zeta, 'V', V)
+        #     raise ZeroDivisionError
 
     return [V, rho, alpha, Cp]
 
@@ -403,7 +465,13 @@ def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf):
         dr = radius[n - i + 1] - radius[n - i]
         pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
         temperature[n - i] = temperature[n - i + 1] + dr * alpha[n - i] / cp[n - i] * gravity[n - i] * temperature[n - i + 1]
-    return pressure, temperature
+        if math.isinf(temperature[n-i]):
+            print('i', i)
+            print('alpha', alpha[n - i])
+            print('cp', cp[n - i])
+            print('gravity', gravity[n - i])
+            raise ZeroDivisionError
+    return pressure, temperature  # Pa, K
 
 
 def core_planet_radii(CMF, Mp, rho_c, rho_m):
