@@ -14,6 +14,7 @@ Journal of Chemical Physics. 101: 3111-3116.
 
 import math
 from scipy import optimize
+import numpy as np
 
 coeff = []
 coeff.append([0, 0, 0.24657688e6, 0.51359951e2, 0, 0])
@@ -36,12 +37,15 @@ def PSeos(volume, temperature, targetP):  # cc/mol, Kelvins, bars
         c.insert(i, coeff[i][0] * temperature ** -4 + coeff[i][1] * temperature ** -2
                  + coeff[i][2] * temperature ** -1 + coeff[i][3]
                  + coeff[i][4] * temperature + coeff[i][5] * temperature ** 2)
-    pressure = (den + c[0] * den ** 2 - den ** 2 * ((c[2] + 2 * c[3] * den + 3 * c[4] * den ** 2
-                                                     + 4 * c[5] * den ** 3) / (
-                                                            c[1] + c[2] * den + c[3] * den ** 2 + c[4] * den ** 3
-                                                            + c[5] * den ** 4) ** 2) + c[6] * den ** 2 * math.exp(
-        -c[7] * den)
-                + c[8] * den ** 2 * math.exp(-c[9] * den)) * R * temperature / 1e5
+    try:
+        pressure = (den + c[0] * den ** 2 - den ** 2 * ((c[2] + 2 * c[3] * den + 3 * c[4] * den ** 2
+                                                         + 4 * c[5] * den ** 3) / (
+                                                                c[1] + c[2] * den + c[3] * den ** 2 + c[4] * den ** 3
+                                                                + c[5] * den ** 4) ** 2) + c[6] * den ** 2 * math.exp(
+            -c[7] * den)
+                    + c[8] * den ** 2 * math.exp(-c[9] * den)) * R * temperature / 1e5
+    except OverflowError as e:
+        return np.inf
     return pressure - targetP  # bars
 
 
@@ -50,13 +54,20 @@ def PSvolume(pressure, temperature):  # bars, Kelvins
     return volume.x
 
 
-def PSfugacity(pressure, temperature):  # bars, Kelvins
+def PSfugacity(pressure, temperature):  # Pa, Kelvins
+    pressure = pressure * 1e-5  # to bars
     R = 8314510  # Pa.cc/K/mol
     c = []
     for i in range(10):
-        c.insert(i, coeff[i][0] * temperature ** -4 + coeff[i][1] * temperature ** -2
+        try:
+            c.insert(i, coeff[i][0] * temperature ** -4 + coeff[i][1] * temperature ** -2
                  + coeff[i][2] * temperature ** -1 + coeff[i][3]
                  + coeff[i][4] * temperature + coeff[i][5] * temperature ** 2)
+        except ValueError:
+            temperature = float(temperature)
+            c.insert(i, coeff[i][0] * temperature ** -4 + coeff[i][1] * temperature ** -2
+                     + coeff[i][2] * temperature ** -1 + coeff[i][3]
+                     + coeff[i][4] * temperature + coeff[i][5] * temperature ** 2)
     volume = PSvolume(pressure, temperature)
     den = 1 / volume  # mol/cc
     fug = math.exp(math.log(den) + c[0] * den + (1 / (c[1] + c[2] * den + c[3] * den ** 2
@@ -64,12 +75,11 @@ def PSfugacity(pressure, temperature):  # bars, Kelvins
                    - c[6] / c[7] * (math.exp(-c[7] * den) - 1)
                    - c[8] / c[9] * (math.exp(-c[9] * den) - 1)
                    + pressure * 1e5 / (den * R * temperature)
-                   + math.log(R * temperature) - 1) / 1e5
-    return fug  # bars
+                   + math.log(R * temperature) - 1)
+    return fug # Pa
 
 
-""" MODIFIED REDLICH-KWONG EOS """
-import numpy as np
+""" MODIFIED REDLICH-KWONG EOS from Frost & Wood 1997 """
 import numpy.polynomial.polynomial as poly
 
 

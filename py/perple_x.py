@@ -5,11 +5,14 @@ from useful_and_bespoke import colorize, iterable_not_string
 import parameters as p
 import os
 import subprocess
+import saturation as sat
 
 perplex_path = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
 fig_path = '/home/claire/Works/rocky-water/figs_scratch/'  # path to save figures
 
+# [SiO2, MgO, CaO, Al2O3, FeO]
 wt_oxides_Mars = [42.71, 31.5, 2.49, 2.31, 18.71]  # nominal Perple_x SNC meteorite composition, for testing
+wt_oxides_Earth = [44.48, 39.22, 3.44, 3.59, 8.10]
 
 
 class PerplexData:
@@ -325,7 +328,8 @@ class PerplexData:
                          werami_command_text_fn=self.command_text_composition,
                          output_file_end='_comp.tab', **kwargs)
 
-    def iterate_structure(self, Psurf=1000, Tsurf=1300, n=200, maxIter=100, tol=10, clean=True, **kwargs):
+    def iterate_structure(self, Psurf=1000, Tsurf=1300, n=500, maxIter=100, tol=0.0001, clean=True,
+                          deltaT_cmb=0, **kwargs):
         """ tweaked from Lena Noack - todo find citation
         Tsurf is potential surface temperature in K (was 1600), Psurf is surface pressure in bar
         n is radial resolution from center of planet to surface"""
@@ -378,19 +382,23 @@ class PerplexData:
                 alpha[n - i] = alpha_c
                 cp[n - i] = cp_c  ## goes to idx = n - i = n - n
 
+        i_cmb = np.argmax(radius > Rc) - 1  # index of cmb in profiles
         gravity = eos.g_profile(n, radius, density)
-        pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf)
+        pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf, i_cmb, deltaT_cmb)
 
         # Iteration
         print('Iterating interior structure...')
         it = 1
-        Rp_old = 0
-        # Rp_store = []
-        # TODO: converge on p_cen or p_cmb instead? shouldn't change results
-        while (abs(Rp - Rp_old) > tol) and (it < maxIter):
+        Rp_old = 1e-5
+        # pcen = pressure[0]
+        # pcen_old = 1e-5
+        # TODO: converge on p_cen or p_cmb instead? shouldn't change results - but still need r to get mass?
+        while (abs((Rp - Rp_old)/Rp_old) > tol) and (it < maxIter):
+        # while (min(pcen / pcen_old, pcen_old / pcen) > tol) and (it < maxIter):
+        #     print(it, 'criterion:', abs((Rp - Rp_old)/Rp_old), '>', tol)
             # store old Rp value to determine convergence
-            # Rp_store.append(Rp * 1e-3)
             Rp_old = Rp
+            # pcen_old = pcen
 
             # average values will be re-determined from material properties
             rho_c = 0
@@ -474,7 +482,7 @@ class PerplexData:
             gravity = eos.g_profile(n, radius, density)
 
             # pressure and temperature are interpolated from surface downwards
-            pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf)
+            pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf, i_cmb, deltaT_cmb)
 
             i_cmb = np.argmax(radius > Rc) - 1  # update index of top of core in profiles
             p_mantle_bar = pressure[i_cmb + 1:] * 1e-5  # convert Pa to bar
@@ -482,7 +490,7 @@ class PerplexData:
 
             print(it, "R_p = {:.8e}".format(Rp / 1000), 'km', "R_c = {:.8e}".format(Rc / 1000), 'km',
                   "p_cmb = {:.2e}".format(pressure[i_cmb] * 1e-9), 'GPa',
-                  "rho_c_av = {:.2e}".format(rho_c), 'kg/m3', "rho_m_av = {:.2e}".format(rho_m), 'kg/m3',
+                  # "rho_c_av = {:.2e}".format(rho_c), 'kg/m3', "rho_m_av = {:.2e}".format(rho_m), 'kg/m3',
                   "CMF*M_p = {:.5e}".format(self.CMF * self.M_p / p.M_E), 'M_E',
                   'mass[i_cmb] = {:.5e}'.format(mass[i_cmb] / p.M_E), 'M_E')
 
@@ -511,6 +519,7 @@ class PerplexData:
         self.mass = mass
         self.R_p = Rp
         self.R_c = Rc
+        self.i_cmb = i_cmb
 
     def plot_structure(self, fig_path=fig_path, save=True):
 
@@ -546,16 +555,15 @@ class PerplexData:
             plt.show()
 
     def plot_composition(self, which='pressure', fig_path=fig_path, save=True, **kwargs):
-
+        # print('df_comp\n', self.df_comp)
         fig, ax = plt.subplots(1, 1)
         if which == 'pressure':
             x = self.pressure_m * 1e-9  # plot P in GPa
             ax.set_xlabel('Pressure (GPa)')
         else:
             raise NotImplementedError('independent variables other than pressure not implemented')
-
         ax.set_ylabel('Modal abundance (mol %)')
-        colors = colorize(range(len(self.phases)), cmap='rainbow')[0]
+        colors = colorize(range(len(self.phases)), cmap='Set3')[0]
         for ii, phase in enumerate(self.phases):
             y = self.df_comp[phase]
             plt.plot(x, y, c=colors[ii], label=phase)
@@ -568,47 +576,162 @@ class PerplexData:
         else:
             plt.show()
 
+    def plot_gety(self, yvar, ylabel=None, yscale=None):
+        if yvar == 'p':
+            y = self.df_all['P(bar)'].to_numpy()
+            if ylabel is None:
+                ylabel = 'Pressure (GPa)'
+            if yscale is None:
+                yscale = 1e-4  # bar to GPa
+        elif yvar == 'T':
+            y = self.df_all['T(K)'].to_numpy()
+            if ylabel is None:
+                ylabel = 'T (K)'
+            if yscale is None:
+                yscale = 1
+        elif yvar == 'r':
+            y = self.df_all['r'].to_numpy()
+            if ylabel is None:
+                ylabel = 'Radius (km)'
+            if yscale is None:
+                yscale = 1e-3
+        elif yvar == 'z':
+            y = self.R_p - self.df_all['r'].to_numpy()
+            if ylabel is None:
+                ylabel = 'Depth (km)'
+            if yscale is None:
+                yscale = 1e-3
+        return y*yscale, ylabel
 
-def start(name=None, M_p=p.M_E, stars='sun', core_efficiency=0.8, clean=True, **kwargs):
+    def plot_profile(self, col, yvar='p', xlabel=None, ylabel=None, xscale=1, yscale=None, c='k', lw=2,
+                     fig=None, ax=None, logx=False, reverse_y=True, label=None, labelsize=14,
+                     y2var=None, y2label=None, y2scale=None, save=True, **kwargs):
+        if fig is None and ax is None:
+            fig, ax = plt.subplots(1, 1)
+
+        # get data to plot
+        x = self.df_all[col].to_numpy()*xscale
+        y, ylabel = self.plot_gety(yvar, ylabel, yscale)
+
+        ax.plot(x, y, c=c, lw=lw, label=label, **kwargs)
+        ax.set_xlabel(xlabel, fontsize=labelsize)
+        ax.set_ylabel(ylabel, fontsize=labelsize)
+        ax.set_ylim(min(y), max(y))
+
+        if logx:
+            ax.set_xscale('log')
+        if reverse_y:
+            ax.invert_yaxis()
+        if y2var is not None:
+            y2, y2label = self.plot_gety(y2var, y2label, y2scale)
+            ax2 = ax.twinx()
+            ax2.plot(x, y2, c=c, lw=lw, label=label, **kwargs)
+            ax2.set_ylabel(y2label, fontsize=labelsize)
+            ax2.set_ylim(min(y2), max(y2))
+            # if reverse_y:
+            #     ax2.invert_yaxis()
+
+        if save:
+            plt.tight_layout()
+            fig.savefig(fig_path + self.name + '_' + col + '.png', bbox_inches='tight')
+        return fig, ax
+
+
+def build_planet(name='test', M_p=p.M_E, star='sun', core_efficiency=0.8, get_saturation=False, test_CMF=None,
+                test_oxides=None, plot=False, store_all=True, clean=True, plot_kwargs={}, **kwargs):
     """ kwargs include
      overwrite (bool) : auto overwrite build etc files,
      head (bool) : to print DataFrame headers when reading them
      n (int) : interior structure radial resolution,
-     tol (float) : iteration tolerance for R_p
+     tol (float) : iteration tolerance for R_p in fraction
+     maxIter (int): max iterations
      verbose (bool) : lots of places """
-    if isinstance(stars, str):
-        stars = [stars]
-    if name is None:
-        # name after star by default
-        name = [s.replace(" ", "") for s in stars]
-    elif isinstance(name, str):
-        name = [name]  # just one star given
 
-    for ii, star in enumerate(stars):
-        dat = PerplexData(name=name[ii], M_p=M_p, star=star, core_efficiency=core_efficiency, **kwargs)
+    dat = PerplexData(name=name, M_p=M_p, star=star, core_efficiency=core_efficiency, **kwargs)
 
-        # get interior structure and geotherm
+    # get oxide bulk composition and CMF (skip if this if input a testing value)
+    if test_oxides is None:
         dat.get_hypatia()
         dat.star_to_oxide()
+    else:
+        dat.wt_oxides = test_oxides
+    if test_CMF is None:
         dat.core_mass_fraction()
-        dat.iterate_structure(clean=clean, **kwargs)
+    else:
+        dat.CMF = test_CMF
 
-        # get composition
-        dat.write_build(adiabat_file=dat.name + '_adiabat.dat', **kwargs)
-        dat.get_composition(clean=clean, **kwargs)
-        dat.load_composition(**kwargs)
+    # iterate perplex to get interior structure and geotherm
+    dat.iterate_structure(clean=clean, **kwargs)
 
+    # run perple_x again to get mantle compositional profile
+    dat.write_build(adiabat_file=dat.name + '_adiabat.dat', **kwargs)
+    dat.get_composition(clean=clean, **kwargs)
+    dat.load_composition(**kwargs)
+
+    # rename and scale columns (for use with saturation calcs but being consistent regardless)
+    df_all = dat.df_comp.copy()
+    for col in dat.phases:
+        df_all[col] = df_all[col] * 1e-2  # convert from % to frac
+        new_col = 'X_' + col.lower()
+        if col.endswith('(stx)') or col.endswith('(fab)'):  # edit as needed
+            new_col = new_col[:-5]
+        # need to rename some more
+        if new_col == 'X_o':
+            new_col = 'X_ol'
+        elif new_col == 'X_c2/c':
+            new_col = 'X_hpcpx'
+        elif new_col == 'X_ca-pv':
+            new_col = 'X_capv'
+        df_all.rename(columns={col: new_col}, inplace=True)
+    # put important mantle data into single dataframe for convenience - note these are all SI units
+    df_all['mass'] = dat.mass[dat.i_cmb + 1:]
+    df_all['r'] = dat.radius[dat.i_cmb + 1:]
+    df_all['rho'] = dat.density[dat.i_cmb + 1:]
+    df_all['alpha'] = dat.alpha[dat.i_cmb + 1:]
+    df_all['cp'] = dat.cp[dat.i_cmb + 1:]
+
+    print(df_all.columns)
+
+    # calculate saturation water content profile per mineral phase
+    if get_saturation:
+        df_all = sat.mineral_water_contents(dat.pressure_m, dat.temperature_m, df=df_all)
+        # print(df_all.head(20))
+        c_h2o_tot = sat.total_water(df_all)
+        print('\n\ntotal water in mantle:', c_h2o_tot*1e2, 'wt %')
+
+    dat.df_all = df_all
+
+    if plot:
         # plot
         dat.plot_structure()
         dat.plot_composition()
-
-        if clean:
-            # move perplex files to their own folder
-            new_dir = os.path.dirname(dat.data_path + 'output/' + dat.name + '/')
-            if not os.path.exists(new_dir):
-                os.makedirs(new_dir)
-            for fend in ['_comp.tab', '_adiabat.dat', '.dat']:
-                file = dat.name + fend
+        dat.plot_profile(col='c_h2o', xlabel='H$_2$O storage capacity (ppm)', xscale=1e6,
+                         yvar='p', y2var=None, logx=True, **plot_kwargs)
+    if store_all:
+        # make mega df to save all mantle data
+        file = dat.data_path + dat.name + '_profiles.dat'
+        # df_all = dat.df_all.drop('node#', axis=1, inplace=False)
+        df_all.to_csv(path_or_buf=file, sep='\t', na_rep='NaN', index=True, index_label=None)
+    if clean:
+        # move perplex files to their own folder
+        new_dir = os.path.dirname(dat.data_path + 'output/' + dat.name + '/')
+        if not os.path.exists(new_dir):
+            os.makedirs(new_dir)
+        for fend in ['_comp.tab', '_adiabat.dat', '_profiles.dat', '.dat']:
+            file = dat.name + fend
+            if os.path.exists(dat.data_path + file):
                 os.rename(dat.data_path + file, new_dir + '/' + file)
+    return dat
 
+
+def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
+    if names is None:
+        # name after loop variable by default
+        names = [loop_var_name.replace(" ", "") + str(s) for s in loop_var_vals]
+    dat_list = []
+    for ii, val in enumerate(loop_var_vals):
+        kwargs[loop_var_name] = val  # add to dict, others input or otherwise use default
+        dat = build_planet(name=names[ii], **kwargs)
+        dat_list.append(dat)
+    return dat_list
 

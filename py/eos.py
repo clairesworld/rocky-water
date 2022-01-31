@@ -454,7 +454,7 @@ def g_profile(n, radius, density):
     return gravity
 
 
-def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf):
+def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf, i_cmb=None, deltaT_cmb=0):
     # input psurf in bar
     # pressure and temperature are interpolated from surface downwards
     pressure = np.zeros(n)
@@ -465,6 +465,9 @@ def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf):
         dr = radius[n - i + 1] - radius[n - i]
         pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
         temperature[n - i] = temperature[n - i + 1] + dr * alpha[n - i] / cp[n - i] * gravity[n - i] * temperature[n - i + 1]
+        if n - i == i_cmb:
+            # add temperature jump across cmb (discontinuity)
+            temperature[n - i] = temperature[n - i] + deltaT_cmb
         if math.isinf(temperature[n-i]):
             print('i', i)
             print('alpha', alpha[n - i])
