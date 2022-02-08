@@ -2,33 +2,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from useful_and_bespoke import colorize, iterable_not_string
-import parameters as p
+from parameters import M_E, M_Fe, M_FeO
 import os
 import subprocess
 import saturation as sat
+from bulk_composition import bulk_composition
 
 perplex_path = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
 fig_path = '/home/claire/Works/rocky-water/figs_scratch/'  # path to save figures
 
-# [SiO2, MgO, CaO, Al2O3, FeO]
-wt_oxides_Mars = [42.71, 31.5, 2.49, 2.31, 18.71]  # nominal Perple_x SNC meteorite composition, for testing
-wt_oxides_Earth = [44.48, 39.22, 3.44, 3.59, 8.10]
+# set defaults
+# oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']
+wt_oxides_Mars = {'SiO2': 42.71, 'MgO': 31.5, 'CaO': 2.49, 'Al2O3': 2.31,
+                  'FeO': 18.71, 'Na2O': 0.5}  # nominal Perple_x SNC meteorite composition, like example 24 but + Na
+wt_oxides_Earth = {'SiO2': 44.48, 'MgO': 39.22, 'CaO': 3.44, 'Al2O3': 3.59, 'FeO': 8.10, 'Na2O': 0.36}  # weight percent
+# solution_phases_default = ['Wus(fab)', 'Pv(fab)', 'O(stx)', 'Wad(stx)', 'Ring(stx)', 'C2/c(stx)', 'Opx(stx)',
+#                            'Cpx(stx)', 'Sp(stx)', 'Gt(stx)', 'Aki(fab)']  # like perple_x example 24
+oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'Na2O', 'FeO']
+solution_phases_default = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c', 'Opx', 'Aki', 'Ppv', 'Gt', 'CF',
+                           'Pl', 'NAl'
+                           ]
 
 
 class PerplexData:
-    def __init__(self, name='default', core_efficiency=0.5, M_p=p.M_E, oxides=['SIO2', 'MGO', 'CAO', 'AL2O3', 'FEO'],
+    def __init__(self, name='default', core_efficiency=0.5, M_p=M_E,
+                 oxides=oxide_list_default, solution_phases=solution_phases_default,
                  star='sun', perplex_path=perplex_path, verbose=False, **kwargs):
         self.name = name
         self.oxide_list = oxides
+        self.solution_phases = solution_phases
         self.star = star
-        self.M_p = M_p  # Holzapfel EoS for hcp iron valid to 2 M_E
+        self.M_p = M_p
         self.core_eff = core_efficiency
         self.data_path = perplex_path
+
         if verbose:
             print('----------------------\ninitialising PerplexData object with M_p = {:.4e}%'.format(M_p), 'kg,',
                   'core_eff = {:5.2f}%'.format(core_efficiency))
 
-    def load_composition(self, build_file_end='', fillnan=True, check_consistent=True, head=False, **kwargs):
+    def load_composition(self, build_file_end='', fillnan=True, check_consistent=True, head=False, verbose=True,
+                         **kwargs):
         file = self.data_path + self.name + build_file_end + '_comp.tab'
 
         df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
@@ -57,7 +70,10 @@ class PerplexData:
         phases.remove('node#')
         phases.remove('P(bar)')
         phases.remove('T(K)')
-        self.phases = phases
+        self.phases_px = phases
+        if verbose:
+            print('-----------------\nphases used in Perple_x:', [ph for ph in phases])
+            print('-----------------')
 
     def load_adiabat(self, build_file_end='', fillnan=True, check_consistent=True, store=False, head=False, **kwargs):
         file = self.data_path + self.name + build_file_end + '_thermo.tab'
@@ -95,7 +111,7 @@ class PerplexData:
         # todo: still might want to triple check this is consistent with stellar composition constraints
         # core from leftover iron
         idx = self.oxide_list.index('FEO')
-        x_Fe_mm = self.wt_oxides[idx] * (p.M_Fe / p.M_FeO)  # mass fraction Fe in mantle wrt mtl
+        x_Fe_mm = self.wt_oxides[idx] * (M_Fe / M_FeO)  # mass fraction Fe in mantle wrt mtl
         # print('M Fe/FeO', p.M_Fe / p.M_FeO)
         # print('x_Fe_m wrt mantle', x_Fe_mm)
         x_Fe_cm = -x_Fe_mm * self.core_eff / (self.core_eff - 1)  # mass fraction Fe in core wrt mantle mass
@@ -116,8 +132,9 @@ class PerplexData:
         print('\ncore mass fraction = {:4.2f}\n'.format(self.CMF))
         return self.CMF
 
-    def get_hypatia(self, api_key='c53fd88b7e9c7e0c2e719ea4ea3c5e46',
-                    ca_sol=6.33 - 12, al_sol=6.47 - 12, fe_sol=7.45 - 12, si_sol=7.52 - 12, mg_sol=7.54 - 12):
+    def get_hypatia(self, api_key='136611fd615f8a90aafb1da408f0e5b3',
+                    ca_sol=6.33 - 12, al_sol=6.47 - 12, fe_sol=7.45 - 12, si_sol=7.52 - 12, mg_sol=7.54 - 12,
+                    na_sol=6.30 - 12):
         """ star id is same as hypatia catalog with spaces e.g. "HIP 12345" """
         import requests
 
@@ -130,55 +147,33 @@ class PerplexData:
             entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(api_key, "api_token"),
                                  params=params)
 
+            if np.size(entry.json()) == 0:
+                raise Exception('No entry found in Hypatia Catalog:', self.star)
+            # print('loaded json', entry.json())
         nH_star = []
         for ii, el in enumerate(els):
             # absolute not working for some reason so get difference from solar via lodders norm
             if self.star == 'sun':
                 nH = 0
             else:
-                nH = entry.json()[ii]['mean']
-                # print(el, entry.json()[ii]['element'], entry.json()[ii]['mean'])
+                try:
+                    nH = entry.json()[ii]['mean']
+                    print('found', el, entry.json()[ii]['element'], 'mean:', entry.json()[ii]['mean'])
+                except IndexError:
+                    raise Exception('Catalog does not contain enough elements, try changing list of oxides')
+
             sol_val = eval(el + '_sol')
             nH_star.append(nH + sol_val)
-        self.nH_star = nH_star
+        self.nH_star = nH_star  # will always be in same order as oxides list
         return nH_star
 
-    def star_to_oxide(self, M_oxides=[p.M_SiO2, p.M_MgO, p.M_CaO, p.M_Al2O3, p.M_FeO]):
-        """ nH_star is list of the absolute log(N_X/N_H) for the star, in same order
-         would need to convert from wrt solar if necessary
-         by convention base element (denomenator for oxide wt ratios) is first in list
-         core_efficiency is fraction of moles Fe that go into core instead of mantle FeO wrt total moles Fe """
-
-        wt_oxides = [1]  # give denomenator 1 for now
-        for ii, ox in enumerate(self.oxide_list):
-            if ii > 0:
-                if ox == 'AL2O3':
-                    X_ratio_mol = 0.5 * 10 ** self.nH_star[ii] / 10 ** self.nH_star[0]  # 2 mols Al per 1 mol Al2O3
-                else:
-                    X_ratio_mol = 10 ** self.nH_star[ii] / 10 ** self.nH_star[0]  # cancel out H abundance
-
-                if ox == 'FEO':
-                    # some molar percentage of Fe goes to core instead of to mantle FeO
-                    X_ratio_mol = X_ratio_mol * (1 - self.core_eff)
-
-                # convert from mole ratio to mass ratio assuming all metals in oxides
-                M_ratio = M_oxides[ii] / M_oxides[0]
-                m_ratio = X_ratio_mol * M_ratio
-                wt_oxides.append(m_ratio)
-
-        # now have ratios in wt% 1:X1:X2:X3... normalise so total wt% is 100
-        wt_oxides = np.array(wt_oxides)
-        wt_oxides = wt_oxides / sum(wt_oxides) * 100
-
-        print('wt.% oxides\n-----------')
-        for chem, val in zip(self.oxide_list, wt_oxides):
-            print("{0:<7}".format(chem), "{:5.2f}%".format(val))
-
+    def star_to_oxide(self):
+        wt_oxides = bulk_composition(self.oxide_list, self.nH_star, self.core_eff)
         self.wt_oxides = wt_oxides
         return wt_oxides
 
     def write_build(self, build_file_end='', title='Planet', p_min=10000, p_max=245000, adiabat_file='aerotherm.dat',
-                    verbose=True, overwrite=False, **kwargs):
+                    verbose=False, overwrite=False, **kwargs):
         """ write perple_x build file, p in bar """
         build_file = self.data_path + self.name + build_file_end + '.dat'
         if os.path.isfile(build_file) and not overwrite:
@@ -188,10 +183,12 @@ class PerplexData:
 
         s = ''
         with open(build_file, 'w') as file:
-            s = s + 'sfo05ver.dat     thermodynamic data file\n'
+            # s = s + 'sfo05ver.dat     thermodynamic data file\n'
+            s = s + 'stx21ver.dat     thermodynamic data file\n'
             s = s + 'no_print | print generates print output\n'
             s = s + 'plot     | obsolete 6.8.4+\n'
-            s = s + 'solution_model.dat     | solution model file, blank = none\n'
+            # s = s + 'solution_model.dat     | solution model file, blank = none\n'
+            s = s + 'stx21_solution_model.dat     | solution model file, blank = none\n'
             s = s + title + '\n'
             s = s + 'perplex_option.dat | Perple_X option file\n'
             s = s + '   10 calculation type: 0- composition, 1- Schreinemakers, 3- Mixed, 4- swash, 5- gridded min, 7- 1d fract, 8- gwash, 9- 2d fract, 10- 7 w/file input, 11- 9 w/file input, 12- 0d infiltration\n'
@@ -208,11 +205,12 @@ class PerplexData:
             s = s + ' 0.00000      0.00000      0.00000      0.00000      0.00000     Geothermal gradient polynomial coeffs.\n\n'
 
             s = s + 'begin thermodynamic component list\n'
-            for ii, el in enumerate(self.oxide_list):
-                wt = self.wt_oxides[ii]
+            # for ii, el in enumerate(self.oxide_list):
+            for el, wt in self.wt_oxides.items():
                 dig = len(str(int(wt)))
-                s = s + el.ljust(6) + '1'.ljust(3) + "{value:{width}.{precision}f}".format(value=float(wt), width=7,
-                                                                                           precision=6 - dig)
+                s = s + el.upper().ljust(6) + '1'.ljust(3) + "{value:{width}.{precision}f}".format(value=float(wt),
+                                                                                                   width=7,
+                                                                                                   precision=6 - dig)
                 s = s + '      0.00000      0.00000     mass  amount\n'
             s = s + 'end thermodynamic component list\n\n\n'
 
@@ -220,7 +218,11 @@ class PerplexData:
             s = s + 'begin saturated phase component list\nend saturated phase component list\n\n\n'
             s = s + 'begin independent potential/fugacity/activity list\nend independent potential list\n\n\n'
             s = s + 'begin excluded phase list\nstv\nend excluded phase list\n\n\n'
-            s = s + 'begin solution phase list\nWus(fab)\nPv(fab)\nO(stx)\nWad(stx)\nRing(stx)\nC2/c(stx)\nOpx(stx)\nCpx(stx)\nSp(stx)\nGt(stx)\nAki(fab)\nend solution phase list\n\n'
+
+            s = s + 'begin solution phase list'
+            for sol in self.solution_phases:
+                s = s + '\n' + sol
+            s = s + '\nend solution phase list\n\n'
 
             s = s + "   {value:{width}.{precision}f}".format(value=float(p_max), width=7,
                                                              precision=7 - len(str(int(p_max))))[
@@ -235,7 +237,7 @@ class PerplexData:
         if verbose:
             print('  wrote to', build_file)
 
-    def write_adiabat(self, P, T, file_end='_adiabat', verbose=True, overwrite=False, **kwargs):
+    def write_adiabat(self, P, T, file_end='_adiabat', verbose=False, overwrite=False, **kwargs):
         """ write perple_x build file, p in bar """
         adiabat_file = self.data_path + self.name + file_end + '.dat'
         if os.path.isfile(adiabat_file) and not overwrite:
@@ -393,9 +395,9 @@ class PerplexData:
         # pcen = pressure[0]
         # pcen_old = 1e-5
         # TODO: converge on p_cen or p_cmb instead? shouldn't change results - but still need r to get mass?
-        while (abs((Rp - Rp_old)/Rp_old) > tol) and (it < maxIter):
-        # while (min(pcen / pcen_old, pcen_old / pcen) > tol) and (it < maxIter):
-        #     print(it, 'criterion:', abs((Rp - Rp_old)/Rp_old), '>', tol)
+        while (abs((Rp - Rp_old) / Rp_old) > tol) and (it < maxIter):
+            # while (min(pcen / pcen_old, pcen_old / pcen) > tol) and (it < maxIter):
+            #     print(it, 'criterion:', abs((Rp - Rp_old)/Rp_old), '>', tol)
             # store old Rp value to determine convergence
             Rp_old = Rp
             # pcen_old = pcen
@@ -408,7 +410,7 @@ class PerplexData:
 
             i_cmb = np.argmax(radius > Rc) - 1  # index of cmb in profiles
             run_flag = True
-            for i in range(n):  # M: 1:n, P: 0:n-1
+            for i in range(n):  # M: 1:n, P: 0:n-1  index from centre to surface
                 # get layer
                 if i <= i_cmb:
                     # get local thermodynamic properties - core
@@ -442,7 +444,7 @@ class PerplexData:
 
                     if cp[i] == 0:
                         # Perple_x EoS error
-                        cp[i] = cp[i+1]
+                        cp[i] = cp[i + 1]
                         print('warning: correcting cp = 0 at idx', i)
 
                 # get mass vector
@@ -482,7 +484,8 @@ class PerplexData:
             gravity = eos.g_profile(n, radius, density)
 
             # pressure and temperature are interpolated from surface downwards
-            pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf, i_cmb, deltaT_cmb)
+            pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tsurf, i_cmb,
+                                                   deltaT_cmb)
 
             i_cmb = np.argmax(radius > Rc) - 1  # update index of top of core in profiles
             p_mantle_bar = pressure[i_cmb + 1:] * 1e-5  # convert Pa to bar
@@ -491,8 +494,8 @@ class PerplexData:
             print(it, "R_p = {:.8e}".format(Rp / 1000), 'km', "R_c = {:.8e}".format(Rc / 1000), 'km',
                   "p_cmb = {:.2e}".format(pressure[i_cmb] * 1e-9), 'GPa',
                   # "rho_c_av = {:.2e}".format(rho_c), 'kg/m3', "rho_m_av = {:.2e}".format(rho_m), 'kg/m3',
-                  "CMF*M_p = {:.5e}".format(self.CMF * self.M_p / p.M_E), 'M_E',
-                  'mass[i_cmb] = {:.5e}'.format(mass[i_cmb] / p.M_E), 'M_E')
+                  "CMF*M_p = {:.5e}".format(self.CMF * self.M_p / M_E), 'M_E',
+                  'mass[i_cmb] = {:.5e}'.format(mass[i_cmb] / M_E), 'M_E')
 
             if clean:
                 for fend in ['.dat', '_adiabat.dat', '_thermo.tab']:
@@ -516,7 +519,8 @@ class PerplexData:
         self.pressure = pressure
         self.alpha = alpha
         self.cp = cp
-        self.mass = mass
+        self.cum_mass = mass
+        self.mass = np.diff(np.insert(mass, 0, 0))
         self.R_p = Rp
         self.R_c = Rc
         self.i_cmb = i_cmb
@@ -563,8 +567,8 @@ class PerplexData:
         else:
             raise NotImplementedError('independent variables other than pressure not implemented')
         ax.set_ylabel('Modal abundance (mol %)')
-        colors = colorize(range(len(self.phases)), cmap='Set3')[0]
-        for ii, phase in enumerate(self.phases):
+        colors = colorize(range(len(self.phases_px)), cmap='Set3')[0]
+        for ii, phase in enumerate(self.phases_px):
             y = self.df_comp[phase]
             plt.plot(x, y, c=colors[ii], label=phase)
         ax.legend()
@@ -601,7 +605,7 @@ class PerplexData:
                 ylabel = 'Depth (km)'
             if yscale is None:
                 yscale = 1e-3
-        return y*yscale, ylabel
+        return y * yscale, ylabel
 
     def plot_profile(self, col, yvar='p', xlabel=None, ylabel=None, xscale=1, yscale=None, c='k', lw=2,
                      fig=None, ax=None, logx=False, reverse_y=True, label=None, labelsize=14,
@@ -610,7 +614,7 @@ class PerplexData:
             fig, ax = plt.subplots(1, 1)
 
         # get data to plot
-        x = self.df_all[col].to_numpy()*xscale
+        x = self.df_all[col].to_numpy() * xscale
         y, ylabel = self.plot_gety(yvar, ylabel, yscale)
 
         ax.plot(x, y, c=c, lw=lw, label=label, **kwargs)
@@ -637,8 +641,9 @@ class PerplexData:
         return fig, ax
 
 
-def build_planet(name='test', M_p=p.M_E, star='sun', core_efficiency=0.8, get_saturation=False, test_CMF=None,
-                test_oxides=None, plot=False, store_all=True, clean=True, plot_kwargs={}, **kwargs):
+def build_planet(name='test', M_p=M_E, star='sun', core_efficiency=0.8, oxides=oxide_list_default,
+                 get_saturation=False, test_CMF=None, test_oxides=None,
+                 plot=False, store_all=True, clean=True, plot_kwargs={}, **kwargs):
     """ kwargs include
      overwrite (bool) : auto overwrite build etc files,
      head (bool) : to print DataFrame headers when reading them
@@ -647,14 +652,16 @@ def build_planet(name='test', M_p=p.M_E, star='sun', core_efficiency=0.8, get_sa
      maxIter (int): max iterations
      verbose (bool) : lots of places """
 
-    dat = PerplexData(name=name, M_p=M_p, star=star, core_efficiency=core_efficiency, **kwargs)
+    dat = PerplexData(name=name, M_p=M_p, star=star, core_efficiency=core_efficiency, oxides=oxides, **kwargs)
 
-    # get oxide bulk composition and CMF (skip if this if input a testing value)
+    # get oxide bulk composition and CMF (skip if input a testing value)
     if test_oxides is None:
         dat.get_hypatia()
         dat.star_to_oxide()
     else:
-        dat.wt_oxides = test_oxides
+        if star not in ('sun', None):
+            print('Did you mean to input both star name and fixed oxide wt%s?')
+        dat.wt_oxides = {k: test_oxides[k] for k in oxides}
     if test_CMF is None:
         dat.core_mass_fraction()
     else:
@@ -670,7 +677,7 @@ def build_planet(name='test', M_p=p.M_E, star='sun', core_efficiency=0.8, get_sa
 
     # rename and scale columns (for use with saturation calcs but being consistent regardless)
     df_all = dat.df_comp.copy()
-    for col in dat.phases:
+    for col in dat.phases_px:
         df_all[col] = df_all[col] * 1e-2  # convert from % to frac
         new_col = 'X_' + col.lower()
         if col.endswith('(stx)') or col.endswith('(fab)'):  # edit as needed
@@ -684,20 +691,18 @@ def build_planet(name='test', M_p=p.M_E, star='sun', core_efficiency=0.8, get_sa
             new_col = 'X_capv'
         df_all.rename(columns={col: new_col}, inplace=True)
     # put important mantle data into single dataframe for convenience - note these are all SI units
-    df_all['mass'] = dat.mass[dat.i_cmb + 1:]
-    df_all['r'] = dat.radius[dat.i_cmb + 1:]
+    df_all['mass(kg)'] = dat.mass[dat.i_cmb + 1:]
+    df_all['r(m)'] = dat.radius[dat.i_cmb + 1:]
     df_all['rho'] = dat.density[dat.i_cmb + 1:]
     df_all['alpha'] = dat.alpha[dat.i_cmb + 1:]
     df_all['cp'] = dat.cp[dat.i_cmb + 1:]
-
-    print(df_all.columns)
 
     # calculate saturation water content profile per mineral phase
     if get_saturation:
         df_all = sat.mineral_water_contents(dat.pressure_m, dat.temperature_m, df=df_all)
         # print(df_all.head(20))
         c_h2o_tot = sat.total_water(df_all)
-        print('\n\ntotal water in mantle:', c_h2o_tot*1e2, 'wt %')
+        print('\n\ntotal water in mantle:', c_h2o_tot * 1e2, 'wt% =', c_h2o_tot * dat.M_p / sat.TO, 'OM')
 
     dat.df_all = df_all
 
@@ -734,4 +739,3 @@ def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
         dat = build_planet(name=names[ii], **kwargs)
         dat_list.append(dat)
     return dat_list
-

@@ -70,12 +70,15 @@ def PSfugacity(pressure, temperature):  # Pa, Kelvins
                      + coeff[i][4] * temperature + coeff[i][5] * temperature ** 2)
     volume = PSvolume(pressure, temperature)
     den = 1 / volume  # mol/cc
-    fug = math.exp(math.log(den) + c[0] * den + (1 / (c[1] + c[2] * den + c[3] * den ** 2
-                                                      + c[4] * den ** 3 + c[5] * den ** 4) - 1 / c[1])
-                   - c[6] / c[7] * (math.exp(-c[7] * den) - 1)
-                   - c[8] / c[9] * (math.exp(-c[9] * den) - 1)
-                   + pressure * 1e5 / (den * R * temperature)
-                   + math.log(R * temperature) - 1)
+    try:
+        fug = math.exp(math.log(den) + c[0] * den + (1 / (c[1] + c[2] * den + c[3] * den ** 2
+                                                          + c[4] * den ** 3 + c[5] * den ** 4) - 1 / c[1])
+                       - c[6] / c[7] * (math.exp(-c[7] * den) - 1)
+                       - c[8] / c[9] * (math.exp(-c[9] * den) - 1)
+                       + pressure * 1e5 / (den * R * temperature)
+                       + math.log(R * temperature) - 1)
+    except (OverflowError, ValueError):
+        return np.inf
     return fug # Pa
 
 

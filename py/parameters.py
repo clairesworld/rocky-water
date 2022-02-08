@@ -15,6 +15,7 @@ M_Mg = 24.305
 M_Ca = 40.078
 M_Al = 26.981539
 M_Fe = 55.845
+M_Na = 22.989769
 
 # molar masses of oxides
 M_SiO2 = M_Si + 2 * M_O
@@ -22,3 +23,4 @@ M_CaO = M_Ca + M_O
 M_MgO = M_Mg + M_O
 M_Al2O3 = 2 * M_Al + 3 * M_O
 M_FeO = M_Fe + M_O
+M_Na2O = 2 * M_Na + M_O

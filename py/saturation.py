@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 Rb = 8.31446261815324
+TO = 1.335e21  # kg
 python_path = '/home/claire/Works/rocky-water/py/'
 
 
@@ -119,7 +120,7 @@ def wmf_phase(phase, sat, df=None):
 
 def sat_partitioning(phase_i, phase_j, sat_j, D_ji, df=None, na_val=1e-6, **kwargs):
     # only allow partitioning in overlapping region, use last overlap otherwise
-    # input phase names (str), weight fractions X, sat water content wmf w_j, and partitioning D_ji
+    # input phase names (str), weight fractions X, sat water content wmf w_j, and partitioning D_ji = cj/ci
     if df is None:
         return None
     sat_i = np.zeros_like(sat_j)
@@ -130,14 +131,20 @@ def sat_partitioning(phase_i, phase_j, sat_j, D_ji, df=None, na_val=1e-6, **kwar
     try:
         X_i = df['X_' + phase_i]
         X_j = df['X_' + phase_j]
-        idx = X_i.where((X_i > 0) & (X_j > 0)).last_valid_index()
+        idx = X_i.where((X_i > 0) & (X_j > 0)).last_valid_index()  # index of deepest layer with coexisting j & i
         sat_i[:idx + 1] = sat_j[:idx + 1] / D_ji[:idx + 1]
         sat_i[idx + 1:] = sat_j[idx] / D_ji[idx]  # should be constant
     except KeyError:
-        return np.zeros(len(df))  # phase not present anywhere
+        if 'X_' + phase_i not in df.columns:
+            print('X_' + phase_i, 'not in df columns')
+            sat_i = np.zeros(len(df))  # this phase not present anywhere
+        elif 'X_' + phase_j not in df.columns:
+            print('X_' + phase_j, 'not in df columns - using na val')
+            sat_i = na_val  # if no coexisting levels, prescribe a value
+            print('sat_i', np.shape(sat_i))
     except Exception as e:
         print(e)
-        sat_i = na_val * np.ones_like(sat_j)  # if no coexisting levels, prescribe a value
+        sat_i = na_val  # if no coexisting levels, prescribe a value
     # TODO: check for phase i existing above phase j
     # w_i = sat_i * X_i
     return sat_i  # returns actual water content in that phase ->
@@ -185,7 +192,8 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     sat_opx_thermo = sat_al_thermo + sat_en_thermo
     D_ol_opx = sat_ol_thermo / sat_opx_thermo
     sat_opx = sat_ol / D_ol_opx  # this and others are just hypothetical values without considering (co-)stability
-    sat_corr_opx = sat_partitioning(phase_i='opx', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_opx, df=df, na_val=1e-6)
+    sat_corr_opx = sat_partitioning(phase_i='opx', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_opx, df=df,
+                                    na_val=sat_opx_thermo)
 
     """ 
     CLINOPYROXENE, GARNET
@@ -194,12 +202,14 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     # cpx (jadeite NaAlSi2O6) - TODO omphacite? see Smythe+ 1991
     D_ol_cpx = partitioning_coeff(p, T, f_h2o_PS, A_j=7.144, deltaH_j=0, deltaV_j=8.019, n_j=0.5)
     sat_cpx = sat_ol / D_ol_cpx
-    sat_corr_cpx = sat_partitioning(phase_i='cpx', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_cpx, df=df, na_val=1e-6)
+    sat_corr_cpx = sat_partitioning(phase_i='cpx', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_cpx, df=df,
+                                    na_val=water_capacity_thermo(p, T, f_h2o, A=7.144, deltaH=0, deltaV=8.019, n=0.5))
 
     # gt (pyrope Mg₃Al₂Si₃O₁₂)
     D_ol_gt = partitioning_coeff(p, T, f_h2o_PS, A_j=0.679, deltaH_j=0, deltaV_j=5.71, n_j=0.5)
     sat_gt = sat_ol / D_ol_gt
-    sat_corr_gt = sat_partitioning(phase_i='gt', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_gt, df=df, na_val=1e-6)
+    sat_corr_gt = sat_partitioning(phase_i='gt', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_gt, df=df,
+                                   na_val=water_capacity_thermo(p, T, f_h2o, A=0.679, n=0.5, deltaH=0, deltaV=5.71))
 
     # spinel?? MgAl2O4 - upper mantle, might want to find D - e.g. via - D_spinel/melt / D_olivine/melt
     # sp is "among the most water poor minerals" but could be important when co-existing with opx
@@ -234,7 +244,7 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
 
     # ferropericlase i.e. magnesiowustite iron endmember
     sat_fp = 10e-6  # assumed in Dong+ 2021
-    sat_wus = sat_fp  # for now call this wustite and use MgO separately
+    sat_wus = sat_fp  # stixrude wustite model is solution of magnesio-wuestite-na2al2o4
     sat_corr_wus = sat_wus
 
     """ 
@@ -253,8 +263,10 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     D_pv_ppv = D_brg_ppv_T16(T)
     # print('D_pv_ppv', D_pv_ppv)
     sat_ppv = sat_pv / D_pv_ppv
-    sat_corr_ppv = sat_partitioning(phase_i='ppv', phase_j='pv', sat_j=sat_pv, D_ji=D_pv_ppv, df=df, na_val=1e-6)
+    # need to use sat_corr_pv here because that's the actual capacity concentration available
+    sat_corr_ppv = sat_partitioning(phase_i='ppv', phase_j='pv', sat_j=sat_corr_pv, D_ji=D_pv_ppv, df=df, na_val=1e-6)
     # TODO check if there is a stable Al-bearing phase
+
 
     """
     other transition zone and lower mantle phases by partitioning
@@ -275,7 +287,9 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     sat_st = sat_ring / D_ring_st
     sat_corr_st = sat_partitioning(phase_i='st', phase_j='ring', sat_j=sat_ring, D_ji=D_ring_st, df=df, na_val=1e-6)
 
-    """ compile """
+    """ 
+    compile 
+    """
     if df is not None:
         df['f_h2o'] = f_h2o  # Pa
         df['c_h2o'] = 0
@@ -284,23 +298,27 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
             phase = col[2:]
             try:
                 df['sat_' + phase] = eval('sat_' + phase)  # (hypothetical) saturation water mass fraction at this T, p
+                # print('df', np.shape(df), 'eval:')
+                # print(eval('sat_corr_' + phase), np.shape(eval('sat_corr_' + phase)))
                 df['sat_corr_' + phase] = eval('sat_corr_' + phase)  # accounting for co-stability when partitioning
                 df['w_' + phase] = wmf_phase(phase, df['sat_corr_' + phase],
                                              df)  # actual water mass fraction given phase concentration
-                df['c_h2o'] = df['c_h2o'].add(df['w_' + phase], fill_value=0)  # total water mass fraction across phases
+                df['c_h2o'] = df['c_h2o'].add(
+                    df['w_' + phase], fill_value=0)  # total water mass fraction - note sum of phases should add to 1
             except NameError:
                 print('>>>MISSING PHASE IN SATURATION MODEL:', phase)
-                # set missing to 0 for now
-                df['w_' + phase] = 0
+                # set missing to v small for now
+                df['w_' + phase] = 1e-9
         for col in filter_col:
             phase = col[2:]
-            df['frac_h2o'] = df['w_' + phase] / df['c_h2o']
-        df['mass_h2o'] = df['c_h2o'] * df['mass']
+            df['frac_h2o_' + phase] = df['w_' + phase] / df['c_h2o']
+        df['mass_h2o(kg)'] = df['c_h2o'] * df['mass(kg)']
+
         return df
 
 
 def total_water(df):
-    return np.sum(df['mass_h2o']) / np.sum(df['mass'])
+    return np.sum(df['mass_h2o(kg)']) / np.sum(df['mass(kg)'])
 
 
 def get_geotherm_file(file='geotherm_Tp1600.csv', path=python_path, res=100):
