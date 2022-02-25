@@ -71,34 +71,34 @@ def Holz(V, T, Z, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g, 
     return P
 
 
-def Holz_highP(V, T, V0=4.28575, P0=234.4, K0=1145.7, c0=3.19, c2=2.40,
-               m=1.891, a0=0.2121, theta0=44.574, gammaInf=0.827, gamma0=1.408, b=0.826, V0_B13=6.290):
-    """
-    fit to Holzapfel EoS for high pressures > 234 GPa, valid 0.234 to 10 TPa, from Hakim+ 2018 eq. (5--8)
-    V0 in cm3/mol
-    P0 in GPa
-    K0 (KT0) in GPa, error +- 3.6
-    c0 unitless, error +-0.08
-    c2 unitless, error +-0.05
-    theta0 in K
-    a0 in 1/(10**3 K)
-    """
-    # P0 = P0 * 1e9
-    # K0 = K0 * 1e9
-    # a0 = a0 * 1e3
-    # isothermal pressure
-    x = V/V0
-    P_iso = P0 + 3 * K0 * x ** (-5 / 3) * (1 - x ** (1 / 3)) * (1 + c2 * x ** (1 / 3) * (1 - x ** (1 / 3))) * \
-            np.exp(c0 * (1 - x**(1/3)))
-
-    # thermal pressure
-    x_corr = x * V0/V0_B13
-    R = 83.1446261815324 * 1e5 * 1e-9  #  # cm3 GPa /K /mol
-    gamma = gammaInf + (gamma0 - gammaInf)* x_corr**b  # Gruen
-    theta = theta0 * x**-gammaInf * np.exp((gamma0 - gammaInf)/b * 1/(x_corr - b))
-    P_harm = 3 * R * gamma / V * (theta/2 + theta / (np.exp(theta / T) - 1))
-    P_ae = 3 * R / (2 * V) * m * a0 * x_corr ** m * T ** 2  # anharmonic-electronic thermal pressure
-    return P_iso + P_ae + P_harm  # GPa
+# def Holz_highP(V, T, V0=4.28575, P0=234.4, K0=1145.7, c0=3.19, c2=2.40,
+#                m=1.891, a0=0.2121, theta0=44.574, gammaInf=0.827, gamma0=1.408, b=0.826, V0_B13=6.290):
+#     """
+#     fit to Holzapfel EoS for high pressures > 234 GPa, valid 0.234 to 10 TPa, from Hakim+ 2018 eq. (5--8)
+#     V0 in cm3/mol
+#     P0 in GPa
+#     K0 (KT0) in GPa, error +- 3.6
+#     c0 unitless, error +-0.08
+#     c2 unitless, error +-0.05
+#     theta0 in K
+#     a0 in 1/(10**3 K)
+#     """
+#     # P0 = P0 * 1e9
+#     # K0 = K0 * 1e9
+#     # a0 = a0 * 1e3
+#     # isothermal pressure
+#     x = V/V0
+#     P_iso = P0 + 3 * K0 * x ** (-5 / 3) * (1 - x ** (1 / 3)) * (1 + c2 * x ** (1 / 3) * (1 - x ** (1 / 3))) * \
+#             np.exp(c0 * (1 - x**(1/3)))
+#
+#     # thermal pressure
+#     x_corr = x * V0/V0_B13
+#     R = 83.1446261815324 * 1e5 * 1e-9  #  # cm3 GPa /K /mol
+#     gamma = gammaInf + (gamma0 - gammaInf)* x_corr**b  # Gruen
+#     theta = theta0 * x**-gammaInf * np.exp((gamma0 - gammaInf)/b * 1/(x_corr - b))
+#     P_harm = 3 * R * gamma / V * (theta/2 + theta / (np.exp(theta / T) - 1))
+#     P_ae = 3 * R / (2 * V) * m * a0 * x_corr ** m * T ** 2  # anharmonic-electronic thermal pressure
+#     return P_iso + P_ae + P_harm  # GPa
 
 
 def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS, **kwargs):
@@ -394,6 +394,7 @@ def EOS_all(P, T, material):
             K0 = 253.844
             V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS)
         elif P < 10e3:
+            # print('                usking Hakim+ EOS')
             V0_iso = 4.28575 * 1e3
             P0 = 234.4
             K0 = 1145.7
@@ -454,9 +455,38 @@ def g_profile(n, radius, density):
     return gravity
 
 
-def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf, i_cmb=None, deltaT_cmb=0):
+def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf, i_cmb=None, deltaT_cmb=0, extrapolate_nan=False):
+    """ input psurf in bar, pressure and temperature are interpolated from surface downwards """
+    pressure = np.zeros(n)
+    temperature = np.zeros(n)
+    pressure[-1] = psurf * 1e5  # surface pressure in Pa
+    temperature[-1] = tsurf  # potential surface temperature, not real surface temperature
+    last_good_lapse_rate = alpha[-1] / cp[-1] * gravity[-1]  # temp
+    flag = True
+    for i in range(2, n + 1):  # M: 1:n-1; n-i from n-1...1; P: from n-2...0 -> i from 2...n
+        dr = radius[n - i + 1] - radius[n - i]
+        pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
+        lapse_rate = alpha[n - i] / cp[n - i] * gravity[n - i]
+        # if lapse_rate == 0 or np.isnan(lapse_rate):
+        #     print('n - i', n - i, 'pressure[n - i]', pressure[n - i]*1e-9, 'GPa', 'alpha', alpha[n - i], 'cp', cp[n - i], 'g', gravity[n - i])
+        #     if extrapolate_nan:
+        #             lapse_rate = last_good_lapse_rate
+        #             if flag:
+        #                 print('bad lapse rate from p =', pressure[n - i]*1e-9, 'GPa')
+        #                 flag = False
+        #     else:
+        #         raise ZeroDivisionError()
+        # last_good_lapse_rate = lapse_rate
+        ## ^^tried to implement constant extrapolation of adiabatic gradient but still need something for bad density to get pressure
+        temperature[n - i] = temperature[n - i + 1] + dr * lapse_rate * temperature[n - i + 1]
+        if n - i == i_cmb:
+            # add temperature jump across cmb (discontinuity)
+            temperature[n - i] = temperature[n - i] + deltaT_cmb
+    return pressure, temperature  # Pa, K
+
+def pt_profile_dynamic(n, radius, density, gravity, alpha, cp, psurf, tsurf, i_cmb=None, deltaT_cmb=0):
     # input psurf in bar
-    # pressure and temperature are interpolated from surface downwards
+    # pressure and temperature are interpolated from surface downwards with possibly different array lengths
     pressure = np.zeros(n)
     temperature = np.zeros(n)
     pressure[-1] = psurf * 1e5  # surface pressure in Pa
@@ -477,7 +507,10 @@ def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf, i_cmb=None,
     return pressure, temperature  # Pa, K
 
 
-def core_planet_radii(CMF, Mp, rho_c, rho_m):
-    Rc = (3 * CMF * Mp / (4 * math.pi * rho_c)) ** (1 / 3)
+def core_planet_radii(CMF, Mp, rho_c, rho_m):  # from bulk i.e. average values
+    if CMF > 0:
+        Rc = (3 * CMF * Mp / (4 * math.pi * rho_c)) ** (1 / 3)
+    else:
+        Rc = 0
     Rp = (Rc ** 3 + 3 * (1 - CMF) * Mp / (4 * math.pi * rho_m)) ** (1 / 3)
     return Rc, Rp

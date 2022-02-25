@@ -1,6 +1,8 @@
 ###### PHYSICAL CONSTANTS ######
 M_E = 5.972e24  # earth mass in kg
 R_E = 6371e3  # earth radius in m
+rho_E = 5513.258738589093  # earth bulk density in kg/m3 using above
+TO = 1.335e21  # earth ocean mass in kg
 G = 6.67408e-11
 years2sec = 31557600
 sec2Gyr = 1e-9 / years2sec

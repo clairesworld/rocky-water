@@ -298,27 +298,30 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
             phase = col[2:]
             try:
                 df['sat_' + phase] = eval('sat_' + phase)  # (hypothetical) saturation water mass fraction at this T, p
-                # print('df', np.shape(df), 'eval:')
-                # print(eval('sat_corr_' + phase), np.shape(eval('sat_corr_' + phase)))
                 df['sat_corr_' + phase] = eval('sat_corr_' + phase)  # accounting for co-stability when partitioning
                 df['w_' + phase] = wmf_phase(phase, df['sat_corr_' + phase],
                                              df)  # actual water mass fraction given phase concentration
                 df['c_h2o'] = df['c_h2o'].add(
-                    df['w_' + phase], fill_value=0)  # total water mass fraction - note sum of phases should add to 1
+                    df['w_' + phase], fill_value=0)  # total water concentration, sum of phase concentrations adds to 1
             except NameError:
                 print('>>>MISSING PHASE IN SATURATION MODEL:', phase)
                 # set missing to v small for now
                 df['w_' + phase] = 1e-9
-        for col in filter_col:
+            except SyntaxError as e:
+                phase = phase.replace('.', '')
+                print('>>>MISSING PHASE IN SATURATION MODEL:', phase)
+                # set missing to v small for now
+                df['w_' + phase] = 1e-9
+        for col in filter_col:  # do this after once you've calculated total layer water mass
             phase = col[2:]
-            df['frac_h2o_' + phase] = df['w_' + phase] / df['c_h2o']
-        df['mass_h2o(kg)'] = df['c_h2o'] * df['mass(kg)']
+            df['frac_h2o_' + phase] = df['w_' + phase] / df['c_h2o']  # proportion of layer's water in this phase
+        df['mass_h2o(kg)'] = df['c_h2o'] * df['mass(kg)']  # convert to kg
 
         return df
 
 
 def total_water(df):
-    return np.sum(df['mass_h2o(kg)']) / np.sum(df['mass(kg)'])
+    return np.sum(df['mass_h2o(kg)']) / np.sum(df['mass(kg)'])  # denominator is mass of that layer
 
 
 def get_geotherm_file(file='geotherm_Tp1600.csv', path=python_path, res=100):

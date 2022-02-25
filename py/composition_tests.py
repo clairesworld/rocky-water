@@ -9,7 +9,7 @@ from matplotlib import rc
 from matplotlib.pyplot import rcParams
 import saturation as sat
 
-rc('text', usetex=True)  # turn off for running over ssh
+# rc('text', usetex=True)  # turn off for running over ssh
 # rcParams['font.family'] = 'serif'
 # rcParams['font.serif'] = 'CMU Serif'
 
@@ -21,33 +21,13 @@ solution_phases = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c', 'Opx', 
 all_phases = ['ol', 'opx', 'cpx', 'pl', 'gt', 'sp', 'neph', 'qtz', 'coes', 'hpcpx', 'st', 'cf', 'seif', 'wus', 'wad',
               'ring', 'capv', 'pv', 'ppv']
 
-# wt_oxides_Earth = {'SiO2': 44.48, 'MgO': 39.22, 'CaO': 3.44, 'Al2O3': 3.59, 'FeO': 8.10, 'Na2O': 0.36}
-def update_MgSi(MgSi=None, oxides=px.wt_oxides_Earth):
-    # vary Mg/Si, use original otherwise
-    # update m_MgO and m_SiO2, preserving total mass
-    m_tot = oxides['MgO'] + oxides['SiO2']  # total mass (%) of MgO and SiO2 - conserve this
-    n_MgO = oxides['MgO'] / M_MgO  # convert to moles
-    n_SiO2 = oxides['SiO2'] / M_SiO2
-    n_MgSi_old = n_MgO / n_SiO2  # n_Mg = n_MgO etc
-    if MgSi is None:
-        MgSi = n_MgSi_old  # no update
-
-    m_ratio_new = MgSi * (M_MgO / M_SiO2)  # m = nM, in % | new mass ratio
-    x = m_ratio_new
-    y = m_tot
-    m_MgO_new = x*y/(1 + x)
-    m_SiO2_new = m_tot - m_MgO_new
-    oxides['MgO'] = m_MgO_new
-    oxides['SiO2'] = m_SiO2_new
-    return oxides
-
 
 def plot_water_composition_profiles(name=None, fig_name=None, title=None, star=None,
                                     Tp=1600, M_p=M_E, CMF=0.33, wt_oxides=px.wt_oxides_Earth,
                                     labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
                                     cmap_phases='tab20', linec='xkcd:navy', linew=2, xlims=None,
                                     save=True, reorder=False,
-                                    show_saturation=True, vertical=False):
+                                    show_saturation=True, vertical=False, **kwargs):
     if name is None:
         name = 'Tp' + str(Tp)
     if fig_name is None:
@@ -57,16 +37,16 @@ def plot_water_composition_profiles(name=None, fig_name=None, title=None, star=N
 
     cmap_vals = matplotlib.cm.get_cmap(cmap_phases)
 
-    dat = px.build_planet(name=name, Tsurf=Tp, M_p=M_p, test_CMF=CMF, test_oxides=wt_oxides, star=star,
+    dat = px.build_planet(name=name, Tp=Tp, M_p=M_p, test_CMF=CMF, test_oxides=wt_oxides, star=star,
                           oxides=oxides, solution_phases=solution_phases, plot=False, store_all=True,
-                          get_saturation=True, overwrite=True)
+                          get_saturation=True, overwrite=True, **kwargs)
 
-    x = dat.df_all['P(bar)'].to_numpy()*1e-4  # GPa
-    w = dat.df_all['c_h2o'].to_numpy()*1e6  # ppm
+    x = dat.df_all['P(bar)'].to_numpy() * 1e-4  # GPa
+    w = dat.df_all['c_h2o'].to_numpy() * 1e6  # ppm
     df_frac = dat.df_all[[col for col in dat.df_all if col.startswith('frac_h2o_')]]
     df_X = dat.df_all[[col for col in dat.df_all if col.startswith('X_')]]
 
-    if reorder:   # so consistent between runs
+    if reorder:  # so consistent between runs
         phase_names_orig = [col[2:] for col in dat.df_all if col.startswith('X_')]
 
         cols_frac_all = []
@@ -120,7 +100,7 @@ def plot_water_composition_profiles(name=None, fig_name=None, title=None, star=N
         axes[0] = cornertext(axes[0], 'total = {0:3.1f} earth oceans'.format(m_w_tot), size=labelsize, c=linec)
 
         # plot modal water
-        axes[2].stackplot(x, df_frac.to_numpy().T*100, labels=phase_names,
+        axes[2].stackplot(x, df_frac.to_numpy().T * 100, labels=phase_names,
                           colors=colours)
         axes[2].set_ylabel('Water modality\nin NAMs', fontsize=labelsize, labelpad=ypad)
         axes[2].set_ylim(0, 100)
@@ -160,9 +140,10 @@ def plot_water_composition_profiles(name=None, fig_name=None, title=None, star=N
     return fig, axes
 
 
+# for animation
 # MgSi = np.linspace(0.5, 1.5, num=50)
 # for ii, rat in enumerate(MgSi):
-#     wt_oxides = update_MgSi(rat, px.wt_oxides_Earth)  # modify oxide list
+#     wt_oxides = px.update_MgSi(rat, px.wt_oxides_Earth)  # modify oxide list
 #     plot_water_composition_profiles(name='MgSi' + str(ii), fig_name=None,
 #                                         Tp=1600, M_p=M_E, CMF=0.33, wt_oxides=wt_oxides,
 #                                         labelsize=45, legsize=35, ticksize=30, xpad=30, ypad=30,
@@ -170,19 +151,21 @@ def plot_water_composition_profiles(name=None, fig_name=None, title=None, star=N
 #                                     # xlims=(0, 140),
 #                                         save=True, linec='w', linew=3, reorder=True)
 
-for ii, star in enumerate(['sun', "HIP 54035"]):
-    plot_water_composition_profiles(name=star.replace(" ", ""), star=star, fig_name=None,
-                                        Tp=1600, M_p=M_E, CMF=0.33, wt_oxides=None,
-                                        labelsize=45, legsize=35, ticksize=30, xpad=30, ypad=30,
-                                    cmap_phases='tab20', title=['Solar', 'HD 95735'][ii],
-                                    xlims=(0.01, 100),
-                                        save=True, linec='w', linew=3, reorder=True, show_saturation=False,
-                                    vertical=True)
+# for ii, star in enumerate(['sun', "HIP 54035"]):
+#     plot_water_composition_profiles(name=star.replace(" ", ""), star=star, fig_name=None,
+#                                         Tp=1600, M_p=M_E, CMF=0.33, wt_oxides=None,
+#                                         labelsize=45, legsize=35, ticksize=30, xpad=30, ypad=30,
+#                                     cmap_phases='tab20', title=['Solar', 'HD 95735'][ii],
+#                                     xlims=(0.01, 100),
+#                                         save=True, linec='w', linew=3, reorder=True, show_saturation=False,
+#                                     vertical=True)
 
-# plot_water_composition_profiles(name='Earth1600', fig_name=None,
-#                                     Tp=1600, M_p=M_E, CMF=0.33, wt_oxides=px.wt_oxides_Earth,
-#                                     labelsize=45, legsize=35, ticksize=30, xpad=30, ypad=30,
-#                                 cmap_phases='tab20', title='Earth',
-#                                 xlims=(0.01, 100),
-#                                     save=True, linec='w', linew=3, reorder=True, show_saturation=False,
-#                                 vertical=True)
+
+for ii, m in enumerate([0.1, 1, 5]):
+    plot_water_composition_profiles(name='mass' + str(ii), fig_name=None,
+                                    Tp=1600, M_p=m * M_E, CMF=0.33, wt_oxides=px.update_MgSi(1.27, px.wt_oxides_Earth),
+                                    labelsize=45, legsize=35, ticksize=30, xpad=30, ypad=30,
+                                    cmap_phases='tab20', title=str(m) + 'ME',
+                                    xlims=(0.01, 100),
+                                    save=True, linec='w', linew=3, reorder=True, show_saturation=False,
+                                    vertical=True)
