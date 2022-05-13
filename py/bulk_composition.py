@@ -5,7 +5,8 @@ def bulk_composition(oxide_list, nH_star, core_eff):
     """ nH_star is list of the absolute log(N_X/N_H) for the star, in same order
          would need to convert from wrt solar if necessary
          by convention base element (denomenator for oxide wt ratios) is first in list
-         core_efficiency is fraction of moles Fe that go into core instead of mantle FeO wrt total moles Fe """
+         core_efficiency is fraction of moles Fe that go into core instead of mantle FeO wrt total moles Fe
+         """
     # get molar masses
     try:
         M_oxides = [eval('p.M_' + ox) for ox in oxide_list]
@@ -27,6 +28,7 @@ def bulk_composition(oxide_list, nH_star, core_eff):
 
             if ox == 'FEO' or ox == 'FeO':
                 # some molar percentage of Fe goes to core instead of to mantle FeO
+                # poss confusing but this is the stage where core Fe is extracted from wt_oxides (which refers to mtl)
                 X_ratio_mol = X_ratio_mol * (1 - core_eff)
 
             # convert from mole ratio to mass ratio assuming all metals in oxides

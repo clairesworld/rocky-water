@@ -40,65 +40,45 @@ def BM3(V, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, q0, etaS0):
     return P
 
 
-def Holz(V, T, Z, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g, c0=None, c2=None, P0=None, V0_iso=None):
+def Holz(V, T, Z, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g):
     """ from Lena Noack """
-    if c0 is None and c2 is None:
-        PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # 1003.6e9 -> 0.10036e9 due to V0*1000^5/3=value*10^5
-        c0 = -np.log(3.0 * K0 / PFG0)
-        c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
-
-    if V0_iso is None:
-        zeta_iso = (V / V0) ** (1.0 / 3.0)  # zetax(p,T,errorCode) ! zeta=(V/V0)**(1./3.)
-        zeta = zeta_iso
-    else:
-        zeta_iso = (V / V0_iso) ** (1.0 / 3.0)
-        zeta = (V / V0) ** (1.0 / 3.0)
+    PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # 1003.6e9 -> 0.10036e9 due to V0*1000^5/3=value*10^5
+    c0 = -np.log(3.0 * K0 / PFG0)
+    c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
+    zeta = (V / V0) ** (1.0 / 3.0)  # zetax(p,T,errorCode) ! zeta=(V/V0)**(1./3.)
     zeta3 = zeta ** 3
-    zeta3_iso = zeta_iso ** 3
 
     theta = theta0 * zeta3 ** (-gammaInf) * np.exp((1 - zeta3 ** beta) * (gamma0 - gammaInf) / beta)
     gamma = (gamma0 - gammaInf) * zeta3 ** beta + gammaInf
 
-    if P0 is None:
-        E = gamma / V * (3 * R_b * (0.5 * theta + theta / (np.exp(theta / T) - 1)) - 3 * R_b * (
-            0.5 * theta + theta / (np.exp(theta / T0) - 1)))
-    else:
-        E = P0
+    E = gamma / V * (3 * R_b * (0.5 * theta + theta / (np.exp(theta / T) - 1)) - 3 * R_b * (
+                0.5 * theta + theta / (np.exp(theta / T0) - 1)))
 
-    P_iso = 3.0 * K0 * zeta_iso ** (-5) * (1 - zeta_iso) * np.exp(c0 * (1 - zeta_iso)) * (1 + c2 * (zeta_iso - zeta_iso ** 2)) + E
-    P = P_iso + 1.5 * R_b / V * m * a0 * zeta ** (3.0 * m) * T ** 2
+    P = 3.0 * K0 * zeta ** (-5) * (1 - zeta) * np.exp(c0 * (1 - zeta)) * (1 + c2 * (zeta - zeta ** 2)) + E
+    P = P + 1.5 * R_b / V * m * a0 * zeta ** (3.0 * m) * T ** 2
 
     return P
 
 
-# def Holz_highP(V, T, V0=4.28575, P0=234.4, K0=1145.7, c0=3.19, c2=2.40,
-#                m=1.891, a0=0.2121, theta0=44.574, gammaInf=0.827, gamma0=1.408, b=0.826, V0_B13=6.290):
-#     """
-#     fit to Holzapfel EoS for high pressures > 234 GPa, valid 0.234 to 10 TPa, from Hakim+ 2018 eq. (5--8)
-#     V0 in cm3/mol
-#     P0 in GPa
-#     K0 (KT0) in GPa, error +- 3.6
-#     c0 unitless, error +-0.08
-#     c2 unitless, error +-0.05
-#     theta0 in K
-#     a0 in 1/(10**3 K)
-#     """
-#     # P0 = P0 * 1e9
-#     # K0 = K0 * 1e9
-#     # a0 = a0 * 1e3
-#     # isothermal pressure
-#     x = V/V0
-#     P_iso = P0 + 3 * K0 * x ** (-5 / 3) * (1 - x ** (1 / 3)) * (1 + c2 * x ** (1 / 3) * (1 - x ** (1 / 3))) * \
-#             np.exp(c0 * (1 - x**(1/3)))
-#
-#     # thermal pressure
-#     x_corr = x * V0/V0_B13
-#     R = 83.1446261815324 * 1e5 * 1e-9  #  # cm3 GPa /K /mol
-#     gamma = gammaInf + (gamma0 - gammaInf)* x_corr**b  # Gruen
-#     theta = theta0 * x**-gammaInf * np.exp((gamma0 - gammaInf)/b * 1/(x_corr - b))
-#     P_harm = 3 * R * gamma / V * (theta/2 + theta / (np.exp(theta / T) - 1))
-#     P_ae = 3 * R / (2 * V) * m * a0 * x_corr ** m * T ** 2  # anharmonic-electronic thermal pressure
-#     return P_iso + P_ae + P_harm  # GPa
+def Holz_fail(V, T, Z, T0, V0, M, KT0, KP0, theta0, gamma0, gammaInf, beta, a0, m, g, c0=None, c2=None, P0=0, V0_Bou=None):
+    if c0 is None and c2 is None:
+        PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # 1003.6e9 -> 0.10036e9 due to V0*1000^5/3=value*10^5
+        c0 = -np.log(3.0 * KT0 / PFG0)
+        c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
+
+    x = V / V0
+    x_corr = x * V0 / V0_Bou  # thermal part corrected to match Bouchet V0
+
+    theta = theta0 * x ** (-gammaInf) * np.exp((1 - x_corr ** beta) * (gamma0 - gammaInf) / beta)
+    gamma = (gamma0 - gammaInf) * x_corr ** beta + gammaInf
+
+    P_iso = P0 + 3.0 * KT0 * x ** (-5/3) * (1 - x ** (1/3)) * np.exp(c0 * (1 - x ** (1/3))) * (1 + c2 * x ** (1/3) * (1 - x ** (1/3)))
+    P_harm = 3 * R_b * gamma / V * (theta / 2 + theta / (np.exp(theta / T) - 1))
+    P_ae = 3 * R_b / (2 * V) * m * a0 * x_corr ** m * T ** 2
+    P = P_iso + P_harm + P_ae
+
+    return P
+
 
 
 def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS, **kwargs):
@@ -130,12 +110,10 @@ def get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, et
 
         if EOS == 3:
             P_i = BM3(V_i, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, q0, etaS0)
-        elif EOS == 4:
-            P_i = Holz_highP(V_i, T, V0=V0, theta0=theta0, gamma0=gamma0, **kwargs)
         elif EOS == 2:
             P_i = BM3(V_i, T, n, T0, V0, M, K0, 4.0, G0, GP0, theta0, gamma0, q0, etaS0)
         else:
-            P_i = Holz(V_i, T, n, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, q0, a0, m, g)
+            P_i = Holz(V_i, T, n, T0, V0, M, K0, KP0, theta0, gamma0, gammaInf, q0, a0, m, g, **kwargs)
 
     V = V_i
     return V
@@ -155,7 +133,6 @@ def EOS_all(P, T, material):
     # EOS = 1: Holzapfel EOS
     # EOS = 2: Second-order Birch-Murnaghan EOS
     # EOS = 3: Third-order Birch-Murnaghan EOS
-    # EOS = 4: Holzapfel for high pressure hcp-Fe
 
     # set EOS parameters
     V = 0
@@ -371,48 +348,62 @@ def EOS_all(P, T, material):
         rho = (mf_pv / Ppv_rho + mf_pe / Pe_rho) ** (-1)
         Cp = mf_pv * Ppv_Cp + mf_pe * Pe_Cp
         alpha = mf_pv * Ppv_alpha * rho / Ppv_rho + mf_pe * Pe_alpha * rho / Pe_rho
-    else:
+    elif material == 4:  # hcp-iron
+        # n = 26  # Z in EOS
+        # T0 = 300.0
+        # q0 = 0.826  # beta in EOS
+        # a0 = 0.0002121
+        # M = 55.845e6  # molar mass
+        # m = 1.891
+        # g = 1.339
+        # G0 = 0
+        # GP0 = 0
+        # etaS0 = 0
+        # gamma0 = 1.408
+        # gammaInf = 0.827
+        # theta0 = 44.574
+        # V0_Bou = 6290.0
+        # V0 = 4285.75
+
+        # V0 = 6290.0
+        # KP0 = 4.719
+        # K0 = 253.844
+
+        # P0 = 234.4
+        # c0 = 3.19
+        # c2 = 2.40
+        # KT0 = 1145.7
+
+        if P > 10e3:
+            raise Exception('EXTRAPOLATION ERROR: Hakim+ Holzapfel EoS for Fe')
+        # V = get_V(P, T, n, T0, V0, M, KT0, None, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS,
+        #           P0=P0, c0=c0, c2=c2, V0_Bou=V0_Bou)
+
         n = 26  # Z in EOS
         T0 = 300.0
+        V0 = 6290.0  # 6.290 cm3/mol
         M = 55.845e6
+        K0 = 253.844
+        KP0 = 4.719
+        theta0 = 44.574
+        gamma0 = 1.408
+        gammaInf = 0.827
         q0 = 0.826  # beta in EOS
         a0 = 0.0002121
-        M = 55.845e6  # molar mass
         m = 1.891
         g = 1.339
         G0 = 0
         GP0 = 0
         etaS0 = 0
-        gamma0 = 1.408
-        gammaInf = 0.827
-        theta0 = 44.574
-        V0 = 6290.0
-        KP0 = 4.719
         EOS = 1  # Holzapfel EOS
-        if P < 234.4:
-            c0, c2 = None, None
-            K0 = 253.844
-            V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS)
-        elif P < 10e3:
-            # print('                usking Hakim+ EOS')
-            V0_iso = 4.28575 * 1e3
-            P0 = 234.4
-            K0 = 1145.7
-            c0 = 3.19
-            c2 = 2.40
-            # b = 0.826  # actually the same parameter as q0
-            EOS = 1  # Holzapfel EOS
-            V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS,
-                      P0=P0, c0=c0, c2=c2, V0_iso=V0_iso)
-        else:
-            print('P', P, 'GPa - extrapolation warning')
-            warnings.warn("WARNING.........extrapolating hcp-Fe EoS to > 10 TPa")
+        V = get_V(P, T, n, T0, V0, M, K0, KP0, G0, GP0, theta0, gamma0, gammaInf, q0, etaS0, a0, m, g, EOS)
+
         Z = n
         beta = q0
-        if c0 is None:  # these are already given by Hakim+ 2018
-            PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # e9 or e5?
-            c0 = -math.log(3.0 * K0 / PFG0)
-            c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
+
+        PFG0 = 0.10036e9 * (Z / V0) ** (5.0 / 3.0)  # e9 or e5?
+        c0 = -math.log(3.0 * K0 / PFG0)
+        c2 = 3.0 / 2.0 * (KP0 - 3.0) - c0
         zeta = (V / V0) ** (1.0 / 3.0)  # zetax(p,T,errorCode) ! zeta=(V/V0)**(1./3.)
         zeta3 = zeta ** 3  # V/V0
         rho = M / V
@@ -435,9 +426,6 @@ def EOS_all(P, T, material):
         Cv = Cv + 3.0 * R_b * m * a0 * zeta3 ** m * T
         alpha = gamma * Cv / (KT * V)
         Cp = Cv * (1.0 + alpha * gamma * T) / (M * 1.0e-9)  # from J/mol K to J/kg K: division by mol mass
-        # if Cp == 0:
-        #     print('Cv', Cv, 'gamma', gamma, 'zeta3', zeta3, 'zeta', zeta, 'V', V)
-        #     raise ZeroDivisionError
 
     return [V, rho, alpha, Cp]
 
@@ -514,3 +502,55 @@ def core_planet_radii(CMF, Mp, rho_c, rho_m):  # from bulk i.e. average values
         Rc = 0
     Rp = (Rc ** 3 + 3 * (1 - CMF) * Mp / (4 * math.pi * rho_m)) ** (1 / 3)
     return Rc, Rp
+
+
+def EOS_lm(P, T, phases, proportions):
+    """ P in GPa, T in K call burnman stuff to use their built in eos for lower mantle
+    # proportions in wt % (same as perple_x compositional output """
+    import burnman_eos
+    alphas = []
+    cps = []
+    rhos = []
+    for (wt, phase) in zip(proportions, phases):
+        [V, rho, alpha, Cp] = burnman_eos.get_properties(P*1e9, T, phase)
+        rhos.append(rho)
+        alphas.append(alpha)  # need total density first
+        cps.append(Cp)
+
+    inv_rho_tot = 0
+    cp_tot = 0
+    alpha_tot = 0
+    for (wt, r, c) in zip(proportions, rhos, cps):
+        inv_rho_tot += wt * 1e-2 / r
+        cp_tot += wt * 1e-2 * c
+
+    rho_tot = inv_rho_tot**-1
+
+    for (wt, r, a) in zip(proportions, rhos, alphas):
+        alpha_tot += wt * 1e-2 * a * rho_tot / r
+
+    return None, rho_tot, alpha_tot, cp_tot
+
+
+# import matplotlib.pyplot as plt
+# P = np.linspace(0.1, 300)
+# T = 300*np.ones_like(P)
+# V, rho, alpha, cp = [], [], [], []
+# for pp, TT in zip(P, T):
+#     V1, rho1, alpha1, cp1 = EOS_all(pp, TT, material=4)
+#     rho.append(rho1)
+#     alpha.append(alpha1)
+#     cp.append(cp1)
+#     V.append(V1)
+# # _, rho, alpha, cp = EOS_lm(P, T, ['ppv', 'per'], [80, 20])
+# fig, axes = plt.subplots(1, 4)
+# axes[0].plot(P, rho)
+# axes[1].plot(P, alpha)
+# axes[2].plot(P, cp)
+# axes[3].plot(V, P)
+# axes[0].axvline(234)
+# axes[0].set_ylabel('density')
+# axes[1].set_ylabel('alpha')
+# axes[2].set_ylabel('cp')
+# plt.show()
+#

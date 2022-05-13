@@ -1,6 +1,6 @@
 """ test variations with temperature profile"""
 import numpy as np
-import perple_x as px
+import perplexdata as px
 import matplotlib.pyplot as plt
 from useful_and_bespoke import colorize, dark_background, cornertext
 from parameters import M_E, M_SiO2, M_MgO, TO

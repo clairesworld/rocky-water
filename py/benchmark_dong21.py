@@ -1,7 +1,7 @@
 """ make plots like Dong+ 2021 for benchmarking """
 
 import numpy as np
-import perple_x as px
+import perplexdata as px
 import matplotlib.pyplot as plt
 from useful_and_bespoke import colorize
 from parameters import M_E
@@ -25,14 +25,14 @@ def figure_3(num=9, save=True):
 
     fig, axes = plt.subplots(1, 2)
     for ii, dat in enumerate(dat_list):
-        fig, axes[0] = dat.plot_profile('T(K)', yvar='p', xlabel='Temperature (K)', xscale=1,
-                                        lw=2, c=c[ii], logx=False, reverse_y=True, labelsize=labelsize,
-                                        label='Tp = ' + str(Ts_vec[ii]) + ' K',
-                                        y2var=None, y2label=None, y2scale=None, save=False, fig=fig, ax=axes[0])
-        fig, axes[1] = dat.plot_profile('c_h2o', yvar='p', xlabel='H$_2$O storage capacity (wt ppm)', xscale=1e6,
-                                        lw=2, c=c[ii], logx=True, reverse_y=True, labelsize=labelsize,
-                                        label='Tp = ' + str(Ts_vec[ii]) + ' K',
-                                        y2var=None, y2label=None, y2scale=None, save=False, fig=fig, ax=axes[1])
+        fig, axes[0] = dat.profile('T(K)', yvar='p', xlabel='Temperature (K)', xscale=1,
+                                   lw=2, c=c[ii], logx=False, reverse_y=True, labelsize=labelsize,
+                                   label='Tp = ' + str(Ts_vec[ii]) + ' K',
+                                   y2var=None, y2label=None, y2scale=None, save=False, fig=fig, ax=axes[0])
+        fig, axes[1] = dat.profile('c_h2o', yvar='p', xlabel='H$_2$O storage capacity (wt ppm)', xscale=1e6,
+                                   lw=2, c=c[ii], logx=True, reverse_y=True, labelsize=labelsize,
+                                   label='Tp = ' + str(Ts_vec[ii]) + ' K',
+                                   y2var=None, y2label=None, y2scale=None, save=False, fig=fig, ax=axes[1])
     axes[0].legend()
     plt.tight_layout()
     if save:

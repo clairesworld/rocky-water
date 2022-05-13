@@ -1,5 +1,5 @@
 import numpy as np
-import perple_x as run
+import perplexdata as run
 import parameters as p
 import eos
 import fugacity as fug

@@ -78,8 +78,9 @@ def PSfugacity(pressure, temperature):  # Pa, Kelvins
                        + pressure * 1e5 / (den * R * temperature)
                        + math.log(R * temperature) - 1)
     except (OverflowError, ValueError):
+        # print('PS: undefined fugacity at', pressure * 1e5 * 1e-9, 'GPa')
         return np.inf
-    return fug # Pa
+    return fug  # Pa
 
 
 """ MODIFIED REDLICH-KWONG EOS from Frost & Wood 1997 """
@@ -242,6 +243,7 @@ def fugacity_frost(p, T,
     RTlnf = R * T * np.log(p) + b * p + a / (b * np.sqrt(T)) * (
             np.log(R * T + b * p) - np.log(R * T + 2 * b * p)) + 2 / 3 * c * p * np.sqrt(p) + d / 2 * p ** 2
     f = np.exp(RTlnf / (R * T))
-    # print('V', V, 'cm3/mol')
-    # print('f_h2o', f, 'bar')
+    # if np.isnan(f) or np.isinf(f):
+    #     print('FW: undefined fugacity at', p*1e5*1e-9, 'GPa')
     return f*1e5  # Pa
+

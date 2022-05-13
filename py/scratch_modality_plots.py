@@ -1,6 +1,6 @@
 """ test variations with stellar composition"""
 import numpy as np
-import perple_x as px
+import perplexdata as px
 import matplotlib.pyplot as plt
 from useful_and_bespoke import colorize, dark_background, cornertext
 from parameters import M_E, M_SiO2, M_MgO
@@ -96,7 +96,7 @@ def plot_water_composition_profiles(name=None, fig_name=None, title=None, star=N
         axes[0].set_ylabel('Storage capacity\n(ppm)', fontsize=labelsize, labelpad=ypad)
         axes[0].set_ylim(1e0, 1e5)
         axes[0].set_yticks([1e1, 1e3, 1e5])
-        m_w_tot = sat.total_water(dat.df_all) * dat.M_p / sat.TO
+        m_w_tot = sat.total_water_frac(dat.df_all) * dat.M_p / sat.TO
         axes[0] = cornertext(axes[0], 'total = {0:3.1f} earth oceans'.format(m_w_tot), size=labelsize, c=linec)
 
         # plot modal water
