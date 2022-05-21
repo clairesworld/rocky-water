@@ -110,6 +110,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         dat = dat_loaded
     else:
         # run --> this is the time-consuming part
+        # print('kwargs build_planet', kwargs)
         okay = dat.get_interior(**kwargs)
 
     if not okay:
@@ -141,7 +142,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
 
     # calculate saturation water content profile per mineral phase
     if get_saturation:
-        df_all = sat.mineral_water_contents(df_all['P(bar)'].to_numpy()*1e5, df_all['T(K)'].to_numpy(), df=df_all)
+        df_all = sat.mineral_water_contents(df_all['P(bar)'].to_numpy() * 1e5, df_all['T(K)'].to_numpy(), df=df_all)
         dat.c_h2o_mantle = sat.total_water_frac(df_all)  # weight fraction wrt mantle
         dat.mass_h2o_total = sat.total_water_mass(df_all)  # total in kg
         print('\n\ntotal water in mantle:', dat.c_h2o_mantle * 1e2, 'wt% = ', dat.mass_h2o_total / sat.TO, 'OM')
@@ -194,9 +195,15 @@ def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
     return dat_list
 
 
-def read_dir(output_path, subsample=None, verbose=True):
+def read_dir(output_path, subsample=None, verbose=False, include_names=None):
     """ read all """
-    subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
+    try:
+        subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
+    except FileNotFoundError:
+        # directory doesn't exist
+        if verbose:
+            print('warning:', output_path, 'does not exist')
+        return []
     if subsample is not None:
         # a random subset of the directory
         subfolders = random.sample(subfolders, subsample)
@@ -215,6 +222,16 @@ def read_dir(output_path, subsample=None, verbose=True):
     return dats
 
 
+def read_name(output_path, name=None, star=None, M_p=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None):
+    """ find single folder in output path with name """
+    if name is None:
+        name = get_name(M_p=M_p, star=star, core_efficiency=core_efficiency, Tp=Tp, test_CMF=test_CMF,
+                         test_oxides=test_oxides, suffix=suffix)
+    with open(output_path + name + '/dat.pkl', "rb") as pfile:
+        dat = pkl.load(pfile)
+    return dat
+
+
 def update_dir(output_path, func, store=False, **func_args):
     """ if you need to redo some analysis or add something """
     dats = read_dir(output_path)
@@ -229,21 +246,26 @@ def update_dir(output_path, func, store=False, **func_args):
     return new_dats
 
 
-def planets_from_hypatia(n_sample=-1, M_p=1, names_file='host_names.txt', plot_all=False, restart=None, **kwargs):
+def planets_from_hypatia(n_sample=-1, M_p=1, names_file='host_names.txt', plot_all=False, restart=None,
+                         stopafter=None, **kwargs):
     """ restart is string name of last star that worked"""
+
     sample_names = hyp.random_star(n_sample, names_file=names_file)
     planets = []
 
     if restart is not None and n_sample == -1:
-        # must be looping all stars for this to work, otherwise can't work as will be random names
+        # must be looping all stars for this to work, otfherwise can't work as will be random names
         ii_start = sample_names.index(restart)
     else:
         ii_start = 0
-    for ii, star in enumerate(sample_names[ii_start:]):
-        print(ii + 1, '/', len(sample_names))
-        pl = build_planet(star=star, M_p=M_p * M_E, plot_all=plot_all, **kwargs
-                          )
+    if stopafter is not None and n_sample == -1:
+        ii_last = sample_names.index(stopafter)
+        subsample_names = sample_names[ii_start:ii_last + 1]
+    else:
+        subsample_names = sample_names[ii_start:]
+    for ii, star in enumerate(subsample_names):
+        print(ii + 1, '/', len(subsample_names))
+        # print('kwargs planets_From_hypatia', kwargs)
+        pl = build_planet(star=star, M_p=M_p * M_E, plot_all=plot_all, **kwargs)
         planets.append(pl)
     return planets
-
-

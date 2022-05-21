@@ -225,13 +225,18 @@ def check_partitioning(phase_i, phase_j, sat_j, D_ji, df=None, na_val=1e-6, **kw
             sat_i[:] = sat_j[idx_j_last]/ D_ji[idx_j_last]  # should be constant
         elif idx is None and phase_j == 'ol':
             # in rare cases can get a tiny olivine shell but doesn't overlap with cpx, gt etc.
-            print('no overlap of', phase_j, 'and', phase_i, 'in Perple_X composition. Using fictive value for', phase_j, 'to partition with', phase_i)
+            print('No overlap of', phase_j, 'and', phase_i, 'in Perple_X composition. Using fictive value for', phase_j, 'to partition with', phase_i)
             idx_ol_last = np.argmax(df['P(bar)'] > 14.5e4)  # don't extrapolate olivine beyond Dong+ fit range
             sat_i[:idx_ol_last] = sat_j[:idx_ol_last] / D_ji[:idx_ol_last]
             sat_i[idx_ol_last:] = sat_i[idx_ol_last - 1]  # extend constant value
         elif idx is None and phase_i == 'aki':
             # rogue aki deep layer
             idx_j_last = df['X_' + phase_j].to_numpy().nonzero()[0][-1]  # deepest ring layer
+            sat_i[:] = sat_j[idx_j_last]/ D_ji[idx_j_last]  # should be constant
+        elif idx is None and phase_i == 'ppv':
+            # pv-ppv transition is abrupt
+            idx_j_last = df['X_' + phase_j].to_numpy().nonzero()[0][-1]  # deepest pv layer
+            idx_i_first = df['X_' + phase_i].to_numpy().nonzero()[0][0]  # shallowest ppv layer
             sat_i[:] = sat_j[idx_j_last]/ D_ji[idx_j_last]  # should be constant
         else:
             print(phase_i, phase_j, 'idx', idx)
@@ -372,7 +377,7 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     # Litasov & Ohtani: approx 5 wt% at 1900 K, 25 GPa
     # Chen+2020: synthesised 19-120 GPa and 1400-2200 K - get approx 0.5-1 wt% - FTIR measurements and can't rule out contamination - propse Ca defect mechanism?
     # uncertainty because dry cubic capv structure (500 K to mantle temps) not seen in these exps, instead colder tetragonal structure still stable in presence of H2O, might fuck up thermodynamic eq.
-    sat_capv = 0.5e-2  # low estimate from Chen+2020, 10e-6 assumed in Dong+ 2021
+    sat_capv = 0.5e-2  # low estimate from Chen+2020, 10e-6 assumed in Dong+ 2021 - probably want to test this
     sat_corr_capv = sat_capv
 
     # ferropericlase i.e. magnesiowustite iron endmember
@@ -480,9 +485,14 @@ def total_water_frac(df, i_min=0, i_max=-1):
     return np.sum(subset['mass_h2o(kg)']) / np.sum(subset['mass(kg)'])  # denominator is mass of that layer
 
 
-def total_water_mass(df, i_min=0, i_max=-1):
+def total_water_mass(df, i_min=0, i_max=None):
     """ returns mass of water in kg """
-    subset = df.iloc[i_min:i_max]  # select a chunk of rows if asked
+    # print('total_water_mass(), i_min', i_min, 'i_max', i_max)
+    if i_max is None:
+        subset = df.iloc[i_min:]  # select a chunk of rows if asked
+    else:
+        subset = df.iloc[i_min:i_max]  # select a chunk of rows if asked
+    # print(subset)
     return np.sum(subset['mass_h2o(kg)'])
 
 

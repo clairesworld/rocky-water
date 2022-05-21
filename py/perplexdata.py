@@ -4,10 +4,8 @@ import pandas as pd
 from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, G, R_E, rho_E
 import os
 import subprocess
-import saturation as sat
 from bulk_composition import bulk_composition
 import ask_hypatia as hyp
-import time
 
 perplex_path_default = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
 output_parent_default = perplex_path_default + 'output/'
@@ -43,7 +41,7 @@ class PerplexData:
 
         # ensure output_parent_default is a valid directory, create directory if it doesn't exist yet
         # if not os.path.isdir(self.output_path):
-        #     raise Exception(self.output_path, 'is not a valid directory with intput parameter output_parent_path',
+        #     raise Exception(self.output_path, 'is not a valid directory with input parameter output_parent_path',
         #                     output_parent_path)
         if not os.path.exists(self.output_path):
             # create directory if it doesn't exist yet
@@ -122,7 +120,7 @@ class PerplexData:
         # print('original phases list:', df.columns.values.tolist())
 
         # find repeating (e.g. Ppv in some cases)
-        dup_cols = [col for col in df.columns.values.tolist() if col.endswith('.1')]
+        dup_cols = [col for col in df.columns.values.tolist() if '.' in col]  # dot put there from pandas reading duplicate behaviour
         for col in dup_cols:
             print('dealing with duplicate', col)
             dup_sum = df[col] + df[col[:-2]]
@@ -244,7 +242,11 @@ class PerplexData:
             raise Exception(
                 'ERROR: cmf is undefined for a given molar core efficiency if no FeO in bulk mantle. try fixing input cmf instead.')
 
-        x_Fe_cm = -x_Fe_mm * self.core_eff / (self.core_eff - 1)  # mass fraction Fe in core wrt total mantle mass
+        if self.core_eff == 1:
+            # TODO
+            x_Fe_cm = 1 - x_Fe_mm  # mass fraction Fe in core wrt total mantle mass
+        else:
+            x_Fe_cm = -x_Fe_mm * self.core_eff / (self.core_eff - 1)  # mass fraction Fe in core wrt total mantle mass
         mantle_mass_fraction = 100 / (100 + x_Fe_cm)
 
         # scale by mass_mtl/M_p --> should be smaller than x_Fe_cm
@@ -258,8 +260,17 @@ class PerplexData:
         print('\ncore mass fraction = {:5.3f}\n'.format(self.CMF))
         return self.CMF
 
+    def core_eff_from_cmf(self):
+        M_c = self.CMF * self.M_p  # core mass in kg
+        M_m = self.M_p - M_c  # mantle mass in kg
+        n_Fe_mtl = self.wt_oxides['FeO'] / 100 * M_m / M_FeO  # n_Fe = n_FeO
+        n_Fe_core = M_c / M_Fe  # pure Fe core
+        self.core_eff = n_Fe_core / (n_Fe_core + n_Fe_mtl)
+        return self.core_eff
+
     def get_hypatia(self, **kwargs):
-        self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, star_name=self.star, **kwargs)
+        # print('kwargs get_hypatia', kwargs)
+        self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, **kwargs)
 
     def get_mgsi(self, **kwargs):
         if self.nH_star:
@@ -409,6 +420,7 @@ class PerplexData:
 
     def run_perplex(self, werami_command_end='_werami_command.txt', build_file_end='', suppress_output=True, clean=True,
                     verbose=True, werami_command_text_fn=None, output_file_end='.tab', **kwargs):
+        cwd = os.getcwd()
         os.chdir(self.perplex_path)
         if suppress_output:
             stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
@@ -455,6 +467,7 @@ class PerplexData:
                     os.remove(self.perplex_path + self.name + build_file_end + fend)
             os.remove(werami_command_file)
             os.remove(vertex_command_file)
+        os.chdir(cwd)  # return to original dir
 
     def get_adiabat(self, **kwargs):
         self.run_perplex(werami_command_end='_werami_command_thermo.txt',
@@ -578,10 +591,10 @@ class PerplexData:
         if n == 'auto':
             if M / M_E <= 1:
                 n = 300  # n = 200 saves about 7 sec per run, misses a little Aki phase
-            elif M / M_E <= 4:
+            elif M / M_E <= 3:
                 n = 500
             elif M / M_E <= 5:
-                n = 800
+                n = 1600
         if profile == 'warm':
             Tp = self.melting_temperature(p_GPa=Psurf * 1e5 * 1e-9)  # Noack "warm" case
 
@@ -815,7 +828,7 @@ class PerplexData:
         # print('final length of mantle', np.shape(T_mantle), np.shape(p_mantle_bar))
 
     def find_lower_mantle(self):
-        """ return the index denoting the top of the lower mantle
+        """ return the index denoting the top of the lower mantle where 0 is the surface
          although not all planets have MTZ minerals or olivine polymorphs, can generalise to where perovskite kicks in,
          even if most of the upper mantle is just SiO2. index will change slightly depending on resolution, but deciding
          to take the first layer because e.g. not all planets have over 50% perovskite in lower mantle. Pv reaches max
@@ -823,8 +836,8 @@ class PerplexData:
         try:
             i_lm = self.df_comp['Pv'].ne(0).idxmax()
         except KeyError:
-            print('no Pv phase found! (planet too small?)')
-            return self.i_cmb  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
+            print('      no Pv phase found! (planet too small?)')
+            return len(self.df_comp)  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
         return i_lm
 
     def get_interior(self, test_CMF=None, test_oxides=None, oxides=None,
@@ -835,6 +848,7 @@ class PerplexData:
         if oxides is None:
             oxides = oxide_list_default
         if test_oxides is None:
+            # print('kwargs get_interior', kwargs)
             self.get_hypatia(**kwargs)
             if self.nH_star is None:
                 return None  # e.g. missing element in hypatia catalogue
@@ -896,3 +910,28 @@ class PerplexData:
     #
     #     self.T_melt = T_melt
     #     return T_melt
+
+
+def read_from_input(star_name, which='oxide_list', output_path=output_parent_default, oxide_list=None, **kwargs):
+    # this isn't tested! trying to read information from perple_x input file
+    oldpath = hyp.get_directory(star_name, output_path=output_path)
+    name = os.path.dirname(oldpath)
+    oldfile = os.path.join(oldpath, name + '.dat')
+    input = []
+    with open(oldfile, 'r') as f:
+        go = False
+        for line in f:
+            if which == 'oxide_list':
+                if go:
+                    s = line.split()
+                    for ox in oxide_list.upper():
+                        if s[0] == (ox):
+                            input.append(s[2])
+                if line == 'begin thermodynamic component list':
+                    go = True
+                if line == 'end thermodynamic component list':
+                    go = False
+            else:
+                raise NotImplementedError('read_from_input(): only oxide list implemented')
+
+    return input

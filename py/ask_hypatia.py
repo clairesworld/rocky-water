@@ -1,7 +1,9 @@
 import numpy as np
 import requests
-from astropy.io import ascii
+# from astropy.io import ascii
 import random
+import pickle as pkl
+import os
 
 key = '136611fd615f8a90aafb1da408f0e5b3'
 
@@ -45,6 +47,7 @@ def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', e
 
 def random_star(n=1, names_file='host_names.txt', **kwargs):
     # get a random star from database - N.B. there are 1331 entries for exo hosts
+    print(os.getcwd())
     if names_file is not None:
         with open(names_file, 'r') as filehandle:
             names = [a.rstrip() for a in filehandle.readlines()]
@@ -61,7 +64,7 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
     return sample_names
 
 
-def star_composition(oxide_list=None, star_name='sun', API_KEY=key, verbose=False,
+def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, use_local_composition=False,
                 ca_sol=6.33 - 12, al_sol=6.47 - 12, fe_sol=7.45 - 12, si_sol=7.52 - 12, mg_sol=7.54 - 12,
                 na_sol=6.30 - 12, **kwargs):
     """ star id is same as hypatia catalog with spaces e.g. "HIP 12345" """
@@ -70,28 +73,56 @@ def star_composition(oxide_list=None, star_name='sun', API_KEY=key, verbose=Fals
     for ox in oxide_list:
         els.append(ox[:2].lower())
 
-    if star_name != 'sun':  # not needed for solar values
-        params = {"name": [star_name] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
-        entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
-                             params=params)
+    def do_local():
+        try:
+            path = get_directory(star)
+            with open(path + '/dat.pkl', "rb") as pfile:
+                dat = pkl.load(pfile)
+            nH_star = dat.nH_star
+        except FileNotFoundError:
+            return None
+        return nH_star
 
-        if np.size(entry.json()) == 0:
-            raise Exception('No entry found in Hypatia Catalog:', star_name)
-        # print('loaded json', entry.json())
-    nH_star = []
-    for ii, el in enumerate(els):
-        # absolute not working for some reason so get difference from solar via lodders norm
-        if star_name == 'sun':
-            nH = 0
-        else:
+    if star != 'sun':  # not needed for solar values
+        params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
+        if not use_local_composition:
             try:
-                nH = entry.json()[ii]['mean']
-                if verbose:
-                    print('retrieving from hypatia...', entry.json()[ii]['element'], 'mean =', entry.json()[ii]['mean'])
-                sol_val = eval(el + '_sol')
-                nH_star.append(nH + sol_val)
-            except TypeError:
-                print(star_name, 'does not have measured', el, 'and should be removed from stellar sample')
-                return None
+                entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
+                                 params=params)
 
+                if np.size(entry.json()) == 0:
+                    raise Exception('No entry found in Hypatia Catalog:', star)
+                # print('loaded json', entry.json())
+                nH_star = []
+                for ii, el in enumerate(els):
+                    # absolute not working for some reason so get difference from solar via lodders norm
+                    if star == 'sun':
+                        nH = 0
+                    else:
+                        try:
+                            nH = entry.json()[ii]['mean']
+                            if verbose:
+                                print('retrieving from hypatia...', entry.json()[ii]['element'], 'mean =', entry.json()[ii]['mean'])
+                            sol_val = eval(el + '_sol')
+                            nH_star.append(nH + sol_val)
+                        except TypeError:
+                            print(star, 'does not have measured', el, 'and should be removed from stellar sample')
+                            return None
+            except (ConnectionError, requests.exceptions.ConnectionError) as e:
+                # try loading from file
+                nH_star = do_local()
+        else:
+            nH_star = do_local()
     return nH_star  # will always be in same order as oxides list
+
+
+def get_directory(star_name, existing_dir='hypatia1M_1600K_80Fe/'):
+    from perplexdata import output_parent_default
+    """retrieve directory of existing run for a given star
+    note this requires default use of paths as given in perplexdata.py"""
+    import glob
+    sn = star_name.replace(' ', '')
+    # print('searching for', output_parent_default + existing_dir + '*' + sn + '*')
+    path = glob.glob(output_parent_default + existing_dir + '*' + sn + '*')
+    # print('path', path)
+    return path[0]  # should only be one but glob.glob returns list
