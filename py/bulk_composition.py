@@ -47,3 +47,14 @@ def bulk_composition(oxide_list, nH_star, core_eff):
     # put in dict
     wt_oxides_dict = {k: v for k, v in zip(oxide_list, wt_oxides)}
     return wt_oxides_dict
+
+
+# from parameters import ca_sol, fe_sol, al_sol, mg_sol, si_sol, na_sol
+# oxide_list_default = oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']  # 'NaO
+# solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol, 'na_sol': na_sol}
+# nH_sun = [solar[ox[:2].lower() + '_sol'] for ox in oxide_list_default]
+#
+# FeH_range = (-0.5 + fe_sol, 0.5 + fe_sol)
+# for f in FeH_range:
+#     nH_sun[-1] = f
+#     print(bulk_composition(oxide_list_default, nH_sun, 0.88))

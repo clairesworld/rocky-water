@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, G, R_E, rho_E
+from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
 import subprocess
 from bulk_composition import bulk_composition
@@ -12,8 +12,9 @@ output_parent_default = perplex_path_default + 'output/'
 
 # set defaults and benchmarks
 wt_oxides_Mars = {'SiO2': 42.71, 'MgO': 31.5, 'CaO': 2.49, 'Al2O3': 2.31,
-                  'FeO': 18.71}  # nominal Perple_x SNC meteorite composition, like example 24 b
+                  'FeO': 18.71}  # nominal Perple_x SNC meteorite composition, but outdated - FeO is ~14% (Khan+2022)
 wt_oxides_Earth = {'SiO2': 44.48, 'MgO': 39.22, 'CaO': 3.44, 'Al2O3': 3.59, 'FeO': 8.10}  # weight percent, 'Na2O': 0.36
+wt_oxides_MD95 = {'SiO2': 45.0, 'MgO': 37.8, 'CaO': 3.55, 'Al2O3': 4.45, 'FeO': 8.05}  # McDonough & Sun 1995 BSE
 wt_oxides_pyrolite = {'SiO2': 38.71, 'MgO': 49.85, 'FeO': 6.17, 'CaO': 2.94, 'Al2O3': 2.22}  # 'Na2O': 0.11
 
 oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']  # 'NaO
@@ -51,6 +52,7 @@ class PerplexData:
         self.nH_star = None
         self.wt_oxides = None
         self.mgsi = None
+        self.mg_number = None
         self.R_p = R_p
         self.R_c = None
         self.CMF = None
@@ -71,6 +73,10 @@ class PerplexData:
         self.Fe_mass_fraction = None
         self.phase_mass = None
         self.mass_um = None
+        self.mass_h2o_total = None
+        self.mass_h2o_um = None
+        self.mass_h2o_obm = None
+        self.c_h2o_mantle = None
 
         # if verbose:
         #     print('----------------------\ninitialising PerplexData object with M_p = {:.4e}%'.format(M_p), 'kg,',
@@ -268,25 +274,39 @@ class PerplexData:
         self.core_eff = n_Fe_core / (n_Fe_core + n_Fe_mtl)
         return self.core_eff
 
-    def get_hypatia(self, **kwargs):
-        # print('kwargs get_hypatia', kwargs)
-        self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, **kwargs)
+    def get_star_compositon(self, **kwargs):
+        if self.star == 'sun':
+            from parameters import ca_sol, fe_sol, al_sol, mg_sol, si_sol, na_sol
+            solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol, 'na_sol': na_sol}
+            self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list]
+        else:
+            self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, **kwargs)
 
     def get_mgsi(self, **kwargs):
-        if self.nH_star:
-            self.mgsi = 10 ** self.nH_star[self.oxide_list.index('MgO')] / 10 ** self.nH_star[self.oxide_list.index('SiO2')]  # molar ratio
-        else:
-            n_MgO = self.wt_oxides['MgO'] / M_MgO  # convert to moles
-            n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2
-            self.mgsi = n_MgO / n_SiO2  # n_Mg = n_MgO etc
+        # if self.nH_star:
+        #     self.mgsi = 10 ** self.nH_star[self.oxide_list.index('MgO')] / 10 ** self.nH_star[self.oxide_list.index('SiO2')]  # molar ratio
+        # else:
+        n_MgO = self.wt_oxides['MgO'] / M_MgO  # convert to moles
+        n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2
+        self.mgsi = n_MgO / n_SiO2  # n_Mg = n_MgO etc
+        return self.mgsi
+
+    def get_mg_number(self):
+        # Mg number of mantle
+        n_MgO = self.wt_oxides['MgO'] / M_MgO  # convert to moles
+        n_FeO = self.wt_oxides['FeO'] / M_FeO
+        self.mg_number = n_MgO / (n_MgO + n_FeO) * 100
+        return self.mg_number
 
     def get_phase_masses(self):
         self.phase_mass = {ph: np.sum(self.df_comp[ph]*1e-2 * self.df_all['mass(kg)']) for ph in self.phases_px}
+        return self.phase_mass
 
     def get_um_mass(self):
         i_um_base = self.find_lower_mantle() - 1  # base of lower mantle
         # print('pressure at um base', self.df_all['P(bar)'][i_um_base], 'bar')
         self.mass_um = np.sum(self.df_all['mass(kg)'][:i_um_base + 1])
+        return self.mass_um
 
     def star_to_oxide(self, **kwargs):
         """ get the bulk oxide compositon of the mantle (core Fe will have been extracted from returned dict) """
@@ -595,8 +615,11 @@ class PerplexData:
                 n = 500
             elif M / M_E <= 5:
                 n = 1600
+
         if profile == 'warm':
-            Tp = self.melting_temperature(p_GPa=Psurf * 1e5 * 1e-9)  # Noack "warm" case
+            Tp = self.melting_temperature(**kwargs)  # use compositionally-dependent solidus temperature
+            print('using Tp', Tp, 'K')
+        # elif profile == 'adiabat': Tp = Tp
 
         # Initialization - guesses
         # rho_c_av = 11000  # guess for core density in kg/m^3
@@ -837,11 +860,27 @@ class PerplexData:
             i_lm = self.df_comp['Pv'].ne(0).idxmax()
         except KeyError:
             print('      no Pv phase found! (planet too small?)')
-            return len(self.df_comp)  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
+            return len(
+                self.df_comp)  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
         return i_lm
 
-    def get_interior(self, test_CMF=None, test_oxides=None, oxides=None,
-                     parameterise_lm=True, p_max_perplex=200e9 * 1e-5, **kwargs):
+    def find_transition_zone(self):
+        """ return the index denoting the top of the transition zone where 0 is the surface
+         for planets with no Ol or Wad, still get Ring so use this as MTZ definition...
+         index will change slightly depending on resolution """
+        try:
+            i_lm = self.df_comp['Wad'].ne(0).idxmax()
+        except KeyError:
+            print('      no Wad phase found! Defining TZ at ring')
+            try:
+                i_lm = self.df_comp['Ring'].ne(0).idxmax()
+            except KeyError:
+                print('      no Ring phase found! Guessing the planet is very small')
+                return len(self.df_comp)
+        return i_lm
+
+    def get_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None,
+                     parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
         """ procedure for setting up interior composition and structure of planet """
 
         # first, get oxide bulk composition and CMF (skip if input a testing value)
@@ -849,7 +888,7 @@ class PerplexData:
             oxides = oxide_list_default
         if test_oxides is None:
             # print('kwargs get_interior', kwargs)
-            self.get_hypatia(**kwargs)
+            self.get_star_compositon(**kwargs)
             if self.nH_star is None:
                 return None  # e.g. missing element in hypatia catalogue
             self.star_to_oxide(**kwargs)
@@ -858,13 +897,12 @@ class PerplexData:
                 print('Did you mean to input both star name and fixed oxide wt%s?')
 
             # ensure bulk oxide composition sums to 100% (necessary for cmf calculations
-            # print('input oxides', test_oxides)
             sum_wt_oxides = sum(test_oxides.values())
             self.wt_oxides = {k: test_oxides[k] / sum_wt_oxides * 100 for k in oxides}
-            # print('scaled to 100%', dat.wt_oxides)
         self.get_mgsi()  # molar mg/si ratio
+        self.get_mg_number()
 
-        # second, get core size and interior structure profiles
+        # second, get core size for either a fixed CMF or a core partitioning
         if test_CMF is None:
             self.core_mass_fraction()
         else:
@@ -872,44 +910,72 @@ class PerplexData:
                 test_CMF = 1e-10  # can't be 0 for analytical reasons???
             self.CMF = test_CMF
 
-        # iterate perplex to get interior structure and geotherm
-        self.iterate_structure(parameterise_lm=parameterise_lm, p_max_perplex=p_max_perplex, **kwargs)
+        # pull some Si out of mantle into core - not self-consistently doing core EoS with Si though
+        if x_Si_core is not None:
+            self.partition_core_Si(x_Si_core)
 
-        # finally, run perple_x again to get mantle compositional profile
-        # N. B. this is different than final iteration because including solution phases
-        self.write_build(adiabat_file=self.name + '_adiabat.dat', p_min=self.pressure[-1] * 1e-5,
-                         p_max=self.pressure[self.i_cmb + 1] * 1e-5, **kwargs)
+        if solve_interior:
+            # iterate perplex to get interior structure and geotherm
+            self.iterate_structure(parameterise_lm=parameterise_lm, p_max_perplex=p_max_perplex, **kwargs)
 
-        if parameterise_lm and self.pressure[self.i_cmb + 1] * 1e-5 > p_max_perplex:
-            self.extend_lm_composition(build_file_end='', **kwargs)
-        else:
-            self.get_composition(**kwargs)
-            self.load_composition_px(**kwargs)
-        return True  # checks that it works
+            # finally, run perple_x again to get mantle compositional profile
+            # N. B. this is different than final iteration because including solution phases
+            self.write_build(adiabat_file=self.name + '_adiabat.dat', p_min=self.pressure[-1] * 1e-5,
+                             p_max=self.pressure[self.i_cmb + 1] * 1e-5, **kwargs)
+            if parameterise_lm and self.pressure[self.i_cmb + 1] * 1e-5 > p_max_perplex:
+                self.extend_lm_composition(build_file_end='', **kwargs)  # includes get_composition()
+            else:
+                self.get_composition(**kwargs)
+                self.load_composition_px(**kwargs)
+            return True  # checks that it works
+
+    def melting_temperature(self, T_sol=1927, p0=1, **kwargs):
+        """ get compositionally-dependent top-of-mantle solidus temperature
+         1927 K from Miyazaki & Korenaga (2022), p0 in GPa"""
+
+        def dorn(p, X_Fe):
+            # p in GPa, X_Fe in mass fraction
+            dT = (102 + 64.1 * p - 3.62 * p ** 2) * (0.1 - X_Fe)
+            return dT
+
+        # convert wt% FeO to mass fraction Fe
+        m_Fe = self.wt_oxides['FeO'] * M_Fe / M_FeO / 100
+        return T_sol + dorn(p0, m_Fe)
+
+    def partition_core_Si(self, x_Si_core):
+        # x_Si_core is wt% Si in core
+
+        print('old oxides', self.wt_oxides)
+        print('old CMF', self.CMF)
+        print('old mg/si', self.mgsi)
+
+        # get total Si
+        mass_mtl_old = self.M_p - (self.CMF * self.M_p)  # kg
+        mass_Si_tot = self.wt_oxides['SiO2'] * M_Si / M_SiO2 / 100 * mass_mtl_old  # kg, old total
+
+        # boost core mass
+        mass_core_old = self.CMF * self.M_p  # kg
+        mass_core_new = mass_core_old / (1 - x_Si_core * 1e-2)
+        self.CMF = mass_core_new / self.M_p
+        print('new CMF', self.CMF)
+
+        mass_Si_core = mass_core_new * x_Si_core * 1e-2  # kg
+        mass_mtl_new = self.M_p - (self.CMF * self.M_p)  # kg
+        mass_Si_mtl = mass_Si_tot - mass_Si_core  # kg, new
+
+        mass_SiO2_mtl_wtpt = mass_Si_mtl * M_SiO2 / M_Si / mass_mtl_new * 100
+        # print('new SiO2 mantle in wt%', mass_SiO2_mtl_wtpt)
+        self.wt_oxides['SiO2'] = mass_SiO2_mtl_wtpt
+
+        # renormalise all wt percent oxides
+        sum_wt_oxides = sum(self.wt_oxides.values())
+        self.wt_oxides = {k: self.wt_oxides[k] / sum_wt_oxides * 100 for k in self.oxide_list}
+        self.get_mgsi()
+        print('new mg/si', self.mgsi)
 
 
-    # def melting_temperature(self, p_GPa=None):
-    #     # Dorn & Lichtenberg 2021 (eq 2-3)
-    #     #  following Belonoshko et al.(2005) and Stixrude (2014)
-    #     if p_GPa is None:
-    #         p_GPa = self.pressure_m * 1e-9  # GPa
-    #
-    #     # use your bs spline to peridotite melting, Fiquet+ 2010
-    #     tck = (np.array([31.11111111, 31.11111111, 34.44444444, 38.66666667,
-    #             41.33333333, 44., 47.77777778, 53.77777778,
-    #             58.88888889, 62.88888889, 67.33333333, 71.77777778,
-    #             76.88888889, 82.88888889, 84.66666667, 89.11111111,
-    #             95.77777778, 99.77777778, 104.44444444, 108.44444444,
-    #             115.77777778, 126., 132.88888889, 139.77777778,
-    #             139.77777778]), np.array([2650., 2731.25, 2837.5, 2900., 2962.5, 3043.75, 3168.75,
-    #                                    3268.75, 3350., 3425., 3506.25, 3581.25, 3675., 3700.,
-    #                                    3762.5, 3843.75, 3887.5, 3943.75, 3981.25, 4043.75, 4118.75,
-    #                                    4156.25, 4187.5, 0., 0.]), 1)
-    #
-    #     T_melt = splev(p_GPa, tck)
-    #
-    #     self.T_melt = T_melt
-    #     return T_melt
+
+
 
 
 def read_from_input(star_name, which='oxide_list', output_path=output_parent_default, oxide_list=None, **kwargs):
@@ -933,5 +999,4 @@ def read_from_input(star_name, which='oxide_list', output_path=output_parent_def
                     go = False
             else:
                 raise NotImplementedError('read_from_input(): only oxide list implemented')
-
     return input

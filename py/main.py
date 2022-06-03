@@ -46,6 +46,26 @@ def update_MgSi(MgSi=None, oxides=px.wt_oxides_Earth):
     return oxides
 
 
+def update_MgFe(MgFe=None, oxides=px.wt_oxides_Earth):
+    # vary Mg/Fe, use original otherwise
+    # update m_MgO and m_FeO, preserving total mass
+    m_tot = oxides['MgO'] + oxides['FeO']  # total mass (%) of MgO and FeO - conserve this
+    n_MgO = oxides['MgO'] / M_MgO  # convert to moles
+    n_FeO = oxides['FeO'] / M_FeO
+    n_MgFe_old = n_MgO / n_FeO  # n_Mg = n_MgO etc
+    if MgFe is None:
+        MgFe = n_MgFe_old  # no update
+
+    m_ratio_new = MgFe * (M_MgO / M_FeO)  # m = nM, in % | new mass ratio
+    x = m_ratio_new
+    y = m_tot
+    m_MgO_new = x * y / (1 + x)
+    m_FeO_new = m_tot - m_MgO_new
+    oxides['MgO'] = m_MgO_new
+    oxides['FeO'] = m_FeO_new
+    return oxides
+
+
 def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None,
              **kwargs):
     mass_str = str(int(np.round(M_p / M_E))) + 'M'
@@ -73,7 +93,33 @@ def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, 
     return name
 
 
-def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=None, **kwargs):
+def update_saturation(dat):  # weird choice that this isn't in class file but ok
+    """
+    gets saturation from composition dataframe
+    :param dat:
+    :return:
+    """
+    df_all = dat.df_all
+    df_all = sat.mineral_water_contents(df_all['P(bar)'].to_numpy() * 1e5, df_all['T(K)'].to_numpy(), df=df_all)
+
+    # save whole-mantle concentration and mass
+    dat.c_h2o_mantle = sat.total_water_frac(df_all)  # weight fraction wrt mantle (NOT PLANET!)
+    dat.mass_h2o_total = sat.total_water_mass(df_all)  # total in kg
+    print('\n\ntotal water in mantle:', dat.c_h2o_mantle * 1e2, 'wt% = ', dat.mass_h2o_total / sat.TO, 'OM')
+
+    # also isolate upper mantle
+    i_um_base = dat.find_lower_mantle() - 1  # base of upper mantle
+    dat.mass_h2o_um = sat.total_water_mass(df_all, i_min=0, i_max=i_um_base)
+
+    # also isolate olivine-bearing mantle
+    i_mtz_base = dat.find_transition_zone() - 1  # base of upper mantle
+    dat.mass_h2o_obm = sat.total_water_mass(df_all, i_min=0, i_max=i_mtz_base)
+
+    dat.df_all = df_all
+    return dat
+
+
+def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=None, pickle_always=False, **kwargs):
     """ kwargs include
      overwrite (bool) : auto overwrite build etc files,
      head (bool) : to print DataFrame headers when reading them
@@ -113,60 +159,58 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         # print('kwargs build_planet', kwargs)
         okay = dat.get_interior(**kwargs)
 
-    if not okay:
+    if not okay and not pickle_always:
         return None
 
-    # rename and scale columns (for use with saturation calcs but being consistent regardless)
-    df_all = dat.df_comp.copy()
-    renamed_phases = rename_phases(dat.phases_px)
-    # prefix phase wt composition with 'X_'
-    for old, new in zip(dat.phases_px, renamed_phases):
-        try:
-            col_name = 'X_' + new
-            df_all.rename(columns={old: col_name}, inplace=True)
-            df_all[col_name] = df_all[col_name] * 1e-2  # also convert from % to frac
-        except KeyError as e:
-            print('something very wrong:', e)
-            print('df columns:', df_all.columns)
+    else:
+        # rename and scale columns (for use with saturation calcs but being consistent regardless)
+        df_all = dat.df_comp.copy()
+        renamed_phases = rename_phases(dat.phases_px)
+        # prefix phase wt composition with 'X_'
+        for old, new in zip(dat.phases_px, renamed_phases):
+            try:
+                col_name = 'X_' + new
+                df_all.rename(columns={old: col_name}, inplace=True)
+                df_all[col_name] = df_all[col_name] * 1e-2  # also convert from % to frac
+            except KeyError as e:
+                print('something very wrong:', e)
+                print('df columns:', df_all.columns)
 
-    # put important mantle data into single dataframe for convenience - note these are all SI units
-    df_all['mass(kg)'] = dat.mass[dat.i_cmb + 1:][::-1]  # invert and just store mantle (surface down)
-    df_all['z(m)'] = dat.R_p - dat.radius[dat.i_cmb + 1:][::-1]
-    df_all['rho'] = dat.density[dat.i_cmb + 1:][::-1]
-    df_all['alpha'] = dat.alpha[dat.i_cmb + 1:][::-1]
-    df_all['cp'] = dat.cp[dat.i_cmb + 1:][::-1]
+        # put important mantle data into single dataframe for convenience - note these are all SI units
+        df_all['mass(kg)'] = dat.mass[dat.i_cmb + 1:][::-1]  # invert and just store mantle (surface down)
+        df_all['z(m)'] = dat.R_p - dat.radius[dat.i_cmb + 1:][::-1]
+        df_all['rho'] = dat.density[dat.i_cmb + 1:][::-1]
+        df_all['alpha'] = dat.alpha[dat.i_cmb + 1:][::-1]
+        df_all['cp'] = dat.cp[dat.i_cmb + 1:][::-1]
+        dat.df_all = df_all
 
-    # print('total mass Ol:', np.sum(df_all['X_ol'] * df_all['mass(kg)']))
-    # print('total mass Ring:', np.sum(df_all['X_ring'] * df_all['mass(kg)']))
-    # print('total mass Wad:', np.sum(df_all['X_wad'] * df_all['mass(kg)']))
+        # print('total mass Ol:', np.sum(df_all['X_ol'] * df_all['mass(kg)']))
+        # print('total mass Ring:', np.sum(df_all['X_ring'] * df_all['mass(kg)']))
+        # print('total mass Wad:', np.sum(df_all['X_wad'] * df_all['mass(kg)']))
 
-    # calculate saturation water content profile per mineral phase
-    if get_saturation:
-        df_all = sat.mineral_water_contents(df_all['P(bar)'].to_numpy() * 1e5, df_all['T(K)'].to_numpy(), df=df_all)
-        dat.c_h2o_mantle = sat.total_water_frac(df_all)  # weight fraction wrt mantle
-        dat.mass_h2o_total = sat.total_water_mass(df_all)  # total in kg
-        print('\n\ntotal water in mantle:', dat.c_h2o_mantle * 1e2, 'wt% = ', dat.mass_h2o_total / sat.TO, 'OM')
+        # calculate saturation water content profile per mineral phase
+        if get_saturation:
+            dat = update_saturation(dat)
 
-        # also isolate upper mantle
-        i_um_base = dat.find_lower_mantle() - 1  # base of upper mantle
-        dat.mass_h2o_um = sat.total_water_mass(df_all, i_min=0, i_max=i_um_base)
-    dat.df_all = df_all
+        # calculate some other simple things - only here because you thought of this later but should be done inside class
+        if not hasattr(dat, 'mass_um'):
+            dat.get_um_mass()
+        if not hasattr(dat, 'mgsi'):
+            dat.get_mgsi()
+        if not hasattr(dat, 'mg_number'):
+            dat.get_mg_number()
 
-    # calculate some other simple things
-    dat.get_um_mass()
-    dat.get_mgsi()
+        # write df to file
+        df_all.to_csv(path_or_buf=dat.output_path + dat.name + '_profiles.dat', sep='\t', na_rep='NaN', index=True,
+                      index_label=None)
 
-    # make mega df to save all mantle data
-    df_all.to_csv(path_or_buf=dat.output_path + dat.name + '_profiles.dat', sep='\t', na_rep='NaN', index=True,
-                  index_label=None)
+        # move perplex files to their own folder
+        for fend in ['_comp.tab', '_adiabat.dat', '.dat', '_WERAMI_options.txt', '_VERTEX_options.txt']:
+            file = dat.name + fend
+            if os.path.exists(dat.perplex_path + file):
+                os.rename(dat.perplex_path + file, dat.output_path + file)
 
-    # move perplex files to their own folder
-    for fend in ['_comp.tab', '_adiabat.dat', '.dat', '_WERAMI_options.txt', '_VERTEX_options.txt']:
-        file = dat.name + fend
-        if os.path.exists(dat.perplex_path + file):
-            os.rename(dat.perplex_path + file, dat.output_path + file)
-
-    # for now save as pickle for laziness
+    # for now also save as pickle for laziness
     with open(dat.output_path + "dat.pkl", "wb") as pfile:
         pkl.dump(dat, pfile)
 
@@ -195,12 +239,14 @@ def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
     return dat_list
 
 
-def read_dir(output_path, subsample=None, verbose=False, include_names=None):
+def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True, include_names=None):
     """ read all """
     try:
         subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     except FileNotFoundError:
         # directory doesn't exist
+        if prevent_blank_dir:
+            raise FileNotFoundError(output_path, 'does not exist')
         if verbose:
             print('warning:', output_path, 'does not exist')
         return []
@@ -218,7 +264,8 @@ def read_dir(output_path, subsample=None, verbose=False, include_names=None):
         except FileNotFoundError:
             if verbose:
                 print('warning:', dir, 'is empty')
-    print('loaded', count, 'pickle files')
+    if verbose:
+        print('loaded', count, 'pickle files')
     return dats
 
 

@@ -17,6 +17,21 @@ test_phases_order = ['cpx', 'gt', 'opx', 'hpcpx', 'ol', 'pl', 'wad', 'ring', 'st
 c_Earth = 'xkcd:olive green'
 
 
+def get_phase_display_names(phases_list):
+    alias_dict = {}
+    for s in phases_list:
+        alias_dict[s] = s
+        if s == 'an':
+            alias_dict[s] = 'plg'
+        elif s == 'st':
+            alias_dict[s] = 'stv'
+        elif s == 'wus':
+            alias_dict[s] = 'fp'
+        elif s == 'hpcpx':
+            alias_dict[s] = 'hcpx'
+    return alias_dict
+
+
 def annotate_ax_continuation(ax, which):
     # end axis with arrow to suggest it continues
     if which == 'y':
@@ -105,11 +120,12 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
 
     # get modes of each phase from dataframe
     if plot_phases_order is None:  # use all phases from dataframe (default)
-        phases = rw.rename_phases(dat.phases_px)
+        phases = rw.rename_phases(dat.phases_px)  # list of strings
     else:  # use a fixed order of phases - neater but may miss some
         phases = plot_phases_order
         if verbose:
             print('using input phase order', phases, '\noriginal phases are:', dat.phases_px)
+    phase_map = get_phase_display_names(phases)
 
     # get colours from cmap
     cmap_vals = matplotlib.cm.get_cmap(cmap)
@@ -138,11 +154,11 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
                 y_stacked = np.vstack((y_stacked, y))
         else:
             # or, if not a stackplot, plot immediately
-            ax.plot(x, y, c=colours[ii], label=phase)
+            ax.plot(x, y, c=colours[ii], label=phase_map[phase])
 
     # make stackplot at this point
     if comp_stacked:
-        ax.stackplot(x, y_stacked, labels=phases, colors=colours)
+        ax.stackplot(x, y_stacked, labels=[phase_map[s] for s in phases], colors=colours)
         ax.set_ylim(0, 100)
         # ax.scatter(x, [50]*len(x), marker='.', s=20, c='k', zorder=100)  # show perple_x resolution
 
@@ -186,7 +202,7 @@ def set_independent_var(dat, var_name):
     return y * scale, label
 
 
-def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=None, scale=1, c='k', lw=2, alpha=1,
+def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=None, scale=1, c='k', lw=2, ls='-', alpha=1,
             xmin=None, xmax=None, ymin=None, ymax=None, ax_ticks=None, label_x=True, label_y=True, labelsize=14,
             fig=None, ax=None, log=False, leg_label=None, orientation='vertical', figsize=None, fname=None, legtitle=None,
             y2var=None, y2label=None, y2scale=None, save=True, fig_path=fig_path, legsize=12, leg_bbox_to_anchor=None, **kwargs):
@@ -224,7 +240,7 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
         xlabel = ax_label
         ylabel = independent_ax_label
     elif orientation == 'horizontal':
-        ax.plot(y, x, c=c, lw=lw, label=leg_label, alpha=alpha)
+        ax.plot(y, x, c=c, lw=lw, ls=ls, label=leg_label, alpha=alpha)
         if log:
             ax.set_yscale('log')
         if ax_ticks is not None:
@@ -317,9 +333,9 @@ def melting_curve(dat, labelsize=14, fig_path=fig_path):
     plt.show()
 
 
-def pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None, title=None, c_hist='k', ls='-', fig_path=fig_path,
-               filename=None, extension='.png', save=True, show=True, data_label=None, fig=None, ax=None,
-               xlim=None, labelsize=12, legsize=12, bins=None, showmedian=False, **kwargs):
+def pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None, title=None, c_hist='k', ls_stats='-', fig_path=fig_path,
+               filename=None, extension='.png', save=True, show=True, data_label=None, fig=None, ax=None, annotate_n=True,
+               xlim=None, labelsize=12, legsize=12, bins=None, showmedian=False, showsigma=False, **kwargs):
     """ histogram of 1 or more variables on same x axis. x_name, data_label, and ls can be list, to differentiate """
     if xlabel is None:
         xlabel = x_name
@@ -329,33 +345,40 @@ def pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None, title=None, c_his
     if ax is None:
         fig, ax = plt.subplots(1, 1)
 
-    def do_plot(attr, c, label, linestyle):
+    def do_plot(attr, c, label, ls_stats):
         print('attr', attr)
         x = []
-        for pl in dats:
+        for dat in dats:
             try:
-                x.append(eval('pl.' + attr))
-            except AttributeError:
+                x.append(eval('dat.' + attr))
+            except (AttributeError, KeyError):
                 pass  # blank data, didn't work because star not measured maybe
         yarr = np.array(x)
         print('hist; y < 0.2', yarr[yarr < 0.2], 'n', len(yarr[yarr < 0.2]))
-        ax.hist([a * scale for a in x], color=c, label=label, ls=linestyle, bins=bins, **kwargs)
+        ax.hist([a * scale for a in x], color=c, label=label, bins=bins, **kwargs)
         if earth:
-            ax.axvline(eval('earth.' + attr) * scale, label='Earth', c=c_Earth, ls=linestyle)
+            ax.axvline(eval('earth.' + attr) * scale, label='Earth', c=c_Earth)
         if showmedian:
             med = np.median([a * scale for a in x])
             print('median', med)
-            ax.axvline(med, label='median', c=c, ls=linestyle)
+            ax.axvline(med, label='median', c=c, ls=ls_stats)
+        if showsigma:
+            qs = np.percentile(x, [2.27, 97.93], method='nearest')
+            siglabel = '$\pm 1 \sigma$'
+            for q in qs:
+                ax.axvline(q, c='r', ls=ls_stats, label=siglabel)
+                siglabel = None
 
     if iterable_not_string(x_name):
         for ii, attr in enumerate(x_name):
-            do_plot(attr, c_hist, data_label[ii], ls[ii])
+            do_plot(attr, c_hist, data_label[ii], ls_stats[ii])
     else:
-        do_plot(x_name, c_hist, data_label, ls)
+        do_plot(x_name, c_hist, data_label, ls_stats)
 
     ax.set_xlabel(xlabel, fontsize=labelsize)
     ax.legend(frameon=False, fontsize=legsize)
-    cornertext(ax, text='n = ' + str(len(dats)), pos='top left', size=legsize, pad=0.02)
+    if annotate_n:
+        cornertext(ax, text='n = ' + str(len(dats)), pos='top left', size=legsize, pad=0.02)
     plt.title(title)
     if xlim is not None:
         ax.set_xlim(xlim)
@@ -367,10 +390,10 @@ def pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None, title=None, c_his
     return fig, ax
 
 
-def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=None, ylabel=None, filename=None,
+def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=None, ylabel=None, filename=None, ticksize=10, legsize=12,
                 show_histx=False, show_histy=False, hist_kwargs={}, data_label=None, earth=False, fig_path=fig_path,
                 extension='.png', fig=None, ax=None, xlim=None, ylim=None, labelsize=14, save=True, show=True, x=None, y=None,
-                return_data=False, annotate_n=True, **kwargs):
+                return_data=False, annotate_n=True, **scatter_kwargs):
     # for list of planet objects, make scatter plot of 2 properties
     if x is None and y is None:
         x = []
@@ -381,28 +404,30 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
             ylabel = y_name
         if filename is None:
             filename = x_name + '_' + y_name + '_scatter'
-        for pl in dats:
+        for dat in dats:
             try:
-                xi = eval('pl.' + x_name)
-                yi = eval('pl.' + y_name)
-                x.append(xi)
-                y.append(yi)
+                xi = eval('dat.' + x_name)
+                yi = eval('dat.' + y_name)
+                x.append(xi * x_scale)
+                y.append(yi * y_scale)
             except KeyError:
-                print(pl.name, 'does not have attribute', x_name, 'or', y_name)
+                print(dat.name, 'does not have attribute', x_name, 'or', y_name)
 
     # create figure
     if ax is None:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-    ax.scatter([a * x_scale for a in x], [b * y_scale for b in y], label=data_label, **kwargs)
+    print('max', y_name, '=', np.max(y))
+    ax.scatter(x, y, label=data_label, **scatter_kwargs)
     if earth:
         ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth', c='k',
                    marker='$\oplus$', s=200, zorder=200)
 
     ax.set_xlabel(xlabel, fontsize=labelsize)
     ax.set_ylabel(ylabel, fontsize=labelsize)
-    ax.legend(frameon=False)
+    ax.tick_params(axis='both', which='major', labelsize=ticksize)
+    ax.legend(frameon=False, fontsize=legsize)
     if annotate_n:
         cornertext(ax, text='n = ' + str(len(x)), pos='top left', size=8, pad=0.02)
     plt.title(title)
@@ -421,25 +446,25 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
 
 
 def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=None, ylabel=None, filename=None,
-                    show_histx=False, show_histy=False, hist_kwargs={}, data_label=None, earth=False, fig_path=fig_path,
+                    show_histx=False, show_histy=False, histx_kwargs={}, histy_kwargs={}, data_label=None, earth=False, fig_path=fig_path,
                     extension='.png', fig=None, ax=None, ax_histx=None, ax_histy=None, xlim=None, ylim=None,
                     bins=None, save=True, show=True, ratios=[7, 1], lim_histx=None, lim_histy=None, **kwargs):
     x, y = [], []
-    for pl in dats:
+    for dat in dats:
         try:
-            xi = eval('pl.' + x_name)
-            yi = eval('pl.' + y_name)
-            x.append(xi)
-            y.append(yi)
+            xi = eval('dat.' + x_name)
+            yi = eval('dat.' + y_name)
+            x.append(xi * x_scale)
+            y.append(yi * y_scale)
         except KeyError:
-            print(pl.name, 'does not have attribute', x_name, 'or', y_name)
+            print(dat.name, 'does not have attribute', x_name, 'or', y_name)
 
     if fig is None:
         fig = plt.figure()
     if (ax is None) and (not show_histx) and (not show_histy):
         ax = fig.add_subplot(111)
     elif show_histx and show_histy:
-        gs = fig.add_gridspec(2, 2, width_ratios=ratios, height_ratios=list(reversed(ratios)),
+        gs = fig.add_gridspec(2, 2, width_ratios=[ratios[0] + 2, ratios[1]], height_ratios=list(reversed(ratios)),
                               left=0.1, right=0.9, bottom=0.1, top=0.9,
                               wspace=0.05, hspace=0.05)
         if ax is None:
@@ -452,14 +477,17 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
         ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
         ax_histx.set_yticks([])
         ax_histy.set_xticks([])
+        if (lim_histy is None) and (lim_histx is not None):
+            lim_histy = lim_histx
+        ax_histx.set_ylim(lim_histx)
+        ax_histy.set_xlim(lim_histy)
 
         # now determine nice limits by hand:
-        binwidth = 0.25
-        xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
-        lim = (int(xymax / binwidth) + 1) * binwidth
-        bins = np.arange(-lim, lim + binwidth, binwidth)
+        # binwidth = 0.25
+        # xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
+        # lim = (int(xymax / binwidth) + 1) * binwidth
+        # bins = np.arange(-lim, lim + binwidth, binwidth)
     elif show_histx:
-        print('show_histx')
         gs = fig.add_gridspec(2, 1, height_ratios=list(reversed(ratios)),
                               bottom=0.1, top=0.9,
                               hspace=0.05)
@@ -469,10 +497,8 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
             ax_histx = fig.add_subplot(gs[0, 0], sharex=ax)
         ax_histx.tick_params(axis="both", labelbottom=False, labelleft=False)
         ax_histx.set_yticks([])
-        if lim_histx is not None:
-            ax_histx.set_ylim(lim_histx)
+        ax_histx.set_ylim(lim_histx)
     elif show_histy:
-        print('show_histy')
         gs = fig.add_gridspec(1, 2, width_ratios=ratios,
                               left=0.1, right=0.9,
                               wspace=0.05)
@@ -482,17 +508,23 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
             ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
         ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
         ax_histy.set_xticks([])
-        if lim_histy is not None:
-            ax_histy.set_xlim(lim_histx)
+        ax_histy.set_xlim(lim_histy)
     fig, ax = pop_scatter(dats, x_name, y_name, x_scale, y_scale, title, xlabel, ylabel, filename='',
                           data_label=data_label, earth=earth, fig_path=fig_path,
                           extension=extension, fig=fig, ax=ax, xlim=xlim, ylim=ylim, save=False,
                           show=False, x=x, y=y, **kwargs)
 
     if show_histx:
-        ax_histx.hist(x, bins=bins, **hist_kwargs)
+        ax_histx.hist(x, **histx_kwargs)
+        ax_histx.spines.right.set_visible(False)
+        ax_histx.spines.left.set_visible(False)
+        ax_histx.spines.top.set_visible(False)
+
     if show_histy:
-        ax_histy.hist(y, bins=bins, orientation='horizontal', **hist_kwargs)
+        ax_histy.hist(y, orientation='horizontal', **histy_kwargs)
+        ax_histy.spines.bottom.set_visible(False)
+        ax_histy.spines.right.set_visible(False)
+        ax_histy.spines.top.set_visible(False)
 
     if save:
         plt.savefig(fig_path + filename + extension, bbox_inches='tight')
@@ -558,7 +590,7 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
     if filename is None:
         filename = 'pops_dist_' + x_name + '_' + y_name
     if datalabel is None:
-        datalabel = str(sigma) + '-$\sigma$ distribution'
+        datalabel = str(sigma) + '$\sigma$ distribution'
 
     print('x_name', x_name)
     datsdict = dict_across_pops(dirs, x_name, y_name, **kwargs)
@@ -566,6 +598,16 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
     # plot
     if ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    # add earth point if desired
+    if earth:
+        ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth', c='k',
+                   marker='$\oplus$', s=200, zorder=100)
+        print('earth:', y_name, eval('earth.' + y_name) * y_scale)
+
+    if earth_real:
+        ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth (observed)', c='xkcd:silver',
+                   marker='$\oplus$', s=200, zorder=100)
 
     # get into plotting format: y should be nested list of different runs' y-value at each x
     x = datsdict[list(datsdict.keys())[0]][0]  # should be the same for all
@@ -609,16 +651,6 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
     # print('x\n', np.array(x) * x_scale)
     # print('\n\ny\n',  np.array(y_mid) * y_scale)
 
-    # add earth point if desired
-    if earth:
-        ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth (modelled)', c='k',
-                   marker='$\oplus$', s=200, zorder=100)
-        print('earth:', y_name, eval('earth.' + y_name) * y_scale)
-
-    if earth_real:
-        ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth (observed)', c='xkcd:silver',
-                   marker='$\oplus$', s=200, zorder=100)
-
     if show_scaling_fn:
         # add naive scaling
         xhat = np.linspace(np.min(x), np.max(x))
@@ -655,7 +687,8 @@ def compare_pop_scatter(dirs, x_name, y_name, v_name=None, x_scale=1, y_scale=1,
                         legsize=10, ticksize=12, c='k', earth=None, head=-1, xlim=None, ylim=None, alpha=0.5,
                         dark=False, fig=None, ax=None, **kwargs):
     """ for a list of directories containing runs with different x_name values, plot y_name vs. x_name scatterplot
-    dats to plot is taken from first entry in directory list (dirs) so make sure that dir is complete """
+    dats to plot is taken from first entry in directory list (dirs) so make sure that dir is complete
+    use lw=0 for no joining line"""
     if xlabel is None:
         xlabel = x_name
     if ylabel is None:
@@ -769,7 +802,7 @@ def composition_subfig(dat, var_name, var_scale=1, var_log=False, var_label=None
     if annotation is not None:
         ax_var = cornertext(ax_var, annotation, size=labelsize, c=linec)
 
-    # i_lm = dat.find_lower_mantle()
+    i_lm = dat.find_lower_mantle()
     # print(dat.name, 'i_lm', i_lm, ', p =', dat.pressure[i_lm] * 1e-9, 'GPa')
     # print('   mass um', dat.mass_um, 'kg', '| mass_h2o um', dat.mass_h2o_um / p.TO, 'TO', '| c_h2o',
     #       dat.mass_h2o_um / dat.mass_um * 1e6, 'ppm')
@@ -811,7 +844,7 @@ def exclude_points(dat, exclude_params, minval=-1e50, maxval=1e50):
     return dat
 
 
-def find_rich_planets(dir_name, phase, n=1, output_base='output/', **kwargs):
+def find_rich_planets(dir_name, phase, n=1, output_base='output/', get_min=False, **kwargs):
     """ find n planets most rich in phase """
     dats = rw.read_dir(px.perplex_path_default + output_base + dir_name + '/')
 
@@ -827,10 +860,17 @@ def find_rich_planets(dir_name, phase, n=1, output_base='output/', **kwargs):
     yx.sort(reverse=True)
     names_sorted = [x for y, x in yx]
     # props_sorted = [y for y, x in yx]
-    print('\n', n, 'planets with the most', phase)
-    print('-------------------------------')
-    for val, pl in yx[:n]:
-        print(pl, '|', val)
+    if get_min:
+        print('\n', n, 'planets with the lowest', phase)
+        print('-------------------------------')
+        for val, pl in reversed(yx[-n:]):
+            print(pl, '|', val)
+        return names_sorted[-n:]
+    else:
+        print('\n', n, 'planets with the most', phase)
+        print('-------------------------------')
+        for val, pl in yx[:n]:
+            print(pl, '|', val)
     return names_sorted[:n]
 
 

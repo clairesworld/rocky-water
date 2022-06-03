@@ -64,10 +64,9 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
     return sample_names
 
 
-def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, use_local_composition=False,
-                ca_sol=6.33 - 12, al_sol=6.47 - 12, fe_sol=7.45 - 12, si_sol=7.52 - 12, mg_sol=7.54 - 12,
-                na_sol=6.30 - 12, **kwargs):
+def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, use_local_composition=False, **kwargs):
     """ star id is same as hypatia catalog with spaces e.g. "HIP 12345" """
+    import parameters as p
 
     els = []
     for ox in oxide_list:
@@ -83,36 +82,33 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, us
             return None
         return nH_star
 
-    if star != 'sun':  # not needed for solar values
-        params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
-        if not use_local_composition:
-            try:
-                entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
-                                 params=params)
+    params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
+    if not use_local_composition:
+        try:
+            entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
+                             params=params)
 
-                if np.size(entry.json()) == 0:
-                    raise Exception('No entry found in Hypatia Catalog:', star)
-                # print('loaded json', entry.json())
-                nH_star = []
-                for ii, el in enumerate(els):
-                    # absolute not working for some reason so get difference from solar via lodders norm
-                    if star == 'sun':
-                        nH = 0
-                    else:
-                        try:
-                            nH = entry.json()[ii]['mean']
-                            if verbose:
-                                print('retrieving from hypatia...', entry.json()[ii]['element'], 'mean =', entry.json()[ii]['mean'])
-                            sol_val = eval(el + '_sol')
-                            nH_star.append(nH + sol_val)
-                        except TypeError:
-                            print(star, 'does not have measured', el, 'and should be removed from stellar sample')
-                            return None
-            except (ConnectionError, requests.exceptions.ConnectionError) as e:
-                # try loading from file
-                nH_star = do_local()
-        else:
+            if np.size(entry.json()) == 0:
+                raise Exception('No entry found in Hypatia Catalog:', star)
+            # print('loaded json', entry.json())
+            nH_star = []
+            for ii, el in enumerate(els):
+                # absolute not working for some reason so get difference from solar via lodders norm
+                try:
+                    nH = entry.json()[ii]['mean']
+                    if verbose:
+                        print('retrieving from hypatia...', entry.json()[ii]['element'], 'mean =', entry.json()[ii]['mean'])
+                    sol_val = eval('p.' + el + '_sol')
+                    nH_star.append(nH + sol_val)
+                except TypeError:
+                    print(star, 'does not have measured', el, 'and should be removed from stellar sample')
+                    return None
+        except (ConnectionError, requests.exceptions.ConnectionError) as e:
+            # try loading from file
             nH_star = do_local()
+    else:
+        nH_star = do_local()
+
     return nH_star  # will always be in same order as oxides list
 
 

@@ -18,17 +18,24 @@ earth = rw.build_planet(M_p=1 * p.M_E, test_CMF=0.325, test_oxides=wt_oxides_Ear
                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
                         name='Earth_' + str(Tp) + 'K',
                         )
+print('earth mgsi', earth.mgsi)
+print('earth mg#', earth.wt_oxides['MgO'] / (earth.wt_oxides['MgO'] + earth.wt_oxides['FeO']))
 
 """ plot variable across masses with composition continuity """
 
-dirs = [perplex_path_default + 'output/hypatia' + s + 'M/' for s in ('0,1', '0,3', '0,5', '1', '2', '3', '4', '5')]
+plt.rc('text', usetex=True)
+plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
+dirs = [perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '3,5', '4', '5')]
 fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E ** -1, y_scale=1e-24, xlog=False, ylog=False,
                            ylabel='Upper mantle mass ($10^{24}$ kg)', xlabel='Planet mass ($M_\oplus$)', sigma=2,
-                            save=True, show=False, extension='.png', xlim=(0.1, 5), show_n=False,
-                           labelsize=12, earth=earth, earth_real=None, #1.06e24,
+                            save=True, show=False, extension='.png', xlim=(0.1, 5), ylim=(0.4, 1.8), show_n=False,
+                           labelsize=16, legsize=14, ticksize=14, earth=earth, earth_real=None, #1.06e24,
                                          show_scaling_fn=um_mass_scaling, scalinglabel=r'Constant-$\rho$ scaling')
 
-# # add different Fe to same axes
+
+
+
+"""add different Fe to same axes"""
 # dirs = [perplex_path_default + 'output/hypatia' + s + 'M_1900K/'  # 'M_1600K_50Fe
 #         for s in ('0,1', '0,3', '0,5', '1', '2', '3', '4', '5')]
 # fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E ** -1, y_scale=1e-24, xlog=False, ylog=False,

@@ -26,3 +26,13 @@ M_MgO = M_Mg + M_O
 M_Al2O3 = 2 * M_Al + 3 * M_O
 M_FeO = M_Fe + M_O
 M_Na2O = 2 * M_Na + M_O
+
+# solar composition from Lodders 09 in log(n/H)
+ca_sol = 6.33 - 12
+al_sol = 6.47 - 12
+fe_sol = 7.45 - 12
+si_sol = 7.52 - 12
+mg_sol = 7.54 - 12
+na_sol = 6.30 - 12
+
+# print(10 ** mg_sol / 10 ** si_sol)   # sun = 1.04

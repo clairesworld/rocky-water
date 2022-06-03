@@ -310,7 +310,7 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
 
     # high pressure clinoenstatite - note this is called C2/C in Stixrude solubility model
     D_ol_hpcpx = 0.7  # Withers & hirschmann 2007 figure 8 "weighted average"
-    D_wd_hpcpx = 3.4  # Withers & hirschmann 2007 figure 8 "weighted average" todo use this for overlap
+    D_wd_hpcpx = 3.4  # Withers & hirschmann 2007 figure 8 "weighted average" todo use for overlap? but discontinuity
     sat_hpcpx = sat_ol / D_ol_hpcpx
     sat_corr_hpcpx = check_partitioning(phase_i='hpcpx', phase_j='ol', sat_j=sat_ol, D_ji=D_ol_hpcpx, df=df,
                                         na_val=None)
@@ -377,6 +377,11 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     # Litasov & Ohtani: approx 5 wt% at 1900 K, 25 GPa
     # Chen+2020: synthesised 19-120 GPa and 1400-2200 K - get approx 0.5-1 wt% - FTIR measurements and can't rule out contamination - propse Ca defect mechanism?
     # uncertainty because dry cubic capv structure (500 K to mantle temps) not seen in these exps, instead colder tetragonal structure still stable in presence of H2O, might fuck up thermodynamic eq.
+    # Panero+ 2020: dominant defect is Al_Si-H - Chen mention nothing of this. to be consistent with st just use same author (Panero)??
+    # actually experiments are supported by DFT calcs from Shim+2022 - Chen and SHim both reject Panero substitution
+    # think the conclusion is we can't tell yet
+    # in any case, stv seems to have more evidence for being hydrous phases (sio2 and h2o mutually soluble also) which we do not consider explicitly and would raise mantle w
+    # so ok to overestimate slightly the anhydrous variety?
     sat_capv = 0.5e-2  # low estimate from Chen+2020, 10e-6 assumed in Dong+ 2021 - probably want to test this
     sat_corr_capv = sat_capv
 
