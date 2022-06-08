@@ -7,6 +7,7 @@ import plot_perplex as plotpx
 import main as rw
 from bulk_composition import bulk_composition
 from saturation import TO
+import matplotlib.pyplot as plt
 
 """ get every star from hypatia (run once) - todo only with measured mg?"""
 # hyp.retrieve_star_names(exo_hosts=False, writeto='all_hypatia_names.txt')
@@ -35,19 +36,19 @@ n_sample = -1
 #
 
 """vary Mg/Si with otherwise Earth compositon and CMF for fig. 4"""
-# Tp = 1600
-# test_CMF = 0.325
-# Mp = 1
-# directory = 'output/MgSi_from_earth/'
-# # for ms in np.linspace(1.7, 3, num=5, endpoint=True):
+Tp = 1600
+test_CMF = 0.325
+Mp = 1
+directory = 'output/MgSi_from_earth/'
+for ms in np.linspace(0.6, 2, num=12, endpoint=True):
 # for ms in [0.7244359600749921, 1.0715193052376069, 1.4125375446227555]:  # or, hypatia 2sigma range
-#     oxides = rw.update_MgSi(MgSi=ms, oxides=px.wt_oxides_Earth)
-#     planet_dict = {'M_p': Mp*p.M_E, 'Tp': Tp, 'test_CMF': test_CMF, 'test_oxides': oxides,
-#                    'maxIter': 30, 'tol': 1e-4, #'n': 1600,
-#                    'get_saturation': True, 'verbose': True, 'star': None,
-#                    'output_parent_path': px.perplex_path_default + directory}
-#     rw.build_planet(plot_all=False, **planet_dict)
-#
+    oxides = rw.update_MgSi(MgSi=ms, oxides=px.wt_oxides_MD95)
+    planet_dict = {'M_p': Mp*p.M_E, 'Tp': Tp, 'test_CMF': test_CMF, 'test_oxides': oxides,
+                   'maxIter': 30, 'tol': 1e-4, #'n': 1600,
+                   'get_saturation': True, 'verbose': True, 'star': None,
+                   'output_parent_path': px.perplex_path_default + directory}
+    rw.build_planet(plot_all=False, **planet_dict)
+
 
 """start with solar composition, vary FeO in mantle via tuning core efficiency (so also change CMF)"""
 # Tp = 1600
@@ -126,17 +127,19 @@ n_sample = -1
 #                                   use_local_composition=True, **planet_dict)
 
 """ trying fake Si partitioning """
-n_sample = -1
-core_eff = 0.88
-Tp = 1600
-Mp = 1
-for x_Si_core in [1, 6, 9]:
-    directory = 'output/test_Si_core' + str(x_Si_core) + '/'
-    planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff, 'x_Si_core': x_Si_core,
-                   'maxIter': 30, 'tol': 1e-4, 'get_saturation': True, 'verbose': True,
-                   'output_parent_path': px.perplex_path_default + directory}
-    planets = rw.planets_from_hypatia(n_sample,
-                                      use_local_composition=True, solve_interior=False, **planet_dict)
-
-    # make hist of mg/si - above runs in like a second
-
+# n_sample = -1
+# core_eff = 0.88
+# Tp = 1600
+# Mp = 1
+# for x_Si_core in [1, 6, 9]:
+#     directory = 'output/test_Si_core' + str(x_Si_core) + '/'
+#     planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff, 'x_Si_core': x_Si_core,
+#                    'maxIter': 30, 'tol': 1e-4, 'get_saturation': True, 'verbose': True,
+#                    'output_parent_path': px.perplex_path_default + directory}
+#     planets = rw.planets_from_hypatia(n_sample,
+#                                       use_local_composition=True, solve_interior=False, **planet_dict)
+#
+#     # make hist of mg/si - above runs in like a second
+#     plotpx.pop_hist1D(planets, 'mgsi', save=False, show=False, showmedian=True, showsigma=True, bins=100, alpha=0.3)
+# plt.show()
+#

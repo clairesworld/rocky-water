@@ -26,12 +26,12 @@ def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=Non
     if dats is not None:
         pass
     elif stars is not None:
-        dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_80Fe/', star=st, M_p=p.M_E,
+        dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', star=st, M_p=p.M_E,
                              core_efficiency=0.8831461545794602, Tp=1600) for st in stars]
     elif mgsi is not None:  # update Earth value
         dats = []
         for z in mgsi:
-            oxides = rw.update_MgSi(MgSi=z, oxides=px.wt_oxides_Earth)
+            oxides = rw.update_MgSi(MgSi=z, oxides=px.wt_oxides_MD95)
             dats.append(rw.build_planet(test_oxides=oxides, test_CMF=0.325, M_p=M_p * p.M_E, Tp=Tp, get_saturation=True,
                                         output_parent_path=px.output_parent_default + '/MgSi_from_earth_fig1/',
                                         plot_all=False))

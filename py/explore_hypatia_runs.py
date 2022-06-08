@@ -15,12 +15,37 @@ import matplotlib.gridspec as gridspec
 
 """ get earth benchmark """
 Tp = 1600
-earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_Earth,
-                        maxIter=30, tol=1e-4, n=800, Tp=Tp, core_efficiency=0.88,
+earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_MD95,
+                        maxIter=30, tol=1e-4, #n=800,
+                        Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
                         plot_all=False, get_saturation=True, verbose=True, clean=True,
                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        name='Earth_Si_test', x_Si_core=9,  # 'Earth_' + str(Tp) + 'K',
+                        # name='Earth_Si_test', x_Si_core=9,
+                        name='Earth300_' + str(Tp) + 'K',
                         )
+print('earth CMF', earth.CMF, 'core eff', earth.core_eff)
+earth.find_lower_mantle()
+print('earth mass um', earth.mass_um, 'kg')
+print()
+earth.femg_star = 0.81
+# earth.get_obm_water()
+# m_w_obm = earth.mass_h2o_obm
+# m_w_um = earth.mass_h2o_um
+# m_w_mtz = m_w_um - m_w_obm
+# print('earth obm mass', m_w_obm/p.TO, 'OM', 'mtz mass', m_w_mtz/p.TO, 'um mass', m_w_um/p.TO)
+# i_lm = earth.find_lower_mantle()
+# i_mtz = earth.find_transition_zone()
+
+# sun = rw.build_planet(M_p=1 * p.M_E,
+#                         maxIter=30, tol=1e-4, n=800, Tp=Tp, core_efficiency=0.88, star='sun',
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         # name='Earth_Si_test', x_Si_core=9,
+#                         name='sun_' + str(Tp) + 'K',
+#                         )
+# print('solar CMF', sun.CMF, 'core eff', sun.core_eff)
+#
+
 # earth.get_garnet_composition()
 # plotpx.single_composition(earth, which='pressure', modality_type='water', comp_stacked=True, save=True,
 #                           show=True, cmap='tab20', labelsize=16, plot_phases_order=None, p_max=None, make_legend=True)
@@ -41,33 +66,95 @@ earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_Earth,
 #                      core_efficiency=0.8, Tp=1900) for st in stars]
 
 # dat0 = rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1900K_60Fe/', star='2MASS 19375133+4945541', M_p=1*p.M_E, core_efficiency=0.6, Tp=1900)
-# dat1 = rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_70Fe/', star='2MASS 19375133+4945541', M_p=1*p.M_E, core_efficiency=0.7, Tp=1600)
-# #
-# # # m_mtl = dat0.cum_mass[-1] - dat0.cum_mass[dat0.i_cmb]
-# # # print('mass ratio UM/mantle', dat0.mass_um / dat0.M_p)
-# for dat in (dat0, dat1):
-#     print('pmax', dat.pressure[dat.i_cmb + 1] * 1e-9, 'GPa', 'Tmax', dat.temperature[dat.i_cmb + 1], 'K')
+# dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia0,1M_1600K_88Fe/', star=s, M_p=0.1*p.M_E,
+#                      core_efficiency=0.88, Tp=1600) for s in ['2MASS 19394601-2544539',
+# '2MASS 19141179+3833548', 'HIP 24186', 'HIP 79126',
+#                                                               'HD 240210', 'HIP 1475', 'HIP 86087', 'HIP 80459',
+#                                                               #'HIP 86287', 'HIP 114046', 'HIP 84460'
+#                                                               ]]
+star = '2MASS19375133+4945541'#'HIP1692'
+dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_70Fe/', name='1M_70Ceff_' + star + '_1600K'),
+        rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
+        rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
+        ]
+# # # # # m_mtl = dat0.cum_mass[-1] - dat0.cum_mass[dat0.i_cmb]
+# # # # # print('mass ratio UM/mantle', dat0.mass_um / dat0.M_p)
+for dat in dats:
+    # print('p_mtz', dat.p_mtz * 1e-9, 'GPa')
+    # print('pmax', dat.pressure[dat.i_cmb + 1] * 1e-9, 'GPa', 'Tmax', dat.temperature[dat.i_cmb + 1], 'K')
+    m_w_tot = dat.mass_h2o_total / p.TO
+    # plotpx.single_composition(dat, which='pressure',# modality_type='water',
+    #                    xlabel=None, ylabel=None, cmap='tab20', labelsize=16,
+    #                           # plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv', 'qtz', 'coes',
+    #                           #                                  'st', 'wus', 'capv', 'ppv', 'fapv']
+    #                           )
+    dat.find_lower_mantle()
+    print(dat.p_lm * 1e-9, 'GPa')
+    fig, axes = plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=False, vertical_pressure=False,
+                                           title='core eff = ' + str(dat.core_eff),
+                                          phase_order=['qtz', 'gt', 'cpx', 'ol', 'opx', 'hpcpx', 'wad', 'capv', 'ring', 'st', 'wus', 'pv', 'ppv', 'fapv'],
+                                           var_label='Water capacity\n(ppm)', save=True, show=False,
+                                           labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
+                                           # ax_ticks=[1e1, 1e3, 1e5],
+                                           annotation='total = {0:3.1f} earth oceans'.format(m_w_tot),
+                                           cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=50e2, p_max=30,
+                                          )
+#     axes[1].axvline(dat.p_lm*1e-9, c='k', lw=2)
+
+""" check individual mgsi """
+# test1 = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.72, px.wt_oxides_Earth),
+#                         maxIter=30, tol=1e-4, n=800, Tp=Tp, core_efficiency=0.88,
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         )
+#
+#
+# test2 = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.801, px.wt_oxides_Earth),
+#                         maxIter=30, tol=1e-4, n=800, Tp=Tp, core_efficiency=0.88,
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         )
+# for mgsi in [1.4, 1.5, 1.6, 1.7]:
+#     dat = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(mgsi, px.wt_oxides_MD95),
+#                         n=800, Tp=1600, core_efficiency=0.88,
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         )
 #     m_w_tot = dat.mass_h2o_total / p.TO
-#     plotpx.single_composition(dat, which='pressure', modality_type='water',
-#                        xlabel=None, ylabel=None, cmap='tab20', labelsize=16, plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv', 'qtz', 'coes',
-#                                                                'st', 'wus', 'capv', 'ppv', 'fapv'] , p_max=30,)
-# fig, axes = plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=False, vertical_pressure=False,
-#                                        title='',
-#                                       phase_order=['gt', 'cpx', 'ol', 'opx', 'hpcpx', 'wad', 'capv', 'ring', 'st', 'wus', 'pv', 'ppv', 'fapv'],
-#                                        var_label='Water capacity\n(ppm)', save=True, show=False,
-#                                        labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
-#                                        # ax_ticks=[1e1, 1e3, 1e5],
-#                                        annotation='total = {0:3.1f} earth oceans'.format(m_w_tot),
-#                                        cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=6e2)
+#     # plotpx.single_composition(dat, which='pressure', #modality_type='water',
+#     #                    xlabel=None, ylabel=None, cmap='tab20', labelsize=16, p_max=35, title=str(dat.mgsi),
+#     #                           plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv',
+#     #                                              # 'qtz', 'coes','st', 'seif',
+#     #                                              'wus', 'capv', 'ppv', 'fapv'] ,
+#     #                           )
+#     fig, axes = plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=False, vertical_pressure=False,
+#                                            title='Mg/Si = ' + str(dat.mgsi),
+#                                           plot_phases_order=['gt', 'cpx', 'opx', 'hpcpx', 'ol', 'wad', 'ring', 'pv',
+#                                                              # 'qtz', 'coes','st', 'seif',
+#                                                              'wus', 'capv', 'ppv', 'fapv'],
+#                                            var_label='Water capacity\n(ppm)', save=True, show=False,
+#                                            labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
+#                                            # ax_ticks=[1e1, 1e3, 1e5],
+#                                            # annotation='total = {0:3.1f} earth oceans'.format(m_w_tot),
+#                                            cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=100e2, p_max=35,
+#                                           )
+# print(test1.get_phase_masses())
+# print(test2.get_phase_masses())
 
 
 """ try some crossplots - compositional effects """
 # earth.get_phase_masses()
 
 # UM water vs. mg/si
-# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M/')
-# plotpx.pop_scatter(dats, 'mgsi', 'mass_h2o_um', x_scale=1, y_scale=p.TO**-1, c='k', alpha=0.4,
-#                         xlabel='Mg/Si', ylabel='Upper mantle water capacity (Earth oceans)', filename=None,
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/')
+# plotpx.pop_scatter(dats, 'mg_number', 'mass_um', x_scale=1, y_scale=p.TO**-1, c='g', alpha=0.4,
+#                         # xlabel='Mg/Si', ylabel='Upper mantle water capacity (Earth oceans)', filename=None,
+#                         earth=earth, save=True)
+
+# stellar fe/mg
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/')
+# plotpx.pop_scatter(dats, 'femg_star', 'mass_um', x_scale=1, y_scale=p.TO**-1, c='g', alpha=0.4,
+#                         # xlabel='Mg/Si', ylabel='Upper mantle water capacity (Earth oceans)', filename=None,
 #                         earth=earth, save=True)
 
 # # mass of phase vs. water
@@ -154,11 +241,31 @@ def hist_saturation_subfig(which='um', masses=None, xlim='default', bins=None, l
 # hist_saturation_subfig(which='um', masses=[0.1], xlim=(0, 1),
 #                        bins=100, showmedian=True, show=False)
 
+def find_sd(nsd, dir_name, prop, dats=None):
+    # if np.size(q) > 1:
+    #     raise NotImplementedError('find_percentile() - multiple percentiles at once not implemented. use scalar q.')
+    if dats is None:
+        dats = rw.read_dir(px.perplex_path_default + 'output/' + dir_name + '/')
+    x = []
+    names = []
+    test_vals = []
+    for dat in dats:
+        try:
+            x.append(eval('dat.' + prop))
+            names.append(dat.star)
+        except AttributeError:
+            pass
+    mean = np.mean(x)
+    std = np.std(x)
+    pcen = (mean - nsd*std, mean + nsd*std)
+    print(prop, pcen)
+    return pcen
 
-def find_percentile(q, dir_name, prop):
-    if np.size(q) > 1:
-        raise NotImplementedError('find_percentile() - multiple percentiles at once not implemented. use scalar q.')
-    dats = rw.read_dir(px.perplex_path_default + 'output/' + dir_name + '/')
+def find_percentile(q, dir_name, prop, dats=None):
+    # if np.size(q) > 1:
+    #     raise NotImplementedError('find_percentile() - multiple percentiles at once not implemented. use scalar q.')
+    if dats is None:
+        dats = rw.read_dir(px.perplex_path_default + 'output/' + dir_name + '/')
     x = []
     names = []
     test_vals = []
@@ -169,9 +276,10 @@ def find_percentile(q, dir_name, prop):
         except AttributeError:
             pass
     pcen = np.percentile(x, q, method='nearest')
-    i_near = abs(x - pcen).argmin()
-    print(q, 'pcen', pcen, 'val')
-    return names[i_near]
+    for qq, p in zip(q, pcen):
+        i_near = abs(x - p).argmin()
+        print(prop, qq, '%:', p, '@', names[i_near])
+    return pcen
 
 
 folder = 'hypatia1M_1600K_80Fe'
@@ -261,35 +369,84 @@ folder = 'hypatia1M_1600K_80Fe'
 
 
 """ explain earth high water mass ? """
-# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/')
-# params = ['c_h2o_mantle', 'mass_h2o_total', 'mgsi', "wt_oxides['MgO']/pl.wt_oxides['FeO']"]
-# xlims = [(0, 0.004), (0, 1.5e22), None, None]
-# xlabels = ['Mantle c_h2o', 'Mantle m_h2o (kg)', 'Mg/Si', 'Mantle Mg/Fe']
-# fig, axes = plt.subplots(1, len(params))
-# for ii, pm in enumerate(params):
-#     fig, axes[ii] = plotpx.pop_hist1D(dats, pm, xlim=xlims[ii], bins=100, scale=1, earth=earth, ls_stats='--', c_hist='k', xlabel=xlabels[ii],
-#                       histtype='step', showmedian=True, showsigma=True, save=False, show=False, annotate_n=False,
-#                       fig=fig, ax=axes[ii])
-# todo: make axis lims +/- 3 sigma to compare, and cut off very extreme low Mg/Si because skewing?
+# folder = 'hypatia1M_1600K_88Fe'
+# dats = rw.read_dir(px.perplex_path_default + 'output/' + folder + '/')
+# params = ['mass_um', 'mass_h2o_um', "wt_oxides['MgO']/dat.wt_oxides['FeO']", 'p_mtz', 'p_lm'] #]#, 'mgsi', 'femg_star']
+# # # xlims = [(0, 0.004), (0, 1.5e22), None, None]
+# xlabels = ['UM mass (kg)', 'UM m_h2o (kg)', 'Mg/Fe', 'p mtz (Pa)', 'p LM (Pa)'] #Mantle Mg/Fe', 'Stellar Fe/Mg']
+# for jj, pl in enumerate([earth]):#, sun)):
+#     fig, axes = plt.subplots(len(params), 1)
+#     for ii, pm in enumerate(params):
+#         # get percentiles
+#         # pmin, pmax = find_percentile([2.27, 97.73], folder, pm, dats=dats)
+#         # pmin, pmax = find_sd(2, folder, pm, dats=dats)
+#         fig, axes[ii] = plotpx.pop_hist1D(dats, pm,  #xmin=pmin, xmax=pmax,xlim=(pmin, pmax),
+#                                           bins=50, scale=1, earth=pl, ls_stats='--', c_hist='k', alpha=0.5, xlabel=xlabels[ii],
+#                           histtype='step', showmedian=True, showsigma=1, save=False, show=False, annotate_n=False,
+#                           fig=fig, ax=axes[ii])
+#     plt.tight_layout()
+#     fig.savefig(plotpx.fig_path + ['earth', 'sun'][jj] + '_hists' + str(jj) + '.png')
 
+def get_percentile_of_attr(target_dat, attr, dats=None, folder=None):
+    from scipy import stats
+    if dats is None:
+        dats = rw.read_dir(px.perplex_path_default + 'output/' + folder + '/')
+    x = []
+    for dat in dats:
+        try:
+            x.append(eval('dat.' + attr))
+        except (AttributeError, KeyError):
+            pass  # blank data, didn't work because star not measured maybe
+    x_target = eval('target_dat.' + attr)
+    p = stats.percentileofscore(x, x_target, 'rank')
+    return p
+
+#
+# for ii, pm in enumerate(params):
+#     print('earth', pm, get_percentile_of_attr(earth, pm, dats=dats), 'percentile')
+#     print('sun', pm, get_percentile_of_attr(sun, pm, dats=dats), 'percentile')
 
 """ hist of FeO """
-# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_70Fe/')
-# # plotpx.pop_hist1D(dats, "wt_oxides['MgO']/(dat.wt_oxides['FeO'] + dat.wt_oxides['MgO'])", scale=1, earth=None, showmedian=True, save=False)
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/')
+# plotpx.pop_hist1D(dats, "femg_star", scale=1, earth=earth, showmedian=True, save=False)
+# plotpx.pop_hist1D(dats, "wt_oxides['MgO']/(dat.wt_oxides['FeO'] + dat.wt_oxides['MgO'])", scale=1, earth=earth, showmedian=True, save=False)
 # plotpx.pop_hist1D(dats, "wt_oxides['CaO']/(dat.wt_oxides['Al2O3'])", scale=1, earth=None, showmedian=True, save=False, xlim=(0, 5), bins=100)
 
 """ hist of p_CMB """
 # dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_65Fe/')
 # plotpx.pop_hist1D(dats, 'pressure[pl.i_cmb]', earth=None, showmedian=True)
 
-""" find highest p_cmb """
+""" hist of obm """
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia3M_1600K_88Fe/')
+# plotpx.pop_hist1D(dats, 'c_h2o_obm', earth=None, showmedian=True, showsigma=2)
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/')
+# plotpx.pop_hist1D(dats, 'c_h2o_obm', earth=None, showmedian=True, showsigma=2)
+
+""" hist of wmf """
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia2M_1600K_88Fe/')
+# plotpx.pop_hist1D(dats, 'mass_h2o_total', scale=1/(2*p.M_E) * 1e6, bins=100, range=(0, 500), earth=None, showmedian=True)
+
+""" find extrema """
 # plotpx.find_extrema('hypatia3,5M_1600K_88Fe', 'pressure[0]', get_min=False, get_max=True, n=1, output_base='output/', scale=1e-9)
 # plotpx.find_extrema('hypatia1M_1600K_65Fe', "wt_oxides['FeO']", get_min=False, get_max=True, n=1, output_base='output/')  # max FeO is 040%
+# plotpx.find_extrema('hypatia1M_1600K_99Fe', "mass_um", get_min=False, get_max=True, n=10, output_base='output/')
 
 
 """ find n richest planets """
 # plotpx.find_rich_planets(dir_name='hypatia3M', phase='st', n=10)
 # plotpx.find_rich_planets(dir_name='hypatia4M_1600K_88Fe', phase='ppv', n=10, get_min=True)
 
+
+""" update for unthought-of parameter """
+# # # dirs = [px.perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ['0,1', '0,5', '1','1,5', '2', '3']]  # todo other masses
+# dirs = [px.perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '3,5', '4', '5')]
+# # dirs = [px.perplex_path_default + 'output/hypatia1M_1600K_' + s + 'Fe/' for s in ['65', '70', '75', '80', '85', '90', '93', '95', '97', '99']]
+# # dirs = [px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/']  # 'output/hypatia1M_1900K_88Fe/'
+# for folder in dirs:
+#     # dats = rw.update_dir(folder, px.PerplexData.get_femg_star, store=True)
+#     # dats = rw.update_dir(folder, px.PerplexData.get_obm_water, store=True)
+#     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)
+#     # dats = rw.update_dir(folder, px.PerplexData.find_transition_zone, store=True)
+#     dats = rw.update_dir(folder, px.PerplexData.get_um_mass, store=True)
 
 plt.show()

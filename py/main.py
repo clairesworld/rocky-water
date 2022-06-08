@@ -112,14 +112,14 @@ def update_saturation(dat):  # weird choice that this isn't in class file but ok
     dat.mass_h2o_um = sat.total_water_mass(df_all, i_min=0, i_max=i_um_base)
 
     # also isolate olivine-bearing mantle
-    i_mtz_base = dat.find_transition_zone() - 1  # base of upper mantle
-    dat.mass_h2o_obm = sat.total_water_mass(df_all, i_min=0, i_max=i_mtz_base)
+    dat.get_obm_water()
 
     dat.df_all = df_all
     return dat
 
 
-def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=None, pickle_always=False, **kwargs):
+def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=None, pickle_always=False, solve_interior=True,
+                 **kwargs):
     """ kwargs include
      overwrite (bool) : auto overwrite build etc files,
      head (bool) : to print DataFrame headers when reading them
@@ -157,12 +157,13 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
     else:
         # run --> this is the time-consuming part
         # print('kwargs build_planet', kwargs)
-        okay = dat.get_interior(**kwargs)
+        okay = dat.get_interior(solve_interior=solve_interior, **kwargs)
 
-    if not okay and not pickle_always:
+    if not okay and solve_interior:
+        print('returning None')
         return None
 
-    else:
+    elif solve_interior:
         # rename and scale columns (for use with saturation calcs but being consistent regardless)
         df_all = dat.df_comp.copy()
         renamed_phases = rename_phases(dat.phases_px)
@@ -193,11 +194,11 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
             dat = update_saturation(dat)
 
         # calculate some other simple things - only here because you thought of this later but should be done inside class
-        if not hasattr(dat, 'mass_um'):
+        if not hasattr(dat, 'mass_um') or dat.mass_um is None:  # needs to be here because df_all not created in class
             dat.get_um_mass()
-        if not hasattr(dat, 'mgsi'):
+        if not hasattr(dat, 'mgsi') or dat.mgsi is None:
             dat.get_mgsi()
-        if not hasattr(dat, 'mg_number'):
+        if not hasattr(dat, 'mg_number') or dat.mg_number is None:
             dat.get_mg_number()
 
         # write df to file
@@ -209,6 +210,10 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
             file = dat.name + fend
             if os.path.exists(dat.perplex_path + file):
                 os.rename(dat.perplex_path + file, dat.output_path + file)
+
+    else:
+        print('mgsi', dat.mgsi)
+        return dat  # just calculated bulk composition
 
     # for now also save as pickle for laziness
     with open(dat.output_path + "dat.pkl", "wb") as pfile:
@@ -250,6 +255,8 @@ def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True,
         if verbose:
             print('warning:', output_path, 'does not exist')
         return []
+    except PermissionError:
+        print('probably have a for loop reading characters rather than file strings')
     if subsample is not None:
         # a random subset of the directory
         subfolders = random.sample(subfolders, subsample)
@@ -264,6 +271,8 @@ def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True,
         except FileNotFoundError:
             if verbose:
                 print('warning:', dir, 'is empty')
+        except PermissionError as e:
+            print(dir, e)
     if verbose:
         print('loaded', count, 'pickle files')
     return dats

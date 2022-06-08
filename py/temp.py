@@ -17,7 +17,7 @@ Tp = 1600
 # core_eff = 0.8831461545794602
 Mp = 1
 
-for core_eff in [0.65]:
+for core_eff in [0.98]:
     if isinstance(Mp, float):
         mass_str = str(Mp).replace('.', ',')
     elif isinstance(Mp, int):
@@ -30,6 +30,7 @@ for core_eff in [0.65]:
 
     # # get water capacity across planets
     planets = rw.planets_from_hypatia(n_sample,
+                                      restart='2MASS 19592683+4549384',
                                       use_local_composition=True, **planet_dict)
 
 

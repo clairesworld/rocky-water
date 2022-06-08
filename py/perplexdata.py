@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pandas as pd
 from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
@@ -27,6 +27,7 @@ class PerplexData:
                  oxides=None, solution_phases=None,
                  star='sun', perplex_path=perplex_path_default, output_parent_path=output_parent_default, verbose=False,
                  **kwargs):
+        self.c_h2o_obm = None
         if solution_phases is None:
             solution_phases = solution_phases_default
         if oxides is None:
@@ -66,6 +67,8 @@ class PerplexData:
         self.cum_mass = None
         self.mass = None
         self.i_cmb = None
+        self.p_mtz = None
+        self.p_lm = None
         # self.pressure_m = None
         # self.temperature_m = None
         self.phases_px = None
@@ -73,6 +76,7 @@ class PerplexData:
         self.Fe_mass_fraction = None
         self.phase_mass = None
         self.mass_um = None
+        self.mass_obm = None
         self.mass_h2o_total = None
         self.mass_h2o_um = None
         self.mass_h2o_obm = None
@@ -298,14 +302,21 @@ class PerplexData:
         self.mg_number = n_MgO / (n_MgO + n_FeO) * 100
         return self.mg_number
 
+    def get_femg_star(self):
+        X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[self.oxide_list.index('MgO')]
+        self.femg_star = X_ratio_mol
+
     def get_phase_masses(self):
         self.phase_mass = {ph: np.sum(self.df_comp[ph]*1e-2 * self.df_all['mass(kg)']) for ph in self.phases_px}
         return self.phase_mass
 
     def get_um_mass(self):
+        from saturation import total_water_mass
         i_um_base = self.find_lower_mantle() - 1  # base of lower mantle
         # print('pressure at um base', self.df_all['P(bar)'][i_um_base], 'bar')
         self.mass_um = np.sum(self.df_all['mass(kg)'][:i_um_base + 1])
+
+        self.mass_h2o_um = total_water_mass(self.df_all, i_min=0, i_max=i_um_base)
         return self.mass_um
 
     def star_to_oxide(self, **kwargs):
@@ -611,8 +622,10 @@ class PerplexData:
         if n == 'auto':
             if M / M_E <= 1:
                 n = 300  # n = 200 saves about 7 sec per run, misses a little Aki phase
-            elif M / M_E <= 3:
+            elif M / M_E <= 2:
                 n = 500
+            elif M / M_E <= 2.5:
+                n = 1200
             elif M / M_E <= 5:
                 n = 1600
 
@@ -707,9 +720,9 @@ class PerplexData:
                     if pressure[i] > 10e3 * 1e9:
                         print('pressure eror, i', i, pressure[i] * 1e-9, 'GPa', 'rho cen', density[0], 'rho cmb',
                               density[i_cmb])
-                        plt.plot(radius * 1e-3, pressure * 1e-9)
-                        plt.axvline(radius[i_cmb] * 1e-3)
-                        plt.show()
+                        # plt.plot(radius * 1e-3, pressure * 1e-9)
+                        # plt.axvline(radius[i_cmb] * 1e-3)
+                        # plt.show()
                     _, density[i], alpha[i], cp[i] = eos.EOS_all(pressure[i] * 1e-9, temperature[i], 4)
                     if cp[i] == 0:
                         print('i', i, 'cp[i]', cp[i], 'problem with core EoS')
@@ -855,13 +868,28 @@ class PerplexData:
          although not all planets have MTZ minerals or olivine polymorphs, can generalise to where perovskite kicks in,
          even if most of the upper mantle is just SiO2. index will change slightly depending on resolution, but deciding
          to take the first layer because e.g. not all planets have over 50% perovskite in lower mantle. Pv reaches max
-         modality within a handful of layers. """
+         modality within a handful of layers.
+         EDIT: when X_pv > X_ring - because if transition is gradual will be biased to lower p - but makes viol plot look weird because can include lm phases
+         but at 0 FeO content can get no ring sometimes, so here take first pv?
+         """
         try:
+            # series = self.df_comp['Pv'].divide(self.df_comp['Ring'])
+            # i_lm = series[series.gt(1)].index[0]
+            # print('i_lm', i_lm)
             i_lm = self.df_comp['Pv'].ne(0).idxmax()
         except KeyError:
+            # if 'X_ring' not in self.df_comp.columns:  # happens at 0 FeO, get aki instead
+            #     i_lm = self.df_comp['Pv'].ne(0).idxmax()
+            # else:
             print('      no Pv phase found! (planet too small?)')
             return len(
                 self.df_comp)  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
+        except IndexError as e:  # this happens if there is pv but never reaches larger fraction than ring
+            print('      not enough of a Pv phase found! (planet too small?)')
+            # print(self.name, self.output_path)
+            return len(
+                self.df_comp)  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
+        self.p_lm = self.df_comp['P(bar)'].iloc[i_lm] * 1e5  # Pa
         return i_lm
 
     def find_transition_zone(self):
@@ -869,15 +897,23 @@ class PerplexData:
          for planets with no Ol or Wad, still get Ring so use this as MTZ definition...
          index will change slightly depending on resolution """
         try:
-            i_lm = self.df_comp['Wad'].ne(0).idxmax()
+            i_mtz = self.df_comp['Wad'].ne(0).idxmax()
         except KeyError:
-            print('      no Wad phase found! Defining TZ at ring')
-            try:
-                i_lm = self.df_comp['Ring'].ne(0).idxmax()
-            except KeyError:
-                print('      no Ring phase found! Guessing the planet is very small')
-                return len(self.df_comp)
-        return i_lm
+            print('      no Wad phase found! Defining TZ at base of opx')
+            # try:
+            i_mtz = self.df_comp['Opx'].eq(0).idxmax()  # make sure not just first layer has 0 opx <-- actually never the problem
+            # except KeyError:
+            #     print('      no Ring phase found! Guessing the planet is very small')
+            #     return len(self.df_comp)
+        self.p_mtz = self.df_comp['P(bar)'].iloc[i_mtz] * 1e5   # Pa
+        return i_mtz
+
+    def get_obm_water(self):
+        from saturation import total_water_mass
+        i_mtz_base = self.find_transition_zone() - 1  # base of upper mantle
+        self.mass_h2o_obm = total_water_mass(self.df_all, i_min=0, i_max=i_mtz_base)
+        self.mass_obm = np.sum(self.df_all['mass(kg)'][:i_mtz_base])  # also get mass of layer
+        self.c_h2o_obm = self.mass_h2o_obm / self.mass_obm  # also get concentration (avg)
 
     def get_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None,
                      parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
@@ -893,7 +929,9 @@ class PerplexData:
                 return None  # e.g. missing element in hypatia catalogue
             self.star_to_oxide(**kwargs)
         else:
-            if self.star not in ('sun', None):
+            if self.star == 'sun':
+                self.get_star_compositon()
+            elif self.star not in ('sun', None):
                 print('Did you mean to input both star name and fixed oxide wt%s?')
 
             # ensure bulk oxide composition sums to 100% (necessary for cmf calculations
@@ -901,6 +939,8 @@ class PerplexData:
             self.wt_oxides = {k: test_oxides[k] / sum_wt_oxides * 100 for k in oxides}
         self.get_mgsi()  # molar mg/si ratio
         self.get_mg_number()
+        if self.nH_star is not None:
+            self.get_femg_star()
 
         # second, get core size for either a fixed CMF or a core partitioning
         if test_CMF is None:
@@ -909,6 +949,7 @@ class PerplexData:
             if test_CMF == 0:
                 test_CMF = 1e-10  # can't be 0 for analytical reasons???
             self.CMF = test_CMF
+            self.core_eff_from_cmf()
 
         # pull some Si out of mantle into core - not self-consistently doing core EoS with Si though
         if x_Si_core is not None:
@@ -928,6 +969,8 @@ class PerplexData:
                 self.get_composition(**kwargs)
                 self.load_composition_px(**kwargs)
             return True  # checks that it works
+        else:
+            return True  # e.g if you just want to check out bulk compositions
 
     def melting_temperature(self, T_sol=1927, p0=1, **kwargs):
         """ get compositionally-dependent top-of-mantle solidus temperature

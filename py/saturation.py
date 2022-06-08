@@ -491,7 +491,7 @@ def total_water_frac(df, i_min=0, i_max=-1):
 
 
 def total_water_mass(df, i_min=0, i_max=None):
-    """ returns mass of water in kg """
+    """ returns mass of water in kg, i_max is exclusive """
     # print('total_water_mass(), i_min', i_min, 'i_max', i_max)
     if i_max is None:
         subset = df.iloc[i_min:]  # select a chunk of rows if asked

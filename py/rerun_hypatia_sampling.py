@@ -19,14 +19,14 @@ n_sample = -1
 Tp = 1600
 core_eff = 0.8831461545794602
 
-for Mp in [3]:
+for Mp in [2.5]:
     if isinstance(Mp, float):
         mass_str = str(Mp).replace('.', ',')
     elif isinstance(Mp, int):
         mass_str = str(Mp)
     directory = 'output/hypatia' + mass_str + 'M_' + str(Tp) + 'K_' + str(int(core_eff * 100)) + 'Fe_hires/'
     planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff,
-                   'maxIter': 30, 'tol': 1e-4,  'n': 1600,
+                   'maxIter': 30, 'tol': 1e-4,  # 'n': 1600,
                    'get_saturation': True, 'verbose': True,
                    'output_parent_path': px.perplex_path_default + directory}
 
