@@ -65,7 +65,7 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
 
 
 def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, use_local_composition=False,
-                     output_parent=None, **kwargs):
+                     output_parent_path=None, **kwargs):
     """ star id is same as hypatia catalog with spaces e.g. "HIP 12345" """
     import parameters as p
 
@@ -75,7 +75,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, us
 
     def do_local():
         try:
-            path = get_directory(star, output_parent=output_parent)
+            path = get_directory(star, output_parent=output_parent_path)
             with open(path + '/dat.pkl', "rb") as pfile:
                 dat = pkl.load(pfile)
             nH_star = dat.nH_star
@@ -128,5 +128,6 @@ def get_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', output_pare
         # print('path', path)
         return path[0]  # should only be one but glob.glob returns list
     except IndexError as e:
-        print('path', path, 'output_parent', output_parent)
+        print('path', path)
+        print('output_parent', output_parent)
         raise e

@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
+import pathlib
 import subprocess
 from bulk_composition import bulk_composition
 import ask_hypatia as hyp
@@ -284,10 +285,7 @@ class PerplexData:
             solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol, 'na_sol': na_sol}
             self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list]
         else:
-            head, tail = os.path.split(self.output_path)
-            print('head', head)
-            print('tail', tail)
-            self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, output_parent=head, **kwargs)
+            self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, **kwargs)
 
     def get_mgsi(self, **kwargs):
         # if self.nH_star:
