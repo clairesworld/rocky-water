@@ -1,11 +1,11 @@
-import numpy as np
-import parameters as p
-import ask_hypatia as hyp
-import perplexdata as px
-import pickle as pkl
-import plot_perplex as plotpx
+# import numpy as np
+# import parameters as p
+# import ask_hypatia as hyp
+# import perplexdata as px
+# import pickle as pkl
+# import plot_perplex as plotpx
 import main as rw
-from saturation import TO
+# from saturation import TO
 
 """ get every star from hypatia (run once) - todo only with measured mg?"""
 # hyp.retrieve_star_names(exo_hosts=False, writeto='all_hypatia_names.txt')
