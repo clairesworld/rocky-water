@@ -285,6 +285,8 @@ class PerplexData:
             self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list]
         else:
             head, tail = os.path.split(self.output_path)
+            print('head', head)
+            print('tail', tail)
             self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, output_parent=head, **kwargs)
 
     def get_mgsi(self, **kwargs):

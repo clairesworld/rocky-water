@@ -113,7 +113,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, us
     return nH_star  # will always be in same order as oxides list
 
 
-def get_directory(star_name, existing_dir='hypatia1M_1600K_80Fe/', output_parent=None):
+def get_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', output_parent=None):
     from perplexdata import output_parent_default
     import glob
     """retrieve directory of existing run for a given star
