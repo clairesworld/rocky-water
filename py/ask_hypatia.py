@@ -119,6 +119,10 @@ def get_directory(star_name, existing_dir='hypatia1M_1600K_80Fe/'):
     import glob
     sn = star_name.replace(' ', '')
     # print('searching for', output_parent_default + existing_dir + '*' + sn + '*')
-    path = glob.glob(output_parent_default + existing_dir + '*' + sn + '*')
-    # print('path', path)
-    return path[0]  # should only be one but glob.glob returns list
+    try:
+        path = glob.glob(output_parent_default + existing_dir + '*' + sn + '*')
+        # print('path', path)
+        return path[0]  # should only be one but glob.glob returns list
+    except IndexError as e:
+        print('path', path)
+        raise e
