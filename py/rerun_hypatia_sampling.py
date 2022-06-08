@@ -36,7 +36,7 @@ for Mp in [0.1, 0.3, 0.5, 1, 1.5, 2]:
     # # get water capacity across planets
     planets = rw.planets_from_hypatia(n_sample,
                                       # stopafter='2MASS 19461589+4406211',
-                                      use_local_composition=False,
+                                      use_local_composition=True,
                                       perplex_path=perplex_path,
                                       output_parent_path=perplex_path + directory,
                                       **planet_dict)

@@ -59,10 +59,8 @@ def scatterhist_mgsi_allmasses(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rain
     colours = colorize(np.arange(len(dirs)), cmap=cmap, vmin=vmin, vmax=vmax)[0]
 
     # get colour for 1ME
-    print('colour', colours[ii_1M])
     c_1M_alpha = colours[ii_1M]
-    c_1M_alpha[3] = 0.25  # set alpha
-    print('updated colour', colours[ii_1M])
+    c_1M_alpha[3] = 0.8 # 0.25  # set alpha
 
     # set up scatter & histogram gridspec
     dats = rw.read_dir(px.perplex_path_default + 'output/' + dirs[ii_1M] + '/')
@@ -106,15 +104,15 @@ def scatterhist_mgsi_allmasses(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rain
     ax.scatter(earth.mgsi, eval('earth.' + y_var) / p.M_E * 1e6, label='Earth', c='xkcd:dark blue',
                marker='$\oplus$', s=200, zorder=200)
 
-
-
     # make legends
     if show_histy:
         leg_bbox_to_anchor = (1.01, 1)
     else:
         leg_bbox_to_anchor = (1.01, 1)
-    cax = colourised_legend(ax, colours, [str(m) + ' $M_\oplus$' for m in masses], title=None,  # r'$\bf{Planet}$ $\bf{mass}$',
-                            legsize=legsize, titlesize=legsize, markersize=5, bbox_to_anchor=leg_bbox_to_anchor, handletextpad=0.1)
+    cax = colourised_legend(ax, colours, [str(m) + ' $M_\oplus$' for m in masses], #alpha=alpha,
+                            title=None,  # r'$\bf{Planet}$ $\bf{mass}$',
+                            legsize=legsize, titlesize=legsize, markersize=5,
+                            bbox_to_anchor=leg_bbox_to_anchor, handletextpad=0.1)
     ax_histy.set_zorder(-1)  # to go below leg
     ax.legend(handles=[mlines.Line2D([], [], color='k', marker='*',
                                      markersize=8, lw=0, label='Solar'),
