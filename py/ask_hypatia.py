@@ -135,4 +135,5 @@ def get_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', output_pare
         except IndexError as e:
             print('path', path)
             print('output_parent', output_parent)
+            print('output_parent + existing', output_parent + existing_dir)
             raise e
