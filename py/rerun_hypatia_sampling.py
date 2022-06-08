@@ -13,6 +13,7 @@ from saturation import TO
 
 """ run over names list """
 # set run parameters
+perplex_path = '/home/cmg76/Works/perple_x/'  # will have to edit this in .dat after copying over...
 n_sample = -1
 
 # set planet parameters
@@ -28,17 +29,17 @@ for Mp in [0.1, 0.3, 0.5, 1, 1.5, 2]:
         mass_str = str(Mp)
     directory = 'output/hypatia' + mass_str + 'M_' + str(Tp) + 'K_' + str(int(core_eff * 100)) + 'Fe_hires/'
     planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff,
-                   'maxIter': 30, 'tol': 1e-4,  'n': n,
+                   'maxIter': 30, 'tol': 1e-4, 'n': n,
                    'get_saturation': True, 'verbose': True,
-                   'output_parent_path': px.perplex_path_default + directory}
+                   }
 
     # # get water capacity across planets
     planets = rw.planets_from_hypatia(n_sample,
                                       # stopafter='2MASS 19461589+4406211',
-                                      use_local_composition=False, **planet_dict)
-
-
-
+                                      use_local_composition=False,
+                                      perplex_path=perplex_path,
+                                      output_parent_path=perplex_path + directory,
+                                      **planet_dict)
 
 # # or, load from pickle
 # planets = rw.read_dir(px.perplex_path_default + 'output/hypatia2M/')
