@@ -64,7 +64,8 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
     return sample_names
 
 
-def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, use_local_composition=False, **kwargs):
+def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, use_local_composition=False,
+                     output_parent=None, **kwargs):
     """ star id is same as hypatia catalog with spaces e.g. "HIP 12345" """
     import parameters as p
 
@@ -74,7 +75,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, us
 
     def do_local():
         try:
-            path = get_directory(star)
+            path = get_directory(star, output_parent=output_parent)
             with open(path + '/dat.pkl', "rb") as pfile:
                 dat = pkl.load(pfile)
             nH_star = dat.nH_star
@@ -112,17 +113,20 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, us
     return nH_star  # will always be in same order as oxides list
 
 
-def get_directory(star_name, existing_dir='hypatia1M_1600K_80Fe/'):
+def get_directory(star_name, existing_dir='hypatia1M_1600K_80Fe/', output_parent=None):
     from perplexdata import output_parent_default
+    import glob
     """retrieve directory of existing run for a given star
     note this requires default use of paths as given in perplexdata.py"""
-    import glob
+
+    if output_parent is None:
+        output_parent = output_parent_default
     sn = star_name.replace(' ', '')
     # print('searching for', output_parent_default + existing_dir + '*' + sn + '*')
     try:
-        path = glob.glob(output_parent_default + existing_dir + '*' + sn + '*')
+        path = glob.glob(output_parent + existing_dir + '*' + sn + '*')
         # print('path', path)
         return path[0]  # should only be one but glob.glob returns list
     except IndexError as e:
-        print('path', path)
+        print('path', path, 'output_parent', output_parent)
         raise e
