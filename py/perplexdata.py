@@ -319,6 +319,10 @@ class PerplexData:
         X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[self.oxide_list.index('MgO')]
         self.femg_star = X_ratio_mol
 
+    def get_fesi_star(self):
+        X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[self.oxide_list.index('SiO2')]
+        self.fesi_star = X_ratio_mol
+
     def get_phase_masses(self):
         self.phase_mass = {ph: np.sum(self.df_comp[ph]*1e-2 * self.df_all['mass(kg)']) for ph in self.phases_px}
         return self.phase_mass

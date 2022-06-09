@@ -78,6 +78,9 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, verbose=False, us
             path = get_directory(star, output_parent=output_parent_path)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
+            except OSError:
+                # no data
+                return None
             except FileNotFoundError:  # try pickled file
                 with open(path + '/dat.pkl', "rb") as pfile:
                     dat = pkl.load(pfile)
