@@ -287,6 +287,11 @@ class PerplexData:
         else:
             self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, **kwargs)
 
+    def write_star_composition(self, fname='nH_star.txt', path=None):
+        if path is None:
+            path = self.output_path
+        np.savetxt(path + fname, self.nH_star, delimiter=',')  # X is an array
+
     def get_mgsi(self, **kwargs):
         # if self.nH_star:
         #     self.mgsi = 10 ** self.nH_star[self.oxide_list.index('MgO')] / 10 ** self.nH_star[self.oxide_list.index('SiO2')]  # molar ratio

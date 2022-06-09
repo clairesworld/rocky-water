@@ -441,8 +441,9 @@ def get_percentile_of_attr(target_dat, attr, dats=None, folder=None):
 # # # dirs = [px.perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ['0,1', '0,5', '1','1,5', '2', '3']]  # todo other masses
 # dirs = [px.perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '3,5', '4', '5')]
 # # dirs = [px.perplex_path_default + 'output/hypatia1M_1600K_' + s + 'Fe/' for s in ['65', '70', '75', '80', '85', '90', '93', '95', '97', '99']]
-# # dirs = [px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/']  # 'output/hypatia1M_1900K_88Fe/'
-# for folder in dirs:
+dirs = [px.perplex_path_default + 'output/hypatia0,1M_1600K_88Fe/']  # 'output/hypatia1M_1900K_88Fe/'
+for folder in dirs:
+    dats = rw.update_dir(folder, px.PerplexData.write_star_composition, store=True)
 #     # dats = rw.update_dir(folder, px.PerplexData.get_femg_star, store=True)
 #     # dats = rw.update_dir(folder, px.PerplexData.get_obm_water, store=True)
 #     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)

@@ -1,7 +1,7 @@
 # import numpy as np
 # import parameters as p
 # import ask_hypatia as hyp
-# import perplexdata as px
+import perplexdata as px
 # import pickle as pkl
 # import plot_perplex as plotpx
 import main as rw
@@ -13,7 +13,8 @@ import main as rw
 
 """ run over names list """
 # set run parameters
-perplex_path = '/home/cmg76/Works/perple_x/'  # will have to edit this in .dat after copying over...
+# perplex_path = '/home/cmg76/Works/perple_x/'  # will have to edit this in .dat after copying over...
+perplex_path = px.perplex_path_default
 n_sample = -1
 
 # set planet parameters
