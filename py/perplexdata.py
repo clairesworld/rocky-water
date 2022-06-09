@@ -163,12 +163,19 @@ class PerplexData:
             df = df.fillna(0)
         if head:
             print(df.head())
-        P = df['P(bar)'].to_numpy() * 1e5  # in Pa
-        T = df['T(K)'].to_numpy()
-        alpha_m = df['alpha,1/K'].to_numpy()
-        cp_m = df['cp,J/K/kg'].to_numpy()
-        rho_m = df['rho,kg/m3'].to_numpy()
-
+        try:
+            P = df['P(bar)'].to_numpy() * 1e5  # in Pa
+            T = df['T(K)'].to_numpy()
+            alpha_m = df['alpha,1/K'].to_numpy()
+            cp_m = df['cp,J/K/kg'].to_numpy()
+            rho_m = df['rho,kg/m3'].to_numpy()
+        except AttributeError:
+            # old version of pandas
+            P = np.array(df['P(bar)']) * 1e5  # in Pa
+            T = np.array(df['T(K)'])
+            alpha_m = np.array(df['alpha,1/K'])
+            cp_m = np.array(df['cp,J/K/kg'])
+            rho_m = np.array(df['rho,kg/m3'])
         # check if any nans or zeros - flag and for now just extrapolate constant value
         # will want to see how many cases later (limits of Stixrude 2021 dataset e.g.)
         # need to do this for rho, alpha, cp as they could be different idk
