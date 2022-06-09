@@ -1,27 +1,18 @@
-# import numpy as np
-# import parameters as p
-# import ask_hypatia as hyp
-# from perplexdata import perplex_path_default
-# import pickle as pkl
-# import plot_perplex as plotpx
+import perplexdata as px
 import main as rw
 # from saturation import TO
 
-""" get every star from hypatia (run once) - todo only with measured mg?"""
-# hyp.retrieve_star_names(exo_hosts=False, writeto='all_hypatia_names.txt')
-# hyp.retrieve_star_names(exo_hosts=True, writeto='host_names.txt')
 
 """ run over names list """
-def run_all_masses(Tp=1600, core_eff=0.8831461545794602, )
 # set run parameters
 perplex_path = '/raid1/cmg76/perple_x/'  # will have to edit this in .dat after copying over...
-# perplex_path = perplex_path_default
+# perplex_path = px.perplex_path_default
 n_sample = -1
 
 # set planet parameters
 Tp = 1600
 core_eff = 0.8831461545794602
-n = 1200
+n = 'auto'
 
 # run at higher res over masses (primarily to get upper mantle)
 for Mp in [0.3, 0.5, 1, 1.5, 2]:
@@ -36,21 +27,12 @@ for Mp in [0.3, 0.5, 1, 1.5, 2]:
                    }
 
     # # get water capacity across planets
-
+    restart = '2MASS 19584220+4704330'
     planets = rw.planets_from_hypatia(n_sample,
+                                      restart=restart,  # Mp = 0.3, hires, 1600K
                                       # stopafter='2MASS 19461589+4406211',
                                       use_local_composition=True,
                                       perplex_path=perplex_path,
                                       output_parent_path=perplex_path + directory,
                                       **planet_dict)
-
-
-# # or, load from pickle
-# planets = rw.read_dir(px.perplex_path_default + 'output/hypatia2M/')
-
-#########################################################################################################################
-# already ran the below but leaving it here for ref
-# dirs = [px.perplex_path_default + 'output/' + s + '/' for s in ('hypatia1M', 'hypatia2M', 'hypatia4M')]
-# for dir_ in dirs:
-#     rw.update_dir(dir_, px.PerplexData.get_um_mass, store=True)
-#     rw.update_dir(dir_, px.PerplexData.get_mgsi, store=True)
+    restart = None

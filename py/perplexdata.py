@@ -627,9 +627,9 @@ class PerplexData:
 
         if n == 'auto':
             if M / M_E <= 1:
-                n = 300  # n = 200 saves about 7 sec per run, misses a little Aki phase
+                n = 1200 #300  # n = 200 saves about 7 sec per run, misses a little Aki phase
             elif M / M_E <= 2:
-                n = 500
+                n = 1200 #500
             elif M / M_E <= 2.5:
                 n = 1200
             elif M / M_E <= 5:
