@@ -12,7 +12,7 @@ import main as rw
 # hyp.retrieve_star_names(exo_hosts=True, writeto='host_names.txt')
 
 """ run over names list """
-def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-1, n='auto',
+def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-1, n='auto', restart=None,
                    perplex_path='/raid1/cmg76/perple_x/', tail='_hires'  # apollo hires defaults
                    ):
     # run at higher res over masses (primarily to get upper mantle)
@@ -32,12 +32,13 @@ def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-
 
         # get water capacity across planets
         planets = rw.planets_from_hypatia(n_sample,
+                                          restart=restart,
                                           use_local_composition=True,
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
                                           **planet_dict)
 
-def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto',
+def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', restart=None,
                    perplex_path='/raid1/cmg76/perple_x/', tail='_hires'  # apollo hires defaults
                    ):
     # run at higher res over masses (primarily to get upper mantle)
@@ -57,6 +58,7 @@ def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto',
 
         # get water capacity across planets
         planets = rw.planets_from_hypatia(n_sample,
+                                          restart=restart,
                                           use_local_composition=True,
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
