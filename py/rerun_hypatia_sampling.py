@@ -12,38 +12,45 @@ import main as rw
 # hyp.retrieve_star_names(exo_hosts=True, writeto='host_names.txt')
 
 """ run over names list """
-def run_all_masses(Tp=1600, core_eff=0.8831461545794602, )
+def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-1, n='auto',
+                   perplex_path='/raid1/cmg76/perple_x/', tail='_hires'  # apollo hires defaults
+                   ):
+    # run at higher res over masses (primarily to get upper mantle)
+
+    if masses is None:
+        masses = [0.1, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5]
+    for Mp in masses:
+        if isinstance(Mp, float):
+            mass_str = str(Mp).replace('.', ',')
+        elif isinstance(Mp, int):
+            mass_str = str(Mp)
+        directory = 'output/hypatia' + mass_str + 'M_' + str(Tp) + 'K_' + str(int(core_eff * 100)) + 'Fe' + tail + '/'
+        planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff,
+                       'maxIter': 30, 'tol': 1e-4, 'n': n,
+                       'get_saturation': True, 'verbose': True,
+                       }
+
+        # get water capacity across planets
+        planets = rw.planets_from_hypatia(n_sample,
+                                          use_local_composition=True,
+                                          perplex_path=perplex_path,
+                                          output_parent_path=perplex_path + directory,
+                                          **planet_dict)
+
+
 # set run parameters
-perplex_path = '/raid1/cmg76/perple_x/'  # will have to edit this in .dat after copying over...
+# perplex_path = '/raid1/cmg76/perple_x/'  # will have to edit this in .dat after copying over...
 # perplex_path = perplex_path_default
-n_sample = -1
+# tail = '_hires'
 
 # set planet parameters
-Tp = 1600
-core_eff = 0.8831461545794602
-n = 1200
+# Tp = 1600
+# core_eff = 0.8831461545794602
+# n = 'auto'  # 1200
 
-# run at higher res over masses (primarily to get upper mantle)
-for Mp in [0.3, 0.5, 1, 1.5, 2]:
-    if isinstance(Mp, float):
-        mass_str = str(Mp).replace('.', ',')
-    elif isinstance(Mp, int):
-        mass_str = str(Mp)
-    directory = 'output/hypatia' + mass_str + 'M_' + str(Tp) + 'K_' + str(int(core_eff * 100)) + 'Fe_hires/'
-    planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff,
-                   'maxIter': 30, 'tol': 1e-4, 'n': n,
-                   'get_saturation': True, 'verbose': True,
-                   }
-
-    # # get water capacity across planets
-
-    planets = rw.planets_from_hypatia(n_sample,
-                                      # stopafter='2MASS 19461589+4406211',
-                                      use_local_composition=True,
-                                      perplex_path=perplex_path,
-                                      output_parent_path=perplex_path + directory,
-                                      **planet_dict)
-
+# run_all_masses(#masses=None,
+#                Tp=Tp, core_eff=core_eff,
+#             )
 
 # # or, load from pickle
 # planets = rw.read_dir(px.perplex_path_default + 'output/hypatia2M/')
