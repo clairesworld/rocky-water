@@ -37,6 +37,7 @@ def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
                                           **planet_dict)
+        restart = None  # reset
 
 def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', restart=None,
                    perplex_path='/raid1/cmg76/perple_x/', tail='_hires'  # apollo hires defaults
@@ -63,6 +64,7 @@ def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', re
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
                                           **planet_dict)
+        restart = None  # reset
 
 
 # set run parameters

@@ -49,7 +49,7 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
     # get a random star from database - N.B. there are 1331 entries for exo hosts
     from inspect import getsourcefile
     from os.path import abspath
-    wd = abspath(getsourcefile(lambda: 0))
+    wd = abspath(getsourcefile(lambda: 0))  # get absolute path of this file
 
     if names_file is not None:
         with open('/' + os.path.join(*(wd.split(os.path.sep)[:-1])) + '/' + names_file, 'r') as filehandle:
