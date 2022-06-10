@@ -52,7 +52,7 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
     wd = abspath(getsourcefile(lambda: 0))
 
     if names_file is not None:
-        with open(os.path.join(*(wd.split(os.path.sep)[:-1])) + '/' + names_file, 'r') as filehandle:
+        with open('/' + os.path.join(*(wd.split(os.path.sep)[:-1])) + '/' + names_file, 'r') as filehandle:
             names = [a.rstrip() for a in filehandle.readlines()]
     else:
         names = retrieve_star_names(**kwargs)
