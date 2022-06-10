@@ -47,9 +47,12 @@ def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', e
 
 def random_star(n=1, names_file='host_names.txt', **kwargs):
     # get a random star from database - N.B. there are 1331 entries for exo hosts
-    print(os.getcwd())
+    from inspect import getsourcefile
+    from os.path import abspath
+    wd = abspath(getsourcefile(lambda: 0))
+
     if names_file is not None:
-        with open(names_file, 'r') as filehandle:
+        with open(os.path.join(*(wd.split(os.path.sep)[:-1])) + '/' + names_file, 'r') as filehandle:
             names = [a.rstrip() for a in filehandle.readlines()]
     else:
         names = retrieve_star_names(**kwargs)
