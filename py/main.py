@@ -118,7 +118,7 @@ def update_saturation(dat):  # weird choice that this isn't in class file but ok
     return dat
 
 
-def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=None, pickle_always=False, solve_interior=True,
+def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=None, solve_interior=True,
                  **kwargs):
     """ kwargs include
      overwrite (bool) : auto overwrite build etc files,

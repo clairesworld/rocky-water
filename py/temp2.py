@@ -5,8 +5,8 @@ import main as rw
 
 """ run over names list """
 # set run parameters
-perplex_path = '/raid1/cmg76/perple_x/'  # will have to edit this in .dat after copying over...
-# perplex_path = px.perplex_path_default
+# perplex_path = '/raid1/cmg76/perple_x/'  # will have to edit this in .dat after copying over...
+perplex_path = px.perplex_path_default
 n_sample = -1
 
 # set planet parameters

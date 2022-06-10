@@ -346,6 +346,7 @@ class PerplexData:
                     verbose=False, overwrite=True, vertex_data='stx21ver', option_file='perplex_option_claire',
                     excluded_phases=None, use_solutions=True, **kwargs):
         """ write perple_x build file, p in bar but have fucked it before and np """
+        print(option_file)
         if excluded_phases is None:
             excluded_phases = []  # no excluded phases / solution end members
         # if verbose:
