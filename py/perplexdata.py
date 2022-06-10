@@ -917,11 +917,7 @@ class PerplexData:
             i_mtz = self.df_comp['Wad'].ne(0).idxmax()
         except KeyError:
             print('      no Wad phase found! Defining TZ at base of opx')
-            # try:
-            i_mtz = self.df_comp['Opx'].eq(0).idxmax()  # make sure not just first layer has 0 opx <-- actually never the problem
-            # except KeyError:
-            #     print('      no Ring phase found! Guessing the planet is very small')
-            #     return len(self.df_comp)
+            return len(self.df_comp)
         self.p_mtz = self.df_comp['P(bar)'].iloc[i_mtz] * 1e5   # Pa
         return i_mtz
 

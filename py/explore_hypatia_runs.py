@@ -73,10 +73,15 @@ earth.femg_star = 0.81
 #                                                               #'HIP 86287', 'HIP 114046', 'HIP 84460'
 #                                                               ]]
 star = '2MASS19375133+4945541'#'HIP1692'
-dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_70Fe/', name='1M_70Ceff_' + star + '_1600K'),
-        rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
-        rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
-        ]
+# dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_70Fe/', name='1M_70Ceff_' + star + '_1600K'),
+#         rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
+#         rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
+#         ]
+dats = [rw.build_planet(M_p=0.1 * p.M_E,
+                        maxIter=30, tol=1e-4, n=1200, Tp=1900, core_efficiency=0.9999, star='HIP 24186',
+                        plot_all=False, get_saturation=True, verbose=True, clean=True, use_local_composition=True,
+                        vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+                        )]
 # # # # # m_mtl = dat0.cum_mass[-1] - dat0.cum_mass[dat0.i_cmb]
 # # # # # print('mass ratio UM/mantle', dat0.mass_um / dat0.M_p)
 for dat in dats:
@@ -89,7 +94,7 @@ for dat in dats:
     #                           #                                  'st', 'wus', 'capv', 'ppv', 'fapv']
     #                           )
     dat.find_lower_mantle()
-    print(dat.p_lm * 1e-9, 'GPa')
+    # print(dat.p_lm * 1e-9, 'GPa')
     fig, axes = plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=False, vertical_pressure=False,
                                            title='core eff = ' + str(dat.core_eff),
                                           phase_order=['qtz', 'gt', 'cpx', 'ol', 'opx', 'hpcpx', 'wad', 'capv', 'ring', 'st', 'wus', 'pv', 'ppv', 'fapv'],
@@ -97,7 +102,7 @@ for dat in dats:
                                            labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
                                            # ax_ticks=[1e1, 1e3, 1e5],
                                            annotation='total = {0:3.1f} earth oceans'.format(m_w_tot),
-                                           cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=50e2, p_max=30,
+                                           cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=50e2,# p_max=30,
                                           )
 #     axes[1].axvline(dat.p_lm*1e-9, c='k', lw=2)
 
