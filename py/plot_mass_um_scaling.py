@@ -13,11 +13,11 @@ import matplotlib.gridspec as gridspec
 """ get earth benchmark """
 Tp = 1600
 earth = rw.build_planet(M_p=1 * p.M_E, test_CMF=0.325, test_oxides=wt_oxides_MD95,
-                        maxIter=30, tol=1e-4,# n=800,
+                        maxIter=30, tol=1e-4, n=1200,
                         Tp=Tp,  # core_efficiency=0.8,
                         plot_all=False, get_saturation=True, verbose=True, clean=True,
                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        name='Earth300_' + str(Tp) + 'K',
+                        name='Earth_' + str(Tp) + 'K',
                         )
 print('earth mgsi', earth.mgsi)
 print('earth mg#', earth.wt_oxides['MgO'] / (earth.wt_oxides['MgO'] + earth.wt_oxides['FeO']))
@@ -35,14 +35,24 @@ print('sun CMF', sun.CMF)
 """ plot variable across masses with composition continuity """
 plt.rc('text', usetex=True)
 plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
-dirs = [perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '3,5', '4', '5')]
+dirs = [perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '4', '5')]
 fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E ** -1, y_scale=1e-24, xlog=False, ylog=False,
                            ylabel='Upper mantle mass ($10^{24}$ kg)', xlabel='Planet mass ($M_\oplus$)', sigma=2,
-                            save=True, show=False, extension='.png', xlim=(0.1, 5), ylim=(0.4, 1.8), show_n=False,
+                            save=True, show=False, extension='.pdf', xlim=(0.1, 5), ylim=(0.4, 1.8), show_n=False,
                            labelsize=16, legsize=14, ticksize=14, earth=earth, sun=sun, earth_real=None, #1.06e24,
-                                         show_scaling_fn=um_mass_scaling, scalinglabel=r'Constant-$\rho$ scaling')
+                                         show_scaling_fn=um_mass_scaling, scalinglabel=r'Constant-$\rho$ scaling',
+                                         c='xkcd:peach',dpi=400)
 
 
+# dirs = [perplex_path_default + 'output/apollo/hypatia' + s + 'M_1600K_99Fe_hires/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '4', '5')]
+# fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E ** -1, y_scale=1e-24, xlog=False, ylog=False,
+#                            ylabel='Upper mantle mass ($10^{24}$ kg)', xlabel='Planet mass ($M_\oplus$)', sigma=2,
+#                             save=True, show=False, extension='.png', xlim=(0.1, 5), ylim=(0.4, 1.8), show_n=False,
+#                            labelsize=16, legsize=14, ticksize=14, earth=earth, sun=sun, earth_real=None, #1.06e24,
+#                                          show_scaling_fn=um_mass_scaling, scalinglabel=r'Constant-$\rho$ scaling',
+#                                          filename='mass_um_0fe')
+#
+# plt.show()
 
 
 """add different Fe to same axes"""

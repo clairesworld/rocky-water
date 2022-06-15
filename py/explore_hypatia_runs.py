@@ -26,7 +26,7 @@ earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_MD95,
 print('earth CMF', earth.CMF, 'core eff', earth.core_eff)
 earth.find_lower_mantle()
 print('earth mass um', earth.mass_um, 'kg')
-print()
+print('earth mgsi', earth.mgsi)
 earth.femg_star = 0.81
 # earth.get_obm_water()
 # m_w_obm = earth.mass_h2o_obm
@@ -72,16 +72,17 @@ earth.femg_star = 0.81
 #                                                               'HD 240210', 'HIP 1475', 'HIP 86087', 'HIP 80459',
 #                                                               #'HIP 86287', 'HIP 114046', 'HIP 84460'
 #                                                               ]]
-star = '2MASS19375133+4945541'#'HIP1692'
-# dats = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_70Fe/', name='1M_70Ceff_' + star + '_1600K'),
-#         rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
-#         rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
-#         ]
-dats = [rw.build_planet(M_p=0.1 * p.M_E,
-                        maxIter=30, tol=1e-4, n=1200, Tp=1900, core_efficiency=0.9999, star='HIP 24186',
-                        plot_all=False, get_saturation=True, verbose=True, clean=True, use_local_composition=True,
-                        vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        )]
+# star = '2MASS19375133+4945541'#'HIP1692'
+dats = [#rw.read_name(output_path=px.output_parent_default + '/earthsize_planets_1600K_88Fe/', name='Kepler-68c')
+    rw.read_name(output_path=px.output_parent_default + 'MgSi_from_Earth/', name='1M_70Ceff_' + star + '_1600K'),
+        rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
+    #     rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
+        ]
+# dats = [rw.build_planet(M_p=0.1 * p.M_E,
+#                         maxIter=30, tol=1e-4, n=1200, Tp=1900, core_efficiency=0.9999, star='HIP 24186',
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True, use_local_composition=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         )]
 # # # # # m_mtl = dat0.cum_mass[-1] - dat0.cum_mass[dat0.i_cmb]
 # # # # # print('mass ratio UM/mantle', dat0.mass_um / dat0.M_p)
 for dat in dats:
@@ -392,7 +393,7 @@ folder = 'hypatia1M_1600K_80Fe'
 #     plt.tight_layout()
 #     fig.savefig(plotpx.fig_path + ['earth', 'sun'][jj] + '_hists' + str(jj) + '.png')
 
-def get_percentile_of_attr(target_dat, attr, dats=None, folder=None):
+def get_percentile_of_attr(target_dat=None, attr=None, x_target=None, dats=None, folder=None):
     from scipy import stats
     if dats is None:
         dats = rw.read_dir(px.perplex_path_default + 'output/' + folder + '/')
@@ -402,10 +403,13 @@ def get_percentile_of_attr(target_dat, attr, dats=None, folder=None):
             x.append(eval('dat.' + attr))
         except (AttributeError, KeyError):
             pass  # blank data, didn't work because star not measured maybe
-    x_target = eval('target_dat.' + attr)
+    if target_dat is not None:
+        x_target = eval('target_dat.' + attr)
     p = stats.percentileofscore(x, x_target, 'rank')
     return p
 
+
+# print(get_percentile_of_attr(attr='mgsi', x_target=0.81, dats=rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_88Fe/')))
 #
 # for ii, pm in enumerate(params):
 #     print('earth', pm, get_percentile_of_attr(earth, pm, dats=dats), 'percentile')

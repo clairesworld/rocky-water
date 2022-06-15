@@ -1,3 +1,6 @@
 /figs_scratch/*
 /latex/*.pdf
+/latex/*.zip
+/latex/*
+/latex/notes*
 /py/__pycache__/*

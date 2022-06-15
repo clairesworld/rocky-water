@@ -382,8 +382,8 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     # think the conclusion is we can't tell yet
     # in any case, stv seems to have more evidence for being hydrous phases (sio2 and h2o mutually soluble also) which we do not consider explicitly and would raise mantle w
     # so ok to overestimate slightly the anhydrous variety?
-    sat_capv = 0.5e-2  # low estimate from Chen+2020, 10e-6 assumed in Dong+ 2021 - probably want to test this
-    sat_corr_capv = sat_capv
+    sat_dvm = 0.5e-2  # low estimate from Chen+2020, 10e-6 assumed in Dong+ 2021 - probably want to test this
+    sat_corr_dvm = sat_dvm
 
     # ferropericlase i.e. magnesiowustite iron endmember
     # note stixrude wustite model is solution of magnesio-wuestite-na2al2o4

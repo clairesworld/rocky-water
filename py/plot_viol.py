@@ -17,18 +17,18 @@ plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})  # thi
 """ get earth benchmark """
 Tp = 1600
 earth = rw.build_planet(M_p=1 * p.M_E, test_CMF=0.325, test_oxides=px.wt_oxides_MD95,
-                        maxIter=30, tol=1e-4, #n=800,
+                        maxIter=30, tol=1e-4, n=1200,
                         Tp=Tp,  # core_efficiency=0.8,
                         plot_all=False, get_saturation=True, verbose=True, clean=True,
                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        name='Earth300_' + str(Tp) + 'K',
+                        name='Earth_' + str(Tp) + 'K',
                         )
 sun = rw.build_planet(M_p=1 * p.M_E,star='sun',
-                        maxIter=30, tol=1e-4,# n=800,
+                        maxIter=30, tol=1e-4, n=1200,
                         Tp=Tp,  core_efficiency=0.88,
                         plot_all=False, get_saturation=True, verbose=True, clean=True,
                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        name='Sun300_' + str(Tp) + 'K',
+                        name='Sun_' + str(Tp) + 'K',
                         )
 # earth_5m = rw.build_planet(M_p=5 * p.M_E, test_oxides=px.wt_oxides_Earth,
 #                         maxIter=30, tol=1e-4, n=800, Tp=Tp,  core_efficiency=0.88,
@@ -40,7 +40,7 @@ sun = rw.build_planet(M_p=1 * p.M_E,star='sun',
 """ upper mantle water mass - violin plot """
 def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None, ylabel=None,
                          labelsize=18, legsize=14, ticksize=14, yticks=None, save=True, xlim='default', ylim='default', fig=None, ax=None,
-                         fig_path=plotpx.fig_path, extension='.png', show_legend=True, earth=None, sun=None):
+                         fig_path=plotpx.fig_path, extension='.png', show_legend=True, earth=None, sun=None, exclude=True):
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
     if masses is None:
@@ -55,7 +55,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
         key = 'mass_h2o_um'
         textstr = 'Upper mantle'
         fname = 'viol-Mp_w_um'
-        fc = 'xkcd:seafoam'
+        fc = 'xkcd:sea'  # teal blue' # 'xkcd:very light green'  # 'xkcd:seafoam'
         if ylim == 'default':
             ylim = (0, 4)
         points = 200
@@ -78,7 +78,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
             mass_str = str(Mp)
         else:
             print('MP is', type(Mp))
-        planets = rw.read_dir(px.perplex_path_default + 'output/hypatia' + mass_str + 'M_1600K_88Fe/')
+        planets = rw.read_dir(px.perplex_path_default + 'output/apollo/hypatia' + mass_str + 'M_1600K_88Fe_hires/')
 
         y = []
         for pl in planets:
@@ -86,6 +86,12 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
                 y.append(eval('pl.' + key) * yscale)
             except AttributeError:
                 pass  # blank data, didn't work because star not measured maybe
+
+        # exclude extrema?
+        if exclude:
+            y_min, y_max = np.percentile(y, [2.27, 97.93], method='nearest')
+            y = [a for a in y if a <= y_max]
+            y = [a for a in y if a >= y_min]
 
         # plot violin at x=mass
         parts = ax.violinplot(y, positions=[Mp], showmedians=False, showextrema=True, widths=0.25, points=points)
@@ -105,6 +111,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
                 parts[prop].set_alpha(None)
                 parts[prop].set_edgecolor((0, 0, 0, 0.5))
                 parts[prop].set_linewidth(0.7)
+                parts[prop].set_zorder(2)
         else:  # above 3 ME get ppv dissociation and it gets weird
             for pc in parts['bodies']:
                 pc.set_alpha(None)
@@ -122,7 +129,8 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
 
         # show median
         quartile1, median, quartile3 = np.percentile(y, [25, 50, 75])  # [2.27, 50, 97.73]
-        print(Mp, 'M_E', 'med', median, '| range', min(y), max(y), '| sd', np.std(y), ' IQR', quartile3 - quartile1)
+        print(Mp, 'M_E', 'med', median, '| range', min(y), max(y), '| sd', np.std(y), ' IQR', quartile3 - quartile1,
+              '| quartiles', quartile1, quartile3)
         ax.scatter(Mp, median, marker='o', color='0.5', s=30, zorder=3)
         if Mp == 1:
             mearth_med = median
@@ -134,7 +142,8 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
                    marker='*', s=80, zorder=100)
     if earth is not None:
         y_earth = eval('earth.' + key) * yscale
-        ax.scatter(1, y_earth, label='Earth', c='xkcd:dark blue', marker=r'$\oplus$', s=180,
+        ax.scatter(1, y_earth, label='Earth', c='k', #'xkcd:dark blue',
+                   marker=r'$\oplus$', s=180,
                    zorder=200)  # 200 for old font
 
         if which == 'total':
@@ -171,7 +180,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
     ax.yaxis.set_minor_locator(minor_locator)
     if show_legend:
         ax.legend(frameon=False, fontsize=legsize, loc='lower left', bbox_to_anchor=(1.01, 0.001))
-    ax.text(0.03, 0.95, textstr, transform=ax.transAxes, fontsize=labelsize,
+    ax.text(0.03, 0.95, textstr, transform=ax.transAxes, fontsize=labelsize, zorder=500,
             va='top', ha='left', c='0.35', bbox=dict(boxstyle='round, pad=0.3', fc='0.97', ec='0.35', alpha=1, lw=0.5))
     if save:
         plt.tight_layout()
@@ -179,12 +188,26 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
     return fig, ax
 
 
-def make_subplot(save=True, ylabel='Water capacity (OM)', labelsize=18, fig_path=plotpx.fig_path, extension='.png', fname='viol-Mp', **kwargs):
+def make_subplot(masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5], save=True, ylabel='Water capacity (OM)', labelsize=18, fig_path=plotpx.fig_path, extension='.png', fname='viol-Mp', **kwargs):
+    import matplotlib.patches as mpatches
     fig, axes = plt.subplots(2, 1, figsize=(9, 8), sharex=True)
-    fig, axes[0] = viol_saturation_mass(which='um', earth=earth, sun=sun, fig=fig, ax=axes[0], show_legend=False, save=False, xlabel='',
+    fig, axes[0] = viol_saturation_mass(which='um', masses=masses, earth=earth, sun=sun, fig=fig, ax=axes[0], show_legend=False, save=False, xlabel='',
                                    ylabel='', yticks=(0, 1, 2, 3, 4), labelsize=labelsize, **kwargs)
-    fig, axes[1] = viol_saturation_mass(which='total', earth=earth, sun=sun, fig=fig, ax=axes[1], show_legend=True, save=False,
+    fig, axes[1] = viol_saturation_mass(which='total', masses=masses, earth=earth, sun=sun, fig=fig, ax=axes[1], show_legend=True, save=False,
                                    ylabel='', labelsize=labelsize, **kwargs)
+
+    # edit up arrows
+    ax = axes[1]
+    for x in masses[1:]:
+        ax.scatter(x, 14.5, marker='^', s=15, c='k', zorder=100, alpha=0.6)
+        # specify the location of (left,bottom),width,height
+    ymax = ax.get_ylim()[1]
+    ax.add_patch(mpatches.Rectangle((0.1, 14.5), 5, ymax - 14.5,
+                              fill=True,
+                              color="w",
+                              linewidth=0, zorder=3))
+    for k, spine in ax.spines.items():  # ax.spines is a dictionary
+        spine.set_zorder(10)
 
     fig.supylabel(ylabel, fontsize=labelsize, x=0.035)
     plt.subplots_adjust(hspace=0.1)
@@ -194,7 +217,11 @@ def make_subplot(save=True, ylabel='Water capacity (OM)', labelsize=18, fig_path
     return fig, axes
 
 
-make_subplot(save=True, fname='viol-Mp')
+make_subplot(save=True, fname='viol-Mp', exclude=False, extension='.pdf', masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5])
+
+# fig, ax = viol_saturation_mass(masses = [0.1, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
+#                                which='total', earth=earth, sun=sun,  show_legend=True, save=False,
+#                                    ylabel='', )
 
 plt.show()
 

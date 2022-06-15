@@ -17,7 +17,7 @@ from matplotlib.patches import ConnectionPatch
 
 def plot_sat_difference(Mp=1, pmin=1000, pmax=140e4, fig=None, axes=None, c='k', figsize=(10, 4), save=False,
                         labelsize=16, ticksize=12, legsize=12, title=None, sigma=2, inset=[0.34, 0.2, 0.6, 0.2], hist_kwargs={},
-                        dir1=None, dir2=None, show_layers=True):
+                        dir1=None, dir2=None, show_layers=True, extension='.png'):
     from scipy.interpolate import interp1d
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
@@ -142,14 +142,14 @@ def plot_sat_difference(Mp=1, pmin=1000, pmax=140e4, fig=None, axes=None, c='k',
     fig.suptitle(title, fontsize=labelsize)
 
     if save:
-        fig.savefig(plotpx.fig_path + 'sat_T_diff' + '.png', bbox_inches='tight', dpi=300)
+        fig.savefig(plotpx.fig_path + 'sat_T_diff' + extension, bbox_inches='tight', dpi=300)
 
 
 plot_sat_difference(Mp=1, pmin=1000, pmax=150e4, c='xkcd:green blue', title='',  # 'Mantle cooling',
                     hist_kwargs={'color': '0.9', 'edgecolor': 'k', 'linewidth': 0.5}, sigma=1,
                     # dir1=px.perplex_path_default + 'output/test_compositional_solidus_60Fe',
                     # dir2=px.perplex_path_default + 'output/hypatia1M_1900K_60Fe',
-                    save=True
+                    save=True, extension='.pdf',
                     )
 
 plt.show()

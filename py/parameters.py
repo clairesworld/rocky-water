@@ -27,7 +27,7 @@ M_Al2O3 = 2 * M_Al + 3 * M_O
 M_FeO = M_Fe + M_O
 M_Na2O = 2 * M_Na + M_O
 
-# solar composition from Lodders 09 in log(n/H)
+# solar composition from Lodders 09 in log10(N_X/N_H)
 ca_sol = 6.33 - 12
 al_sol = 6.47 - 12
 fe_sol = 7.45 - 12

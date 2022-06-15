@@ -1,7 +1,7 @@
 # import numpy as np
 # import parameters as p
 # import ask_hypatia as hyp
-# from perplexdata import perplex_path_default
+from perplexdata import perplex_path_default
 # import pickle as pkl
 # import plot_perplex as plotpx
 import main as rw
@@ -13,8 +13,8 @@ import main as rw
 
 """ run over names list """
 def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-1, n='auto', restart=None,
-                   perplex_path='/raid1/cmg76/perple_x/', tail='_hires'  # apollo hires defaults
-                   ):
+                   perplex_path='/raid1/cmg76/perple_x/', tail='_hires',  # apollo hires defaults
+                   use_local_composition=True):
     # run at higher res over masses (primarily to get upper mantle)
 
     if masses is None:
@@ -33,15 +33,15 @@ def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-
         # get water capacity across planets
         planets = rw.planets_from_hypatia(n_sample,
                                           restart=restart,
-                                          use_local_composition=True,
+                                          use_local_composition=use_local_composition,
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
                                           **planet_dict)
         restart = None  # reset
 
 def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', restart=None,
-                   perplex_path='/raid1/cmg76/perple_x/', tail='_hires'  # apollo hires defaults
-                   ):
+                   perplex_path='/raid1/cmg76/perple_x/', tail='_hires',  # apollo hires defaults
+                   use_local_composition=True):
     # run at higher res over masses (primarily to get upper mantle)
 
     if core_effs is None:
@@ -60,7 +60,7 @@ def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', re
         # get water capacity across planets
         planets = rw.planets_from_hypatia(n_sample,
                                           restart=restart,
-                                          use_local_composition=True,
+                                          use_local_composition=use_local_composition,
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
                                           **planet_dict)
@@ -76,9 +76,9 @@ def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', re
 # Tp = 1600
 # core_eff = 0.8831461545794602
 # n = 'auto'  # 1200
-
-# run_all_masses(#masses=None,
-#                Tp=Tp, core_eff=core_eff,
+#
+# run_all_masses(masses=[1.1],
+#                Tp=Tp, core_eff=core_eff, perplex_path=perplex_path_default, use_local_composition=False
 #             )
 
 # # or, load from pickle

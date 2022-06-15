@@ -5,7 +5,7 @@ from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO,
 import os
 import pathlib
 import subprocess
-from bulk_composition import bulk_composition
+from bulk_composition import stellar_mantle
 import ask_hypatia as hyp
 
 perplex_path_default = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
@@ -24,7 +24,7 @@ solution_phases_default = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c',
 
 
 class PerplexData:
-    def __init__(self, name='default', core_efficiency=0.5, M_p=M_E, R_p=None,
+    def __init__(self, name='default', core_efficiency=0.88, M_p=M_E, R_p=None,
                  oxides=None, solution_phases=None,
                  star='sun', perplex_path=perplex_path_default, output_parent_path=output_parent_default, verbose=False,
                  **kwargs):
@@ -338,7 +338,7 @@ class PerplexData:
 
     def star_to_oxide(self, **kwargs):
         """ get the bulk oxide compositon of the mantle (core Fe will have been extracted from returned dict) """
-        wt_oxides = bulk_composition(self.oxide_list, self.nH_star, self.core_eff)
+        wt_oxides = stellar_mantle(self.oxide_list, self.nH_star, self.core_eff)
         self.wt_oxides = wt_oxides
         return wt_oxides
 
@@ -346,7 +346,6 @@ class PerplexData:
                     verbose=False, overwrite=True, vertex_data='stx21ver', option_file='perplex_option_claire',
                     excluded_phases=None, use_solutions=True, **kwargs):
         """ write perple_x build file, p in bar but have fucked it before and np """
-        print(option_file)
         if excluded_phases is None:
             excluded_phases = []  # no excluded phases / solution end members
         # if verbose:
@@ -929,6 +928,11 @@ class PerplexData:
         self.mass_obm = np.sum(self.df_all['mass(kg)'][:i_mtz_base])  # also get mass of layer
         self.c_h2o_obm = self.mass_h2o_obm / self.mass_obm  # also get concentration (avg)
 
+    def get_lm_water(self):
+        from saturation import total_water_mass
+        i_lm = self.find_lower_mantle()
+        self.mass_h2o_lm = total_water_mass(self.df_all, i_min=i_lm)
+
     def get_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None,
                      parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
         """ procedure for setting up interior composition and structure of planet """
@@ -1037,7 +1041,7 @@ class PerplexData:
 
 def read_from_input(star_name, which='oxide_list', output_path=output_parent_default, oxide_list=None, **kwargs):
     # this isn't tested! trying to read information from perple_x input file
-    oldpath = hyp.get_directory(star_name, output_path=output_path)
+    oldpath = hyp.find_existing_directory(star_name)
     name = os.path.dirname(oldpath)
     oldfile = os.path.join(oldpath, name + '.dat')
     input = []

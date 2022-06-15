@@ -5,7 +5,7 @@ import perplexdata as px
 import pickle as pkl
 import plot_perplex as plotpx
 import main as rw
-from bulk_composition import bulk_composition
+from bulk_composition import stellar_mantle
 from saturation import TO
 import matplotlib.pyplot as plt
 

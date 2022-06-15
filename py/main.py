@@ -19,7 +19,7 @@ def rename_phases(phases_px):
         elif ph == 'C2/c':
             ph1 = 'hpcpx'
         elif ph == 'ca-pv':
-            ph1 = 'capv'
+            ph1 = 'dvm'
         else:
             ph1 = ph.lower()
         new_phases.append(ph1)
@@ -274,7 +274,7 @@ def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True,
         except PermissionError as e:
             print(dir, e)
     if verbose:
-        print('loaded', count, 'pickle files')
+        print('loaded', count, 'pickle files from', output_path)
     return dats
 
 
