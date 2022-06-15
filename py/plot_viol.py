@@ -122,7 +122,8 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
 
         # show median
         quartile1, median, quartile3 = np.percentile(y, [25, 50, 75])  # [2.27, 50, 97.73]
-        print(Mp, 'M_E', 'med', median, '| range', min(y), max(y), '| sd', np.std(y), ' IQR', quartile3 - quartile1)
+        print(Mp, 'M_E', 'med', median, '| range', min(y), max(y), '| sd', np.std(y), ' IQR', quartile3 - quartile1,
+              '| quartiles', quartile1, quartile3)
         ax.scatter(Mp, median, marker='o', color='0.5', s=30, zorder=3)
         if Mp == 1:
             mearth_med = median
@@ -194,7 +195,10 @@ def make_subplot(save=True, ylabel='Water capacity (OM)', labelsize=18, fig_path
     return fig, axes
 
 
-make_subplot(save=True, fname='viol-Mp')
+# make_subplot(save=True, fname='viol-Mp')
+fig, ax = viol_saturation_mass(masses = [0.1, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
+                               which='total', earth=earth, sun=sun,  show_legend=True, save=False,
+                                   ylabel='', )
 
 plt.show()
 

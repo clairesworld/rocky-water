@@ -102,7 +102,7 @@ def plot_XFe_dependence(M_p=1, Tp=1600, x_Fe=None, sigma=1, labelsize=16, figsiz
     plt.tight_layout()
     # fig, *ax = dark_background(fig, ax, )
     if save:
-        fig.savefig(plotpx.fig_path + 'x_Fe_dependence.png', bbox_inches='tight',
+        fig.savefig(plotpx.fig_path + 'x_Fe_dependence.png', bbox_inches='tight', dpi=400,
                     facecolor=fig.get_facecolor())
 
 

@@ -82,7 +82,7 @@ def single_structure(dat, fig_path=fig_path, save=True, **kwargs):
 
 
 def single_composition(dat, which='pressure', modality_type='phase', comp_stacked=True, fig_path=fig_path, save=True,
-                       show=False, legtitle=None, override_ax_arrow=False, ylabelpad=None,
+                       show=False, legtitle=None, override_ax_arrow=False, ylabelpad=None, xlabelpad=None,
                        xlabel=None, ylabel=None, cmap='tab20', labelsize=16, plot_phases_order=None, p_max=None,
                        verbose=False, fig=None, ax=None, title=None, extension='.png', make_legend=True,
                        leg_bbox_to_anchor=(1, 1), legsize=10, **kwargs):
@@ -107,7 +107,7 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
         ylabel = ylabelauto
     if title is None:
         title = dat.name
-    ax.set_xlabel(xlabel, fontsize=labelsize)
+    ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
     ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
     fig.suptitle(title, fontsize=labelsize)
 
@@ -256,6 +256,7 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
         ax.set_xlabel(xlabel, fontsize=labelsize)
     if label_y:
         ax.set_ylabel(ylabel, fontsize=labelsize)
+
     leg = ax.legend(frameon=False, fontsize=legsize, title=legtitle, loc='upper left',
                     bbox_to_anchor=leg_bbox_to_anchor,
                     )
@@ -408,12 +409,13 @@ def pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None, title=None, c_his
 
 
 def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=None, ylabel=None, filename=None,
-                ticksize=10, legsize=12,
-                show_histx=False, show_histy=False, hist_kwargs={}, data_label=None, earth=False, fig_path=fig_path,
+                ticksize=10, legsize=12, xlabelpad=None, ylabelpad=None, range_min=None, range_max=None,
+                data_label=None, earth=False, fig_path=fig_path,
                 extension='.png', fig=None, ax=None, xlim=None, ylim=None, labelsize=14, save=True, show=True, x=None,
                 y=None,
                 return_data=False, annotate_n=True, ms=200, **scatter_kwargs):
     # for list of planet objects, make scatter plot of 2 properties
+    print('range_min', range_min)
     if x is None and y is None:
         x = []
         y = []
@@ -427,8 +429,11 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
             try:
                 xi = eval('dat.' + x_name)
                 yi = eval('dat.' + y_name)
-                x.append(xi * x_scale)
-                y.append(yi * y_scale)
+                if (range_min is None) or (range_min is not None and xi >= range_min):
+                    if (range_max is None) or (range_max is not None and xi <= range_max):
+                        x.append(xi * x_scale)
+                        y.append(yi * y_scale)
+
             except KeyError:
                 print(dat.name, 'does not have attribute', x_name, 'or', y_name)
 
@@ -443,8 +448,8 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
         ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth', c='k',
                    marker='$\oplus$', s=ms, zorder=200)
 
-    ax.set_xlabel(xlabel, fontsize=labelsize)
-    ax.set_ylabel(ylabel, fontsize=labelsize)
+    ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
+    ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
     ax.tick_params(axis='both', which='major', labelsize=ticksize)
     ax.legend(frameon=False, fontsize=legsize)
     if annotate_n:
@@ -507,7 +512,7 @@ def pop_scatterhist_subplotwrapper(dats, x_name, y_names, y_scales=None, ylabels
 
 def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=None, ylabel=None, filename=None,
                     show_histx=False, show_histy=False, histx_kwargs={}, histy_kwargs={}, data_label=None, earth=False,
-                    fig_path=fig_path,
+                    fig_path=fig_path, range_min=None, range_max=None,
                     extension='.png', fig=None, ax=None, ax_histx=None, ax_histy=None, xlim=None, ylim=None,
                     save=True, show=True, ratios=[7, 1], lim_histx=None, lim_histy=None, **kwargs):
     x, y = [], []
@@ -515,8 +520,10 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
         try:
             xi = eval('dat.' + x_name)
             yi = eval('dat.' + y_name)
-            x.append(xi * x_scale)
-            y.append(yi * y_scale)
+            if (range_min is None) or (range_min is not None and xi >= range_min):
+                if (range_max is None) or (range_max is not None and xi <= range_max):
+                    x.append(xi * x_scale)
+                    y.append(yi * y_scale)
         except KeyError:
             print(dat.name, 'does not have attribute', x_name, 'or', y_name)
 
@@ -552,12 +559,19 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
         if ax_histy is None:
             ax_histy = fig.add_subplot(gs[1, 1], sharey=ax)
     fig, ax = pop_scatter(dats, x_name, y_name, x_scale, y_scale, title, xlabel, ylabel, filename='',
-                          data_label=data_label, earth=earth, fig_path=fig_path,
+                          data_label=data_label, earth=earth, fig_path=fig_path, range_min=range_min, range_max=range_max,
                           extension=extension, fig=fig, ax=ax, xlim=xlim, ylim=ylim, save=False,
                           show=False, x=x, y=y, **kwargs)
 
     if show_histx:
-        ax_histx.hist(x, range=xlim, density=True, **histx_kwargs)
+        if 'range' not in histx_kwargs.keys():
+            histxrange = np.array(ax.get_xlim())
+            if range_min is not None:
+                histxrange[0] = range_min
+            if range_max is not None:
+                histxrange[1] = range_max
+            histx_kwargs['range'] = histxrange
+        ax_histx.hist(x, density=True, **histx_kwargs)
         ax_histx.spines.right.set_visible(False)
         ax_histx.spines.left.set_visible(False)
         ax_histx.spines.top.set_visible(False)
