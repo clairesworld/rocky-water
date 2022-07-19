@@ -37,6 +37,14 @@ for index, row in df.iterrows():
                               )
 
 directory = 'earthsize_planets_1600K_88Fe_mgsimax/'
+df = pd.read_csv('/home/claire/Works/rocky-water/py/earthsize_planets.csv')
+print(df.head())
+
+host_names = hyp.random_star(n=-1)
+
+core_eff = 0.8831461545794602
+Tp = 1900
+
 for index, row in df.iterrows():
     star = row['star_name']
     if (star == star) and star in host_names:  # is not NaN and in host_names

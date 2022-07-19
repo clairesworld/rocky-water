@@ -1,0 +1,25 @@
+
+
+screen -S perplex_1600Kfr_95Fe
+
+
+
+source /raid1/cmg76/venv/bin/activate
+cd ~/Works/rocky-water/py
+python3
+
+
+
+from rerun_hypatia_sampling import run_all_masses
+Tp=1900
+ce=0.88
+run_all_masses(Tp=Tp, masses=[2, 2.5, 3, 4, 5], core_eff=ce, )  # , restart='HIP 23889'
+
+
+# 2MASS19114694+3913500
+
+
+
+from rerun_hypatia_sampling import run_Fe_partitioning
+run_Fe_partitioning()    #restart='2MASS 22520985+3526495')
+

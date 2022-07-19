@@ -218,7 +218,6 @@ def make_subplot(masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5], save=True, ylabel='
 
 
 make_subplot(save=True, fname='viol-Mp', exclude=False, extension='.pdf', masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5])
-
 # fig, ax = viol_saturation_mass(masses = [0.1, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
 #                                which='total', earth=earth, sun=sun,  show_legend=True, save=False,
 #                                    ylabel='', )

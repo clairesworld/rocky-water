@@ -25,7 +25,6 @@ M_E = 5.972e24  # earth mass in kg
 R_E = 6371e3
 g_E = 9.807  # earth grav
 Y = 100e6
-
 labelsize = 45  ##32
 ticksize = 25
 legsize = 25
@@ -42,7 +41,6 @@ def plot_interior_capacity():
                     8.305615141504067])  # medians in OM
     # std = np.array([0.07815052540158095, 0.3442004713636262, 0.902686817841038, 2.3024633913595154 , 3.3241903236080406,  4.2461395182413355, 5.093035310490696 ,  5.917910897159271 , 7.508831299776319 ,  9.06256520708619])  # standard deviations in OM
     med_wmf = med * p.TO / (Mp * p.M_E)
-
     # std_wmf = std * p.TO / (Mp * p.M_E)
     # up_wmf = med_wmf + std_wmf
     # lo_wmf = med_wmf - std_wmf
@@ -72,7 +70,6 @@ def plot_trappist_wmf(cmf='all', err_c='0.8'):
     M_Tre = 0.692
     M_Trf = 1.039
     M_Trg = 1.321
-
     err_m = 's'
     err_kwargs = {'elinewidth': 1, 'capsize': 5, 'ms': 7, 'lw': 0, 'c': err_c, 'marker': err_m}
     lim_kwargs = err_kwargs.copy()
@@ -340,7 +337,6 @@ ax.add_artist(leg_scale)
 #                        loc='lower left',
 #                        borderaxespad=0)
 # ax.add_artist(leg_mantle)
-
 
 plt.xlabel(r'Planet mass $(M_\oplus$)', fontsize=labelsize, labelpad=20)
 plt.ylabel('Waterworld limit\n(ocean mass fraction)', fontsize=labelsize, labelpad=20)
