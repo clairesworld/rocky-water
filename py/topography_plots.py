@@ -15,32 +15,19 @@ leg_loc = 'right'
 rc('text', usetex=True)  # turn off for running over ssh
 # rcParams['font.family'] = 'serif'
 # rcParams['font.serif'] = 'CMU Serif'
-<<<<<<< HEAD
 legcolor='xkcd:off white'
 
 today = date.today().strftime("%b-%d-%Y")
 fig_path = '/home/claire/Desktop/rw-poster/'
-=======
-
-today = date.today().strftime("%b-%d-%Y")
-fig_path = '/home/claire/Documents/sci-misc/postdoc-apps/denman-baynes/presentation/'
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 rho_c = 2700
 rho_w = 1000
 M_E = 5.972e24  # earth mass in kg
 R_E = 6371e3
 g_E = 9.807  # earth grav
 Y = 100e6
-
-<<<<<<< HEAD
 labelsize = 45  ##32
 ticksize = 25
 legsize = 25
-=======
-labelsize = 32  ##32
-ticksize = 25
-legsize = 20
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 lw = 5
 fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 rcParams['legend.title_fontsize'] = legsize
@@ -54,10 +41,6 @@ def plot_interior_capacity():
                     8.305615141504067])  # medians in OM
     # std = np.array([0.07815052540158095, 0.3442004713636262, 0.902686817841038, 2.3024633913595154 , 3.3241903236080406,  4.2461395182413355, 5.093035310490696 ,  5.917910897159271 , 7.508831299776319 ,  9.06256520708619])  # standard deviations in OM
     med_wmf = med * p.TO / (Mp * p.M_E)
-<<<<<<< HEAD
-
-=======
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
     # std_wmf = std * p.TO / (Mp * p.M_E)
     # up_wmf = med_wmf + std_wmf
     # lo_wmf = med_wmf - std_wmf
@@ -73,7 +56,6 @@ def plot_interior_capacity():
     h = ax.fill_between(Mp, lo_wmf, up_wmf, fc=c_int, ec=c_int, alpha=0.5, hatch='///', zorder=10,
                         label='If the entire mantle water capacity\nis brought to the surface')
 
-<<<<<<< HEAD
     # leg_mantle = ax.legend(handles=[h, ],
     #                        ncol=1, frameon=False, fontsize=legsize,
     #                        # title=r'\textbf{Observed ocean masses}',
@@ -85,26 +67,9 @@ def plot_interior_capacity():
 
 
 def plot_trappist_wmf(cmf='all', err_c='0.8'):
-=======
-    leg_mantle = ax.legend(handles=[h, ],
-                           ncol=1, frameon=False, fontsize=legsize,
-                           # title=r'\textbf{Observed ocean masses}',
-                           bbox_to_anchor=(1.04, 0.2),  # (0, 1.02, 1, 0.2),
-                           loc='lower left',
-                           borderaxespad=0)
-    ax.add_artist(leg_mantle)
-
-
-def plot_trappist_wmf(cmf='all'):
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
     M_Tre = 0.692
     M_Trf = 1.039
     M_Trg = 1.321
-
-<<<<<<< HEAD
-=======
-    err_c = '0.8'
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
     err_m = 's'
     err_kwargs = {'elinewidth': 1, 'capsize': 5, 'ms': 7, 'lw': 0, 'c': err_c, 'marker': err_m}
     lim_kwargs = err_kwargs.copy()
@@ -125,35 +90,20 @@ def plot_trappist_wmf(cmf='all'):
         e_Trg = [[w_Trg - 3e-5], [6.4e-2 + 2e-2 - w_Trg]]
 
         # TRAPPIST-1e
-<<<<<<< HEAD
         ax.errorbar(M_Tre, w_Tre, yerr=e_Tre, xerr=None, uplims=True, zorder=3, **lim_kwargs)
         ax.errorbar(M_Tre, w_Tre_av, yerr=None, xerr=None, zorder=3, **err_kwargs)
-=======
-        ax.errorbar(M_Tre, w_Tre, yerr=e_Tre, xerr=None, uplims=True, **lim_kwargs)
-        ax.errorbar(M_Tre, w_Tre_av, yerr=None, xerr=None, **err_kwargs)
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
         ax.annotate('e', (M_Tre + 0.05, w_Tre_av + 1e-3), fontsize=annosize,
                     color=anno_c, ha='center', va='bottom')
 
         # TRAPPIST-1f
-<<<<<<< HEAD
         ax.errorbar(M_Trf, w_Trf, yerr=e_Trf, xerr=None, uplims=True, zorder=3, **lim_kwargs)
         ax.errorbar(M_Trf, w_Trf_av, yerr=None, xerr=None,zorder=3, **err_kwargs)
-=======
-        ax.errorbar(M_Trf, w_Trf, yerr=e_Trf, xerr=None, uplims=True, **lim_kwargs)
-        ax.errorbar(M_Trf, w_Trf_av, yerr=None, xerr=None, **err_kwargs)
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
         ax.annotate('f', (M_Trf + 0.07, w_Trf_av + 1e-3), fontsize=annosize,
                     color=anno_c, ha='center', va='bottom')
 
         # TRAPPIST-1g
-<<<<<<< HEAD
         ax.errorbar(M_Trg, w_Trg, yerr=e_Trg, xerr=None, uplims=True, zorder=3, **lim_kwargs)
         ax.errorbar(M_Trg, w_Trg_av, yerr=None, xerr=None, label='DUMMY', zorder=3, **err_kwargs)
-=======
-        ax.errorbar(M_Trg, w_Trg, yerr=e_Trg, xerr=None, uplims=True, **lim_kwargs)
-        ax.errorbar(M_Trg, w_Trg_av, yerr=None, xerr=None, label='DUMMY', **err_kwargs)
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
         ax.annotate('g', (M_Trg + 0.15, w_Trg_av - 1e-3), fontsize=annosize,
                     color=anno_c, ha='center', va='top')
 
@@ -168,7 +118,6 @@ def plot_trappist_wmf(cmf='all'):
         e_Trg = [[1.3e-2], [1.6e-2]]
 
         # TRAPPIST-1e
-<<<<<<< HEAD
         ax.errorbar(M_Tre, w_Tre_av + 1.8e-2, yerr=[[w_Tre_av + 1.8e-2 - 3e-5], [1.8e-2]], xerr=None, uplims=True, zorder=3, **lim_kwargs)
         ax.errorbar(M_Tre, w_Tre_av, yerr=None, xerr=None, zorder=3, **err_kwargs)
         ax.annotate('e', (M_Tre + 0.05, w_Tre_av + 1e-3), fontsize=annosize, zorder=3,
@@ -182,21 +131,6 @@ def plot_trappist_wmf(cmf='all'):
         # TRAPPIST-1g
         ax.errorbar(M_Trg, w_Trg_av, yerr=e_Trg, xerr=None, label='DUMMY', zorder=3,**err_kwargs)
         ax.annotate('g', (M_Trg + 0.15, w_Trg_av - 1e-3), fontsize=annosize,zorder=3,
-=======
-        ax.errorbar(M_Tre, w_Tre_av + 1.8e-2, yerr=[[w_Tre_av + 1.8e-2 - 3e-5], [1.8e-2]], xerr=None, uplims=True, **lim_kwargs)
-        ax.errorbar(M_Tre, w_Tre_av, yerr=None, xerr=None, **err_kwargs)
-        ax.annotate('e', (M_Tre + 0.05, w_Tre_av + 1e-3), fontsize=annosize,
-                    color=anno_c, ha='center', va='bottom')
-
-        # TRAPPIST-1f
-        ax.errorbar(M_Trf, w_Trf_av, yerr=e_Trf, xerr=None, **err_kwargs)
-        ax.annotate('f', (M_Trf + 0.07, w_Trf_av + 1e-3), fontsize=annosize,
-                    color=anno_c, ha='center', va='bottom')
-
-        # TRAPPIST-1g
-        ax.errorbar(M_Trg, w_Trg_av, yerr=e_Trg, xerr=None, label='DUMMY', **err_kwargs)
-        ax.annotate('g', (M_Trg + 0.15, w_Trg_av - 1e-3), fontsize=annosize,
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
                     color=anno_c, ha='center', va='top')
 
 
@@ -235,11 +169,7 @@ def plot_ss():
     leg_ss = ax.legend([p1, ],
                        ['Solar system planets', ], ncol=1, frameon=False, fontsize=legsize,
                        title=r'\textbf{Observed topographic capacity}',
-<<<<<<< HEAD
                        bbox_to_anchor=(1.04, 0.6), borderaxespad=0,  labelcolor=[legcolor])
-=======
-                       bbox_to_anchor=(1.04, 0.6), borderaxespad=0)
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
     leg_ss._legend_box.align = "left"
 
 
@@ -316,7 +246,6 @@ wmfs_dt_avg = np.log10((10 ** wmfs_dt_hot + 10 ** wmfs_dt_cold) / 2)
 """ DO PLOTTING """
 
 # plot_ss()
-<<<<<<< HEAD
 plot_trappist_wmf(cmf=25, err_c='xkcd:off white')
 
 handles, labels = ax.get_legend_handles_labels()
@@ -328,14 +257,6 @@ h_int = plot_interior_capacity()
 p4 = plt.scatter(1, 1.4e21 / M_E, c='k', ec='k', marker='$\oplus$', s=500, zorder=1000)  # c='0.3' # Earth ocean
 # ax.annotate('Earth, modern ocean', (1, 1.4e21 / M_E), fontsize=legsize,
 #             color=anno_c, ha='center', va='bottom')
-=======
-# plot_trappist_wmf(cmf=25)
-
-handles, labels = ax.get_legend_handles_labels()
-# labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-
-p4 = plt.scatter(1, 1.4e21 / M_E, c='w', ec='w', marker='$\oplus$', s=500, zorder=1000)  # c='0.3' # Earth ocean
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 
 if leg_loc == 'top':
     bbox = (0.6, 1.06)
@@ -344,7 +265,6 @@ elif leg_loc == 'right':
     bbox = (1.04, 0.7)
     loc = 'upper left'
 leg_trapp = ax.legend([
-<<<<<<< HEAD
     handles
     ,p4,
     h_int
@@ -362,21 +282,6 @@ leg_trapp = ax.legend([
 
 c = '#b13c02ff'
 c_cr = '#c5927fff'  # 'xkcd:sand'
-=======
-    # handles,
-    p4],
-    [
-        # 'TRAPPIST-1 exoplanet system',
-        'Earth, modern ocean'],
-    ncol=1, frameon=False, fontsize=legsize,
-    title=r'\textbf{Observed ocean masses}',
-    bbox_to_anchor=bbox,  # (0, 1.02, 1, 0.2),
-    loc=loc,
-    borderaxespad=0)
-
-c = '#b13c02ff'
-c_cr = 'xkcd:sand'
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 c_dt = '#cc7832'  # 'xkcd:greey green'
 
 # # l1, = plt.plot(masses, wmfs_200, c=c_cr, lw=6, label='Crust strength, 200 MPa', zorder=2)
@@ -391,17 +296,10 @@ plt.errorbar(masses, wmfs_dt_hot, yerr=wmfs_dt_hot * 2e-1, c=c_dt, ls='-', lw=3,
 plt.errorbar(masses, wmfs_dt_cold, yerr=wmfs_dt_cold * 2e-1, c=c_dt, ls='-', lw=3, zorder=2, uplims=True)
 l6 = mlines.Line2D([], [], color=c_dt, marker=None, lw=3, label='Dynamic topography limit')  # dummy for leg
 
-<<<<<<< HEAD
 plt.fill_between(masses, wmfs_dt_cold, [1] * len(masses), zorder=0, fc='#131a30', alpha=0.6)
 plt.fill_between(masses, [1e-10] * len(masses), wmfs_dt_hot, zorder=0, fc='xkcd:stone', alpha=0.5)
 ax = cornertext(ax, 'WATER\nWORLD', pos='top right', size=legsize+7, c='xkcd:off white', pad=0.04)  # pad=0.05
 ax = cornertext(ax, 'BLUE\nMARBLE?', pos='bottom left', size=legsize+7, c='xkcd:off white', pad=0.04)
-=======
-plt.fill_between(masses, wmfs_dt_cold, [1] * len(masses), zorder=0, fc='xkcd:navy', alpha=0.9)
-plt.fill_between(masses, [1e-10] * len(masses), wmfs_dt_hot, zorder=0, fc='xkcd:stone', alpha=0.5)
-ax = cornertext(ax, 'WATERWORLD', pos='top right', size=legsize, c='xkcd:off white', pad=0.05)
-ax = cornertext(ax, 'BLUE MARBLE?', pos='bottom left', size=legsize, c='k', pad=0.05)
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 
 leg_trapp._legend_box.align = "left"
 
@@ -422,20 +320,11 @@ leg_scale = ax.legend(handles=[
 ],
     ncol=1, frameon=False, fontsize=legsize, loc=loc,
     title=r'\textbf{Theoretical topographic capacity}',
-<<<<<<< HEAD
     bbox_to_anchor=bbox, borderaxespad=0, labelcolor=[legcolor]*len(handles))
 leg_scale._legend_box.align = "left"
 ax.add_artist(leg_scale)
 
 
-=======
-    bbox_to_anchor=bbox, borderaxespad=0)
-leg_scale._legend_box.align = "left"
-ax.add_artist(leg_scale)
-
-# add mantle water capacity
-plot_interior_capacity()
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 
 # dummy
 # h = ax.fill_between([], [], [], fc=[], ec=[], alpha=0.5, hatch='///', zorder=10,
@@ -449,14 +338,8 @@ plot_interior_capacity()
 #                        borderaxespad=0)
 # ax.add_artist(leg_mantle)
 
-
-<<<<<<< HEAD
 plt.xlabel(r'Planet mass $(M_\oplus$)', fontsize=labelsize, labelpad=20)
 plt.ylabel('Waterworld limit\n(ocean mass fraction)', fontsize=labelsize, labelpad=20)
-=======
-plt.xlabel(r'Planet mass (Earth masses)', fontsize=labelsize, labelpad=20)
-plt.ylabel(r'Maximum water mass fraction', fontsize=labelsize, labelpad=20)
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
 plt.loglog()
 
 xticks = [0.1, 1, 5]
@@ -468,7 +351,6 @@ ax.xaxis.set_minor_formatter(ticker.NullFormatter())
 ax.tick_params(axis='x', labelsize=ticksize)
 ax.tick_params(axis='y', labelsize=ticksize)
 
-<<<<<<< HEAD
 # plt.errorbar(masses[8], wmfs_dt_avg[8], yerr=[[wmfs_dt_avg[8] - wmfs_dt_cold[8]], [wmfs_dt_hot[8] - wmfs_dt_cold[8]]], c='k', ls='-', lw=1, zorder=2)
 
 # change all spines
@@ -486,14 +368,5 @@ fig, ax = dark_background(fig, ax)
 plt.savefig(fig_path + 'ww_lim.png', bbox_inches='tight', dpi=600,
             transparent=True,
             # facecolor=fig.get_facecolor()
-=======
-plt.setp(leg_scale.get_title(), color='xkcd:off white')
-plt.setp(leg_trapp.get_title(), color='xkcd:off white')
-
-# fig, ax = dark_background(fig, ax)
-plt.savefig(fig_path + 'ww_lim_future.png', bbox_inches='tight',
-            # transparent=True,
-            facecolor=fig.get_facecolor()
->>>>>>> 780fc79a30ed92265a34ee2e0dc76d862124a3a0
             )
 plt.show()
