@@ -24,6 +24,7 @@ class PerplexFugacity(px.PerplexData):
 
     def __init__(self, name='test', star=None, solution_phases=solution_phases_default,
                  output_parent_path=output_parent_default, wt_oxides=wt_oxides_DMM, X_ferric=0.03,
+                 perplex_path=px.perplex_path_default,
                  **kwargs):
         # super().__init__(output_parent_path=output_parent_path, **kwargs)
 
