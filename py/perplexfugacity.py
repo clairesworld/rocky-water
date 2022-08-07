@@ -13,6 +13,7 @@ import parameters as p
 
 Rb = 8.31446261815324
 output_parent_default = '/home/claire/Works/min-fo2/perplex_output/'
+output_parent_apollo = '/raid1/cmg76/perple_x/output/rocky-fo2/'
 wt_oxides_DMM = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'FeO': 8.18}  # Workman & Hart depleted mantle
 solution_phases_default = ['Cpx(JH)', 'O(JH)', 'Sp(JH)', 'Grt(JH)', 'Opx(JH)']
 
