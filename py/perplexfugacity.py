@@ -25,7 +25,7 @@ class PerplexFugacity(px.PerplexData):
     def __init__(self, name='test', star=None, solution_phases=solution_phases_default,
                  output_parent_path=output_parent_default, wt_oxides=wt_oxides_DMM, X_ferric=0.03,
                  **kwargs):
-        super().__init__(**kwargs)
+        # super().__init__(output_parent_path=output_parent_path, **kwargs)
 
         self.name = name
         self.star = star
@@ -610,7 +610,7 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
         pl = rw.build_planet(name=name, star=star, get_saturation=False, solve_interior=False, verbose=verbose,
                              output_parent_path=output_parent_path, **planet_kwargs)
 
-    print(pl.star, pl.wt_oxides)
+    print('Starting fo2 calc for planet of', pl.star, 'with', [(v, k) for k, v in pl.wt_oxides.items()])
     dat = PerplexFugacity(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                           **kwargs)
 

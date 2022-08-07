@@ -158,6 +158,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             except OSError as e:
                 # no data?
                 print(e)
+                print('trying remote...')
                 nH_star = do_remote()
                 return nH_star
             except FileNotFoundError:  # try pickled file

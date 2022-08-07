@@ -30,7 +30,16 @@ def remove_bad(df):
 def check_subsolidus(df):
     for phase in melt_phases:
         if (phase in df.columns) and ((df[phase] != 0).any()):
-            return False
+            return False  # False if there are bad ones
+    return True
+
+
+def check_nonmonotonic(df):
+    """ find non-monotonically increasing fo2 """
+    idx = [df['logfo2'].iloc[ii] < df['logfo2'].iloc[ii - 1] for ii in range(1, len(df))]
+    print('bad idx', idx)
+    if np.size(idx) > 0:
+        return False
     return True
 
 
@@ -51,6 +60,9 @@ def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=No
     if not check_subsolidus(df):
         raise Exception('ERROR: melt phases present in', name)
     df = remove_bad(df)  # drop solutionless rows
+
+    if not check_nonmonotonic(df):
+        print(name, 'non-monotonic!!!!!!!!!!!')
 
     # extract and subset pressure
     if p_min is None:
@@ -267,7 +279,7 @@ def stolper_subplot(name=None, fname=None, save=True, fig=None, axes=None, **kwa
 
 
 
-output_parent_path = output_parent_default #+ 'hypatia88Fe/'
+output_parent_path = output_parent_default + 'hypatia88Fe/'
 names = [
     'Stolper'
           # '1M_88Ceff_HIP58237_999K',
@@ -275,14 +287,14 @@ names = [
 ]
 exclude_names = ['1M_88Ceff_HIP58237_999K']
 
-# like figure 3 from Stolper+2020
-for name in names:
-    stolper_subplot(name, output_parent_path=output_parent_path, show_buffer=True, save=True, p_min=1.1, lw=2, **plot_kwargs)
+# # like figure 3 from Stolper+2020
+# for name in names:
+#     stolper_subplot(name, output_parent_path=output_parent_path, show_buffer=True, save=True, p_min=1.1, lw=2, **plot_kwargs)
 
-# # cmap_var, vmin, vmax = 'mg_number', 86, 94
-# cmap_var, vmin, vmax, cbar_label = 'mgsi', 0.7, 1.3, 'Mg/Si'
-# multicomp_xsection(output_parent_path=output_parent_path, cmap='spring', cmap_var=cmap_var, vmin=vmin, vmax=vmax, has_cbar=True, cbar_label=cbar_label,
-#                    save=True, fname=None, alpha=0.9, lw=0.5, p_min=1.1, ymin=-13, ymax=-6,
-#                    hist_y=True, exclude_names=exclude_names, **plot_kwargs)
+# cmap_var, vmin, vmax = 'mg_number', 86, 94
+cmap_var, vmin, vmax, cbar_label = 'mgsi', 0.7, 1.3, 'Mg/Si'
+multicomp_xsection(output_parent_path=output_parent_path, cmap='spring', cmap_var=cmap_var, vmin=vmin, vmax=vmax, has_cbar=True, cbar_label=cbar_label,
+                   save=True, fname=None, alpha=0.9, lw=0.5, p_min=1.1, ymin=-13, ymax=-6,
+                   hist_y=True, exclude_names=exclude_names, **plot_kwargs)
 
 plt.show()

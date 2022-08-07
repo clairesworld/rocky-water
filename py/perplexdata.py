@@ -48,6 +48,7 @@ class PerplexData:
         #                     output_parent_path)
         if not os.path.exists(self.output_path):
             # create directory if it doesn't exist yet
+            print('creating directory', self.output_path)
             os.makedirs(self.output_path)
 
         # initiate other variables
