@@ -328,5 +328,7 @@ def planets_from_hypatia(n_sample=-1, M_p=1, names_file='host_names.txt', plot_a
         print(ii + 1, '/', len(subsample_names))
         # print('kwargs planets_From_hypatia', kwargs)
         pl = build_planet(star=star, M_p=M_p * M_E, plot_all=plot_all, **kwargs)
+        pl.write_star_composition(fname='nH_star.txt',
+                                  path=pl.output_path)  # save parameter nH_star (abundances) to file
         planets.append(pl)
     return planets

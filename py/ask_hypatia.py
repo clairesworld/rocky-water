@@ -197,9 +197,13 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                 except TypeError:
                     print(star, 'does not have measured', el, 'and should be removed from stellar sample')
                     return None
+
         except (ConnectionError, requests.exceptions.ConnectionError) as e:
             # try loading from file
             nH_star = do_local()
+        except Exception as e:
+            print(e)
+            return None
     else:
         nH_star = do_local()
 

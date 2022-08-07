@@ -577,8 +577,6 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwar
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
     for pl in pl_list:
-        pl.write_star_composition(fname='nH_star.txt',
-                                  path=pl.output_path)  # save parameter nH_star (abundances) to file
         fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
 
 
