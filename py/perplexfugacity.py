@@ -286,7 +286,7 @@ class PerplexFugacity(px.PerplexData):
             # deltaG = df_rx['g(J/mol)']
             # logfo2_buffer = -deltaG[0] / (np.log(10) * Rb * T.min())
 
-            logfo2_buffer = read_qfm_os(T, P, verbose=False)
+            logfo2_buffer = read_qfm_os(T, P, verbose=False, perplex_path=self.perplex_path)
             # print('logfo2_qfm', logfo2_buffer)
             # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
             df_save['logfo2_qfm'] = logfo2_buffer
@@ -481,8 +481,13 @@ def mu_to_logfo2(mu, mu_0, T):
     return np.log(np.exp((mu - mu_0) / (Rb * T))) / np.log(10)
 
 
-def read_qfm_os(T, P, path=px.perplex_path_default, fin='data_tables/fmqNl_fo2_oli.dat', verbose=False):
-    """ read in oli's qfm calculations, T in K, p in bar """
+def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmqNl_fo2_oli.dat', verbose=False, **kwargs):
+    """ read in oli's qfm calculations, T in K, p in bar
+
+    Parameters
+    ----------
+    **kwargs :
+    """
 
     def do(df, T0, p0):
         # first check if exact values already there
@@ -537,7 +542,7 @@ def read_qfm_os(T, P, path=px.perplex_path_default, fin='data_tables/fmqNl_fo2_o
             f = interpolate.interp2d(x=x_in, y=y_in, z=z_in)
             return np.squeeze(f(p0, T0))
 
-    df = pd.read_csv(path + fin, delimiter=r"\s+", index_col=False, header=None,
+    df = pd.read_csv(perplex_path + fin, delimiter=r"\s+", index_col=False, header=None,
                      names=['P(bar)', 'T(K)', 'logfo2', 'thing1', 'thing2', 'Rb'])
     df = df.drop(columns=['thing1', 'thing2', 'Rb'])
     nT = 2023 - 1323  # number of temperature points
