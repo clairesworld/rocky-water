@@ -5,7 +5,7 @@ import pickle as pkl
 import os
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = '39728dfb7021ad38c12aa84d66a7f6fd'
+key = '4bde8b0bb6837cd97e8c50451a31499d'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -212,7 +212,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     return nH_star  # will always be in same order as oxides list
 
 
-def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', output_parent=None):
+def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', output_parent=None, **kwargs):
     """
     Retrieve directory of already-existing run for a given star. Best with default use of paths as given in
     perplexdata.py; i.e., output_path_default / existing_dir / *star_name*
