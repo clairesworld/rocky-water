@@ -162,6 +162,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                 nH_star = dat.nH_star
         except FileNotFoundError as e:
             print(e)
+            print('trying remote...')
             nH_star = do_remote()  # try remote
             return nH_star
         return nH_star
@@ -208,7 +209,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             print(e)
             # try loading from file
             nH_star = do_local()
-            return nH_star
+        return nH_star
 
     if use_local_composition:
         nH_star = do_local()
