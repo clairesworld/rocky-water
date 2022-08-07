@@ -41,6 +41,7 @@ class PerplexFugacity(px.PerplexData):
         self.get_mg_number()
         self.solution_phases = solution_phases
         self.output_path = output_parent_path + self.name + '/'
+        self.perplex_path = perplex_path
 
     def command_vertex_grid(self, build_file_end=''):
         """ string for vertex command file - only entry is project name in operational mode 5 """
