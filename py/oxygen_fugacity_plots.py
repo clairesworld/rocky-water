@@ -37,8 +37,9 @@ def check_subsolidus(df):
 def check_nonmonotonic(df):
     """ find non-monotonically increasing fo2 """
     idx = [df['logfo2'].iloc[ii] < df['logfo2'].iloc[ii - 1] for ii in range(1, len(df))]
-    print('bad idx', idx)
-    if np.size(idx) > 0:
+    tmp = df[idx]
+    if len(tmp) > 0:
+        print('bad idx', idx)
         return False
     return True
 
@@ -232,9 +233,7 @@ def multicomp_xsection(output_parent_path=output_parent_default, fig=None, ax=No
 
         # get line data
         lines = ax.get_lines()
-        print('lines\n', lines)
         for line in lines:
-            print('line', line.__dict__)
             y.append(line.get_ydata()[-1])  # get rightmost value for hist plotting
         ax_histy.hist(y, #range=ylim,
                       density=True, orientation='horizontal', color='w', edgecolor='k')

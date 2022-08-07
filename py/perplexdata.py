@@ -300,7 +300,7 @@ class PerplexData:
             path = self.output_path
         try:
             np.savetxt(path + fname, self.nH_star, delimiter=',')  # X is an array
-        except IndexError as e:
+        except (IndexError, ValueError) as e:  # different errors for different python versions
             print(e)
             print('ERROR: star composition possibly incomplete for', self.star, '; no file written')
 
