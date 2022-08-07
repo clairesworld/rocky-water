@@ -93,7 +93,7 @@ def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=No
 
 
 def phases_xsection(name, output_parent_path=output_parent_default, fig=None, ax=None, xlabel=None, ylabel=None,
-                    linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
+                    linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None, y_annot=45,
                     show_in_out=True, axes_all=None, make_legend=True, p_min=None, p_max=None, **kwargs):
 
     if fname is None:
@@ -134,9 +134,12 @@ def phases_xsection(name, output_parent_path=output_parent_default, fig=None, ax
 
                 for axx in axes_all:  # i.e. if this is part of a subplot, extend these vlines to full col of axes
                     if idx_in > pressure.index.min():  # don't plot if stable from start
-                        axx.axvline(x=pressure.iloc[idx_in], c=c, lw=1, ls='--')
+                        axx.axvline(x=pressure[idx_in], c=c, lw=1, ls='--')
+                        ax.text(pressure[idx_in], y_annot, col[2:] + '-in', c=c, va='center', ha='left', rotation=90)  # label (but only comp subplot)
                     if idx_out < pressure.index.max():  # don't plot if stable to end
-                        axx.axvline(x=pressure.iloc[idx_out], c=c, lw=1, ls='--')
+                        axx.axvline(x=pressure[idx_out], c=c, lw=1, ls='--')
+                        ax.text(pressure[idx_out], y_annot, col[2:] + '-out', c=c, va='center',
+                                ha='right', rotation=90)  # label (but only comp subplot)
 
     # make legends and labels, clean up axes
     if xlabel is None:

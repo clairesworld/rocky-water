@@ -137,8 +137,6 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     nH_star : list
         Absolute stellar abundances for each item in oxide_list X, as log10(N_X/N_H)
     """
-
-    import parameters as p
     if get_hypatia_min is None:  # elements for which you want the minimum value
         get_hypatia_min = []
     if get_hypatia_max is None:  # elements for which you want the maximum value
@@ -153,19 +151,24 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             path = find_existing_directory(star, output_parent=output_parent_path, **kwargs)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
-            except OSError:
-                # no data
-                return None
+            except OSError as e:
+                # no data?
+                print(e)
+                nH_star = do_remote()
+                return nH_star
             except FileNotFoundError:  # try pickled file
                 with open(path + '/dat.pkl', "rb") as pfile:
                     dat = pkl.load(pfile)
                 nH_star = dat.nH_star
-        except FileNotFoundError:
-            return None
+        except FileNotFoundError as e:
+            print(e)
+            nH_star = do_remote()  # try remote
+            return nH_star
         return nH_star
 
-    params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
-    if not use_local_composition:
+    def do_remote():
+        import parameters as p
+        params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
         try:
             entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
                                  params=params)
@@ -205,9 +208,13 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             print(e)
             # try loading from file
             nH_star = do_local()
-            return None
-    else:
+            return nH_star
+
+    if use_local_composition:
         nH_star = do_local()
+
+    else:
+        nH_star = do_remote()
 
     return nH_star  # will always be in same order as oxides list
 

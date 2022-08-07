@@ -16,6 +16,7 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, isother
                  X_ferric=X_ferric, core_efficiency=core_eff, planet_kwargs={'Tp': 999},
                  check_comp=True, suppress_output=False, run=True, verbose=True, output_parent_path=output_parent_path,
                  mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
+                 use_local_composition=True, existing_dir=output_parent_path,  # try local first
                  )
 
 # # can (re)do fo2 calculations with this using existing vertex files
