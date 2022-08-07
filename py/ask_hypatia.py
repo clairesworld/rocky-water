@@ -151,6 +151,10 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             path = find_existing_directory(star, output_parent=output_parent_path, **kwargs)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
+                try:  # check for empty
+                    tmp = nH_star[1]
+                except IndexError:
+                    nH_star = do_remote()
             except OSError as e:
                 # no data?
                 print(e)
