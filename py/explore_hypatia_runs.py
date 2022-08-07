@@ -15,19 +15,49 @@ import matplotlib.gridspec as gridspec
 
 """ get earth benchmark """
 Tp = 1600
-earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_MD95,
+# earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_MD95,
+#                         maxIter=30, tol=1e-4, #n=800,
+#                         Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         # name='Earth_Si_test', x_Si_core=9,
+#                         name='Earth300_' + str(Tp) + 'K',
+#                         )
+# print('earth CMF', earth.CMF, 'core eff', earth.core_eff)
+# earth.find_lower_mantle()
+# print('earth mass um', earth.mass_um, 'kg')
+# print('earth mgsi', earth.mgsi)
+# earth.femg_star = 0.81
+
+
+Mp = 2.25
+pl_E = rw.build_planet(M_p=Mp * p.M_E, test_oxides=px.wt_oxides_MD95,
                         maxIter=30, tol=1e-4, #n=800,
                         Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
                         plot_all=False, get_saturation=True, verbose=True, clean=True,
                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
                         # name='Earth_Si_test', x_Si_core=9,
-                        name='Earth300_' + str(Tp) + 'K',
+                        name='test1_' + str(Tp) + 'K',
                         )
-print('earth CMF', earth.CMF, 'core eff', earth.core_eff)
-earth.find_lower_mantle()
-print('earth mass um', earth.mass_um, 'kg')
-print('earth mgsi', earth.mgsi)
-earth.femg_star = 0.81
+rho = pl_E.M_p / (4/3 * np.pi * pl_E.R_p**3)
+print('Earth-like bulk density', rho, 'kg/m3')  # 6562 kg/m3
+
+wt_oxides_CaAl = {'SiO2': 27, 'MgO': 14, 'CaO': 16, 'Al2O3': 43, 'FeO': 0.1}
+pl_Ca = rw.build_planet(M_p=Mp * p.M_E, test_oxides=wt_oxides_CaAl,
+                        maxIter=30, tol=1e-4, #n=800,
+                        Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
+                        plot_all=False, get_saturation=True, verbose=True, clean=True,
+                        vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+                        # name='Earth_Si_test', x_Si_core=9,
+                        name='test2_' + str(Tp) + 'K',
+                        )
+rho = pl_Ca.M_p / (4/3 * np.pi * pl_Ca.R_p**3)
+print('bulk density', rho, 'kg/m3')  # 6445 kg/m3
+
+
+
+
+
 # earth.get_obm_water()
 # m_w_obm = earth.mass_h2o_obm
 # m_w_um = earth.mass_h2o_um
@@ -73,11 +103,11 @@ earth.femg_star = 0.81
 #                                                               #'HIP 86287', 'HIP 114046', 'HIP 84460'
 #                                                               ]]
 # star = '2MASS19375133+4945541'#'HIP1692'
-dats = [#rw.read_name(output_path=px.output_parent_default + '/earthsize_planets_1600K_88Fe/', name='Kepler-68c')
-    rw.read_name(output_path=px.output_parent_default + 'MgSi_from_Earth/', name='1M_70Ceff_' + star + '_1600K'),
-        rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
-    #     rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
-        ]
+# dats = [#rw.read_name(output_path=px.output_parent_default + '/earthsize_planets_1600K_88Fe/', name='Kepler-68c')
+#     rw.read_name(output_path=px.output_parent_default + 'MgSi_from_Earth/', name='1M_70Ceff_' + star + '_1600K'),
+#         rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_88Fe/', name='1M_88Ceff_' + star + '_1600K'),
+#     #     rw.read_name(output_path=px.output_parent_default + 'hypatia1M_1600K_99Fe/', name='1M_99Ceff_' + star + '_1600K')
+#         ]
 # dats = [rw.build_planet(M_p=0.1 * p.M_E,
 #                         maxIter=30, tol=1e-4, n=1200, Tp=1900, core_efficiency=0.9999, star='HIP 24186',
 #                         plot_all=False, get_saturation=True, verbose=True, clean=True, use_local_composition=True,
@@ -85,27 +115,27 @@ dats = [#rw.read_name(output_path=px.output_parent_default + '/earthsize_planets
 #                         )]
 # # # # # m_mtl = dat0.cum_mass[-1] - dat0.cum_mass[dat0.i_cmb]
 # # # # # print('mass ratio UM/mantle', dat0.mass_um / dat0.M_p)
-for dat in dats:
-    # print('p_mtz', dat.p_mtz * 1e-9, 'GPa')
-    # print('pmax', dat.pressure[dat.i_cmb + 1] * 1e-9, 'GPa', 'Tmax', dat.temperature[dat.i_cmb + 1], 'K')
-    m_w_tot = dat.mass_h2o_total / p.TO
-    # plotpx.single_composition(dat, which='pressure',# modality_type='water',
-    #                    xlabel=None, ylabel=None, cmap='tab20', labelsize=16,
-    #                           # plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv', 'qtz', 'coes',
-    #                           #                                  'st', 'wus', 'capv', 'ppv', 'fapv']
-    #                           )
-    dat.find_lower_mantle()
-    # print(dat.p_lm * 1e-9, 'GPa')
-    fig, axes = plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=False, vertical_pressure=False,
-                                           title='core eff = ' + str(dat.core_eff),
-                                          phase_order=['qtz', 'gt', 'cpx', 'ol', 'opx', 'hpcpx', 'wad', 'capv', 'ring', 'st', 'wus', 'pv', 'ppv', 'fapv'],
-                                           var_label='Water capacity\n(ppm)', save=True, show=False,
-                                           labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
-                                           # ax_ticks=[1e1, 1e3, 1e5],
-                                           annotation='total = {0:3.1f} earth oceans'.format(m_w_tot),
-                                           cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=50e2,# p_max=30,
-                                          )
-#     axes[1].axvline(dat.p_lm*1e-9, c='k', lw=2)
+# for dat in dats:
+#     # print('p_mtz', dat.p_mtz * 1e-9, 'GPa')
+#     # print('pmax', dat.pressure[dat.i_cmb + 1] * 1e-9, 'GPa', 'Tmax', dat.temperature[dat.i_cmb + 1], 'K')
+#     m_w_tot = dat.mass_h2o_total / p.TO
+#     # plotpx.single_composition(dat, which='pressure',# modality_type='water',
+#     #                    xlabel=None, ylabel=None, cmap='tab20', labelsize=16,
+#     #                           # plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv', 'qtz', 'coes',
+#     #                           #                                  'st', 'wus', 'capv', 'ppv', 'fapv']
+#     #                           )
+#     dat.find_lower_mantle()
+#     # print(dat.p_lm * 1e-9, 'GPa')
+#     fig, axes = plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=False, vertical_pressure=False,
+#                                            title='core eff = ' + str(dat.core_eff),
+#                                           phase_order=['qtz', 'gt', 'cpx', 'ol', 'opx', 'hpcpx', 'wad', 'capv', 'ring', 'st', 'wus', 'pv', 'ppv', 'fapv'],
+#                                            var_label='Water capacity\n(ppm)', save=True, show=False,
+#                                            labelsize=12, legsize=10, ticksize=12, xpad=10, ypad=10,
+#                                            # ax_ticks=[1e1, 1e3, 1e5],
+#                                            annotation='total = {0:3.1f} earth oceans'.format(m_w_tot),
+#                                            cmap_phases='tab20', linec='xkcd:navy', linew=2, ymin=1e0, ymax=50e2,# p_max=30,
+#                                           )
+# #     axes[1].axvline(dat.p_lm*1e-9, c='k', lw=2)
 
 """ check individual mgsi """
 # test1 = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.72, px.wt_oxides_Earth),
@@ -179,69 +209,69 @@ for dat in dats:
 """ upper mantle water mass - histograms """
 
 
-def hist_saturation_subfig(which='um', masses=None, xlim='default', bins=None, labelsize=14, cmap='rainbow', save=True,
-                           show=True, earth=None, **kwargs):
-    if masses is None:
-        masses = [0.1, 0.5, 1, 2, 3, 4]
-    if which == 'um':
-        if xlim == 'default':
-            xlim = (0.1, 4.0)
-        key = 'mass_h2o_um'
-        xlabel = 'Mantle water capacity (Earth oceans)'
-        data_label = None
-        ls = '-'
-        fname = 'histsubplot-Mp_w_um'
-    elif which == 'total':
-        if xlim == 'default':
-            xlim = (0.1, 8)
-        key = 'mass_h2o_total'
-        xlabel = 'UM water capacity (Earth oceans)'
-        data_label = None
-        ls = '-'
-        fname = 'histsubplot-Mp_w_tot'
-    elif which == 'both':
-        if xlim == 'default':
-            xlim = (0.1, 8)
-        key = ['mass_h2o_um', 'mass_h2o_total']
-        xlabel = 'Water capacity (Earth oceans)'
-        data_label = ['Upper mantle', 'Whole mantle']
-        ls = ['-', '--']
-        fname = 'histsubplot-Mp_w_all'
-
-    fig, axes = plt.subplots(len(masses), 1)
-    c = colorize(masses, cmap)[0]
-    for ii, Mp in enumerate(masses):
-        if isinstance(Mp, float):
-            mass_str = str(Mp).replace('.', ',')
-        elif isinstance(Mp, int):
-            mass_str = str(Mp)
-        else:
-            print('MP is', type(Mp))
-        planets = rw.read_dir(px.perplex_path_default + 'output/hypatia' + mass_str + 'M/')
-        try:
-            ax = axes[ii]
-        except:
-            ax = axes
-        fig, ax = plotpx.pop_hist1D(planets, key, scale=p.TO ** -1, earth=None, xlabel='', c_hist=c[ii], ls_stats=ls,
-                                    save=False, show=False, data_label=data_label, fig=fig, ax=ax, xlim=xlim,
-                                    labelsize=labelsize, legsize=10, bins=bins, alpha=0.7, histtype='step', **kwargs)
-        # add naive Earth scaling
-        if earth is not None:
-            w_um_earth = earth.mass_h2o_um / p.TO  # in earth oceans
-            print('w UM earth', w_um_earth, 'scaled', w_um_earth * Mp)
-        ax.axvline(w_um_earth * Mp, c='k', ls='--', lw=0.5, label=str(Mp) + r' $\times$ Earth value')
-        ax.legend(fontsize=10, frameon=False)
-        if ii == len(masses) - 1:
-            ax.set_xlabel(xlabel)
-        else:
-            ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_ylabel(str(Mp) + ' $M_\oplus$', fontsize=labelsize)
-    # fig.suptitle('Mantle wantle water capacities, $T_p$ = 1600')
-    if save:
-        fig.savefig(plotpx.fig_path + fname + '.png')
-    if show:
-        plt.show()
+# def hist_saturation_subfig(which='um', masses=None, xlim='default', bins=None, labelsize=14, cmap='rainbow', save=True,
+#                            show=True, earth=None, **kwargs):
+#     if masses is None:
+#         masses = [0.1, 0.5, 1, 2, 3, 4]
+#     if which == 'um':
+#         if xlim == 'default':
+#             xlim = (0.1, 4.0)
+#         key = 'mass_h2o_um'
+#         xlabel = 'Mantle water capacity (Earth oceans)'
+#         data_label = None
+#         ls = '-'
+#         fname = 'histsubplot-Mp_w_um'
+#     elif which == 'total':
+#         if xlim == 'default':
+#             xlim = (0.1, 8)
+#         key = 'mass_h2o_total'
+#         xlabel = 'UM water capacity (Earth oceans)'
+#         data_label = None
+#         ls = '-'
+#         fname = 'histsubplot-Mp_w_tot'
+#     elif which == 'both':
+#         if xlim == 'default':
+#             xlim = (0.1, 8)
+#         key = ['mass_h2o_um', 'mass_h2o_total']
+#         xlabel = 'Water capacity (Earth oceans)'
+#         data_label = ['Upper mantle', 'Whole mantle']
+#         ls = ['-', '--']
+#         fname = 'histsubplot-Mp_w_all'
+#
+#     fig, axes = plt.subplots(len(masses), 1)
+#     c = colorize(masses, cmap)[0]
+#     for ii, Mp in enumerate(masses):
+#         if isinstance(Mp, float):
+#             mass_str = str(Mp).replace('.', ',')
+#         elif isinstance(Mp, int):
+#             mass_str = str(Mp)
+#         else:
+#             print('MP is', type(Mp))
+#         planets = rw.read_dir(px.perplex_path_default + 'output/hypatia' + mass_str + 'M/')
+#         try:
+#             ax = axes[ii]
+#         except:
+#             ax = axes
+#         fig, ax = plotpx.pop_hist1D(planets, key, scale=p.TO ** -1, earth=None, xlabel='', c_hist=c[ii], ls_stats=ls,
+#                                     save=False, show=False, data_label=data_label, fig=fig, ax=ax, xlim=xlim,
+#                                     labelsize=labelsize, legsize=10, bins=bins, alpha=0.7, histtype='step', **kwargs)
+#         # add naive Earth scaling
+#         if earth is not None:
+#             w_um_earth = earth.mass_h2o_um / p.TO  # in earth oceans
+#             print('w UM earth', w_um_earth, 'scaled', w_um_earth * Mp)
+#         ax.axvline(w_um_earth * Mp, c='k', ls='--', lw=0.5, label=str(Mp) + r' $\times$ Earth value')
+#         ax.legend(fontsize=10, frameon=False)
+#         if ii == len(masses) - 1:
+#             ax.set_xlabel(xlabel)
+#         else:
+#             ax.set_xticks([])
+#         ax.set_yticks([])
+#         ax.set_ylabel(str(Mp) + ' $M_\oplus$', fontsize=labelsize)
+#     # fig.suptitle('Mantle wantle water capacities, $T_p$ = 1600')
+#     if save:
+#         fig.savefig(plotpx.fig_path + fname + '.png')
+#     if show:
+#         plt.show()
 
 
 # hist_saturation_subfig(which='um', masses=[0.1], xlim=(0, 1),

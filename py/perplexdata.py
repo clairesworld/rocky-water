@@ -24,7 +24,7 @@ solution_phases_default = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c',
 
 
 class PerplexData:
-    def __init__(self, name='default', core_efficiency=0.88, M_p=M_E, R_p=None,
+    def __init__(self, name='test', core_efficiency=0.88, M_p=M_E, R_p=None,
                  oxides=None, solution_phases=None,
                  star='sun', perplex_path=perplex_path_default, output_parent_path=output_parent_default, verbose=False,
                  **kwargs):
@@ -195,7 +195,7 @@ class PerplexData:
                 os.system('./vertex < ' + vertex_command_file)
                 werami_command_file = self.name + build_file_end + '_werami_command_thermo.txt'
                 with open(self.perplex_path + werami_command_file, 'w') as file:
-                    s = self.command_text_thermo(build_file_end=build_file_end)
+                    s = self.command_werami_thermo(build_file_end=build_file_end)
                     file.write(s)
                 os.system('./werami < ' + werami_command_file)
                 os.remove(werami_command_file)
@@ -290,9 +290,9 @@ class PerplexData:
         if self.star == 'sun':
             from parameters import ca_sol, fe_sol, al_sol, mg_sol, si_sol, na_sol
             solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol, 'na_sol': na_sol}
-            self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list]
+            self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list if ox != 'O2']
         else:
-            self.nH_star = hyp.star_composition(oxide_list=self.oxide_list, **kwargs)
+            self.nH_star = hyp.star_composition(oxide_list=[ox for ox in self.oxide_list if ox != 'O2'], **kwargs)
 
     def write_star_composition(self, fname='nH_star.txt', path=None):
         if path is None:
@@ -344,7 +344,7 @@ class PerplexData:
 
     def write_build(self, build_file_end='', title='Planet', p_min=10000, p_max=245000, adiabat_file='aerotherm.dat',
                     verbose=False, overwrite=True, vertex_data='stx21ver', option_file='perplex_option_claire',
-                    excluded_phases=None, use_solutions=True, **kwargs):
+                    excluded_phases=None, use_solutions=True, calculation_type='10', T_min=0.0, T_max=0.0, **kwargs):
         """ write perple_x build file, p in bar but have fucked it before and np """
         if excluded_phases is None:
             excluded_phases = []  # no excluded phases / solution end members
@@ -365,15 +365,15 @@ class PerplexData:
 
         s = ''
         with open(build_file, 'w') as file:
-            # s = s + 'sfo05ver.dat     thermodynamic data file\n'
             s = s + vertex_data + '.dat     thermodynamic data file\n'
             s = s + 'no_print | print generates print output\n'
             s = s + 'plot     | obsolete 6.8.4+\n'
             s = s + solution_model + '.dat     | solution model file, blank = none\n'
             s = s + title + '\n'
             s = s + option_file + '.dat | Perple_X option file\n'
-            s = s + '   10 calculation type: 0- composition, 1- Schreinemakers, 3- Mixed, 4- swash, 5- gridded min, 7- 1d fract, 8- gwash, 9- 2d fract, 10- 7 w/file input, 11- 9 w/file input, 12- 0d infiltration\n'
-            s = s + adiabat_file + '     | coordinate file \n'
+            s = s + '   ' + calculation_type + ' calculation type: 0- composition, 1- Schreinemakers, 3- Mixed, 4- swash, 5- gridded min, 7- 1d fract, 8- gwash, 9- 2d fract, 10- 7 w/file input, 11- 9 w/file input, 12- 0d infiltration\n'
+            if calculation_type == '10':
+                s = s + adiabat_file + '     | coordinate file \n'
             s = s + '    0 unused place holder, post 06\n' * 9
             s = s + '    0 number component transformations\n'
             s = s + '    ' + str(len(self.wt_oxides)) + ' number of components in the data base\n'
@@ -388,7 +388,11 @@ class PerplexData:
             s = s + 'begin thermodynamic component list\n'
             for el, wt in self.wt_oxides.items():
                 dig = len(str(int(wt)))
-                s = s + el.upper().ljust(6) + '1'.ljust(3) + "{value:{width}.{precision}f}".format(value=float(wt),
+                if vertex_data == 'hp622ver':
+                    el_database = el
+                else:
+                    el_database = el.upper()
+                s = s + el_database.ljust(6) + '1'.ljust(3) + "{value:{width}.{precision}f}".format(value=float(wt),
                                                                                                    width=7,
                                                                                                    precision=6 - dig)
                 s = s + '      0.00000      0.00000     mass  amount\n'
@@ -412,39 +416,51 @@ class PerplexData:
             try:
                 s = s + "   {value:{width}.{precision}f}".format(value=float(p_max), width=7,
                                                                  precision=7 - len(str(int(p_max))))[
-                        :-1] + '        0.00000        0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
+                        :-1] + "        {value:{width}.{precision}f}".format(value=float(T_max), width=7,
+                                                                 precision=7 - len(str(int(T_max))))[
+                        :-1] + '         0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
             except ValueError as e:  # not enough digits
                 s = s + "   {value:{width}.{precision}f}".format(value=float(p_max), width=10,
                                                                  precision=10 - len(str(int(p_max))))[
-                        :-1] + '        0.00000        0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
+                        :-1] + "        {value:{width}.{precision}f}".format(value=float(T_max), width=10,
+                                                                 precision=10 - len(str(int(T_max))))[
+                        :-1] + '        0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
             s = s + "   {value:{width}.{precision}f}".format(value=float(p_min), width=7,
                                                              precision=7 - len(str(int(p_min))))[
-                    :-1] + '        0.00000        0.00000        0.00000        0.00000     min p, t, xco2, mu_1, mu_2\n'
+                    :-1] + "        {value:{width}.{precision}f}".format(value=float(T_min), width=7,
+                                                                 precision=7 - len(str(int(T_min))))[
+                        :-1] + '        0.00000        0.00000        0.00000     min p, t, xco2, mu_1, mu_2\n'
             s = s + '   0.00000        0.00000        0.00000        0.00000        0.00000     unused place holder post 06\n\n'
             s = s + ' 1  2  4  5  3   indices of 1st & 2nd independent & sectioning variables'
 
             file.write(s)
         if verbose:
-            print('  wrote to', build_file)
+            print('   wrote to', build_file)
 
-    def write_adiabat(self, P, T, file_end='_adiabat', verbose=False, overwrite=True, **kwargs):
+    def write_adiabat(self, P, T, file_end='_adiabat', fout=None, verbose=False, overwrite=True, **kwargs):
         """ write perple_x build file, p in bar """
-        adiabat_file = self.perplex_path + self.name + file_end + '.dat'
-        if os.path.isfile(adiabat_file) and not overwrite:
-            raise Exception('WARNING: file', adiabat_file, 'already exists, set overwrite=True')
-        elif os.path.isfile(adiabat_file):
-            print('  overwriting', adiabat_file)
+        if fout is None:
+            fout = self.perplex_path + self.name + file_end + '.dat'
+        if os.path.isfile(fout) and not overwrite:
+            raise Exception('WARNING: file', fout, 'already exists, set overwrite=True')
+        elif os.path.isfile(fout):
+            print('  overwriting', fout)
 
         s = ''
-        with open(adiabat_file, 'w') as file:
+        with open(fout, 'w') as file:
             for p, t in zip(P, T):
                 s = s + "{:.6e}".format(p) + '	' + "{:.6e}".format(t) + '\n'
             file.write(s)
         if verbose:
-            print('  wrote to', adiabat_file)
+            print('  wrote to', fout)
 
-    def command_text_composition(self, build_file_end=''):
-        # string for werami command file to get compositional data
+    def command_vertex(self, build_file_end='', **kwargs):
+        """ string for vertex command file - entries are project name and 0 in operational mode 10 """
+        s = self.name + build_file_end + '\n0'
+        return s
+
+    def command_werami_composition(self, build_file_end='', **kwargs):
+        """string for werami command file to get compositional data"""
         s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
         s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
         s = s + '25\n'  # Select a property: 25 - Modes of all phases
@@ -452,8 +468,8 @@ class PerplexData:
         s = s + '0\n'  # Select operational mode: 0 - EXIT
         return s
 
-    def command_text_thermo(self, build_file_end=''):
-        # string for werami command file to get thermodynamic data
+    def command_werami_thermo(self, build_file_end='', **kwargs):
+        """string for werami command file to get thermodynamic data"""
         s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
         s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
         s = s + '2\n'  # Select a property: 2 - Density (kg/m3)
@@ -467,7 +483,12 @@ class PerplexData:
         return s
 
     def run_perplex(self, werami_command_end='_werami_command.txt', build_file_end='', suppress_output=True, clean=True,
-                    verbose=True, werami_command_text_fn=None, output_file_end='.tab', **kwargs):
+                    verbose=True, vertex_command_text_fn=None, werami_command_text_fn=None, run_vertex=True,
+                    store_vertex_output=False, output_file_end='.tab', werami_kwargs=None, **kwargs):
+        """ run_vertex = 'auto' will check for vertex output files in run output directory, False will require output
+        files already in perple_x working directory"""
+        if werami_kwargs is None:
+            werami_kwargs = {}
         cwd = os.getcwd()
         os.chdir(self.perplex_path)
         if suppress_output:
@@ -475,23 +496,41 @@ class PerplexData:
         else:
             stderr, stdout = None, None
 
-        # create vertex command file
-        vertex_command_file = self.name + build_file_end + '_vertex_command.txt'
-        with open(self.perplex_path + vertex_command_file, 'w') as file:
-            s = self.name + build_file_end + '\n0'
-            file.write(s)
+        vertex_copy_flag = False  # track if you moved vertex files
+        if run_vertex == 'auto':
+            run_vertex = False
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof']:
+                if not os.path.isfile(self.output_path + self.name + build_file_end + fend):
+                    run_vertex = True  # if any of these files are missing, need to run
+                    break
+                else:
+                    # temporarily move vertex output files to perple_x working directoy
+                    vertex_copy_flag = True
+                    # print('copying to', self.perplex_path + self.name + build_file_end + fend)
+                    os.rename(self.output_path + self.name + build_file_end + fend,
+                              self.perplex_path + self.name + build_file_end + fend)
+            print('   vertex output files already exist for', self.name, ', skipping to werami')
 
-        # run vertex
-        output = subprocess.run('./vertex < ' + vertex_command_file, shell=True,
-                                stdout=stdout, stderr=stderr)
-        if verbose:
-            print('  ', output)
+        if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
+            # create vertex command file
+            vertex_command_file = self.name + build_file_end + '_vertex_command.txt'
+            with open(self.perplex_path + vertex_command_file, 'w') as file:
+                s = vertex_command_text_fn(build_file_end=build_file_end)
+                file.write(s)
+
+            # run vertex
+            output = subprocess.run('./vertex < ' + vertex_command_file, shell=True,
+                                    stdout=stdout, stderr=stderr)
+            if verbose:
+                print('  ', output)
 
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:
-            s = werami_command_text_fn(build_file_end=build_file_end)
+            s = werami_command_text_fn(build_file_end=build_file_end, **werami_kwargs)
             file.write(s)
+
+        print('   created werami command file', self.name + build_file_end + werami_command_end)
 
         # run werami
         output = subprocess.run('./werami < ' + werami_command_file, shell=True,
@@ -504,31 +543,44 @@ class PerplexData:
             os.rename(self.perplex_path + self.name + build_file_end + '_1.tab',
                       self.perplex_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
+            print('ERROR: vertex did not complete, try running again with suppress_output=False')
             # something probably went wrong with vertex or werami, run again with full output
-            os.system('./vertex < ' + vertex_command_file)
-            os.system('./werami < ' + werami_command_file)
+            # os.system('./vertex < ' + vertex_command_file)
+            # os.system('./werami < ' + werami_command_file)
             raise e
 
+        if store_vertex_output or vertex_copy_flag:
+            # move vertex files to this run's output directory
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof',
+                         '_vertex_command.txt']:
+                if os.path.isfile(self.perplex_path + self.name + build_file_end + fend):
+                    os.rename(self.perplex_path + self.name + build_file_end + fend,
+                              self.output_path + self.name + build_file_end + fend)
         if clean:
-            for fend in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tim', '.plt', '.blk', '.arf', '.tof']:
+            # get rid of any files left in
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tim', '.plt', '.blk', '.arf', '.tof',
+                         '_vertex_command.txt', werami_command_end]:
                 if os.path.isfile(self.perplex_path + self.name + build_file_end + fend):
                     os.remove(self.perplex_path + self.name + build_file_end + fend)
-            os.remove(werami_command_file)
-            os.remove(vertex_command_file)
-        os.chdir(cwd)  # return to original dir
 
-    def get_adiabat(self, **kwargs):
+        # return to original dir
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        # os.chdir(cwd)
+
+    def werami_adiabat(self, **kwargs):
         self.run_perplex(werami_command_end='_werami_command_thermo.txt',
-                         werami_command_text_fn=self.command_text_thermo,
+                         werami_command_text_fn=self.command_werami_thermo,
+                         vertex_command_text_fn=self.command_vertex,
                          output_file_end='_thermo.tab', **kwargs)
 
-    def get_composition(self, **kwargs):
+    def werami_composition(self, **kwargs):
         self.run_perplex(werami_command_end='_werami_command_comp.txt',
-                         werami_command_text_fn=self.command_text_composition,
+                         werami_command_text_fn=self.command_werami_composition,
+                         vertex_command_text_fn=self.command_vertex,
                          output_file_end='_comp.tab', **kwargs)
 
-    def get_lm_composition(self, build_file_end='', **kwargs):
-        self.get_composition(build_file_end=build_file_end, **kwargs)
+    def get_last_composition(self, build_file_end='', **kwargs):
+        self.werami_composition(build_file_end=build_file_end, **kwargs)
         df, _ = self.load_composition_px(build_file_end=build_file_end, save=False, **kwargs)
         df = df.iloc[-1, 3:]  # get last row, drop P and T columns
         df = df.loc[df != 0]  # drop columns with 0
@@ -540,7 +592,7 @@ class PerplexData:
 
     def extend_lm_composition(self, build_file_end='', save=True, **kwargs):
         """ get deepest composition ran in perple_x and hold constant to CMB"""
-        self.get_composition(build_file_end=build_file_end, **kwargs)
+        self.werami_composition(build_file_end=build_file_end, **kwargs)
         df_um, phases = self.load_composition_px(build_file_end=build_file_end, **kwargs)
 
         n = len(self.pressure)
@@ -580,8 +632,8 @@ class PerplexData:
             # self.temperature_m = df_comp['T(K)']
         return df_comp
 
-    def get_garnet_composition(self, build_file_end='', **kwargs):
-        def command_text_gt_composition(**kwargs):
+    def werami_garnet_composition(self, build_file_end='', **kwargs):
+        def command_werami_gt_composition(**kwargs):
             # string for werami command file to get compositional data
             s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
             s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
@@ -605,7 +657,8 @@ class PerplexData:
                 os.rename(self.output_path + self.name + build_file_end + fend,
                           self.perplex_path + self.name + build_file_end + fend)
         self.run_perplex(werami_command_end='_werami_command_gtcomp.txt',
-                         werami_command_text_fn=command_text_gt_composition,
+                         werami_command_text_fn=command_werami_gt_composition,
+                         vertex_command_text_fn=self.command_vertex,
                          output_file_end='_gtcomp.tab', **kwargs)
         # move back
         if flag:
@@ -735,7 +788,7 @@ class PerplexData:
             for i in range(n):  # M: 1:n, P: 0:n-1  index from centre to surface
                 if i <= i_cmb:  # get local thermodynamic properties - core - layer by layer
                     if pressure[i] > 10e3 * 1e9:
-                        print('pressure eror, i', i, pressure[i] * 1e-9, 'GPa', 'rho cen', density[0], 'rho cmb',
+                        print('pressure error, i', i, pressure[i] * 1e-9, 'GPa', 'rho cen', density[0], 'rho cmb',
                               density[i_cmb])
                         # plt.plot(radius * 1e-3, pressure * 1e-9)
                         # plt.axvline(radius[i_cmb] * 1e-3)
@@ -766,7 +819,7 @@ class PerplexData:
                                          p_min=p_mantle_compute[0], p_max=p_mantle_compute[-1],
                                          adiabat_file=self.name + '_temp' + str(it) + '_adiabat.dat',
                                          use_solutions=False, **kwargs)  # no solutions
-                        self.get_adiabat(build_file_end='_temp' + str(it), clean=clean, **kwargs)
+                        self.werami_adiabat(build_file_end='_temp' + str(it), clean=clean, **kwargs)
 
                         # then after running vertex & werami, extract density, alpha, cp
                         density_wer, alpha_wer, cp_wer, p_wer, T_wer = self.load_adiabat(
@@ -785,8 +838,8 @@ class PerplexData:
 
                             # if parameterising, now need to fill in extra bits. start from composition of deepest layer
                             # run werami to get composition
-                            phases, proportions = self.get_lm_composition(build_file_end='_temp' + str(it), clean=clean,
-                                                                          **kwargs)
+                            phases, proportions = self.get_last_composition(build_file_end='_temp' + str(it),
+                                                                            clean=clean, **kwargs)
                             # get properties
                             st, en = i_cmb + 1, n - n_um
                             # print('length of lm', len(range(st, en)))
@@ -933,7 +986,7 @@ class PerplexData:
         i_lm = self.find_lower_mantle()
         self.mass_h2o_lm = total_water_mass(self.df_all, i_min=i_lm)
 
-    def get_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None,
+    def setup_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None,
                      parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
         """ procedure for setting up interior composition and structure of planet """
 
@@ -984,7 +1037,7 @@ class PerplexData:
             if parameterise_lm and self.pressure[self.i_cmb + 1] * 1e-5 > p_max_perplex:
                 self.extend_lm_composition(build_file_end='', **kwargs)  # includes get_composition()
             else:
-                self.get_composition(**kwargs)
+                self.werami_composition(**kwargs)
                 self.load_composition_px(**kwargs)
             return True  # checks that it works
         else:

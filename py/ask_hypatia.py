@@ -5,7 +5,7 @@ import pickle as pkl
 import os
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = '360c219bf9b24ced0abcd820643d15de'
+key = '39728dfb7021ad38c12aa84d66a7f6fd'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -106,7 +106,8 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
 
 
 def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composition=False,
-                     output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, **kwargs):
+                     output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True,
+                     **kwargs):
     """
     Retrieve the elemental abundances of an individual star. Requires file parameters.py definining solar abundances for
     each element X in log10(N_X/N_H); e.g., mg_sol = 7.54 - 12
@@ -149,7 +150,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
 
     def do_local():
         try:
-            path = find_existing_directory(star, output_parent=output_parent_path)
+            path = find_existing_directory(star, output_parent=output_parent_path, **kwargs)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
             except OSError:

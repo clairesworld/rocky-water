@@ -141,7 +141,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
     dat = px.PerplexData(name=name, **kwargs)
     okay = True
 
-    if os.listdir(dat.output_path):
+    if os.listdir(dat.output_path) and os.path.isfile(dat.output_path + 'dat.pkl'):
         # check if data exists in directpry and load if so
         print(dat.output_path,
               'already contains data, trying to load... [to overwrite, please delete directory manually]')
@@ -157,7 +157,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
     else:
         # run --> this is the time-consuming part
         # print('kwargs build_planet', kwargs)
-        okay = dat.get_interior(solve_interior=solve_interior, **kwargs)
+        okay = dat.setup_interior(solve_interior=solve_interior, **kwargs)
 
     if not okay and solve_interior:
         print('returning None')
@@ -244,8 +244,7 @@ def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
     return dat_list
 
 
-def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True, include_names=None):
-    """ read all """
+def get_run_dirs(output_path, prevent_blank_dir=True, verbose=False):
     try:
         subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     except FileNotFoundError:
@@ -257,6 +256,12 @@ def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True,
         return []
     except PermissionError:
         print('probably have a for loop reading characters rather than file strings')
+    return subfolders
+
+
+def read_dir(output_path, subsample=None, verbose=False, prevent_blank_dir=True, include_names=None):
+    """ read all """
+    subfolders = get_run_dirs(output_path, prevent_blank_dir=prevent_blank_dir, verbose=verbose)
     if subsample is not None:
         # a random subset of the directory
         subfolders = random.sample(subfolders, subsample)

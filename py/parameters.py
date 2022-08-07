@@ -18,6 +18,7 @@ M_Ca = 40.078
 M_Al = 26.981539
 M_Fe = 55.845
 M_Na = 22.989769
+M_P = 30.97
 
 # molar masses of oxides
 M_SiO2 = M_Si + 2 * M_O
@@ -26,6 +27,8 @@ M_MgO = M_Mg + M_O
 M_Al2O3 = 2 * M_Al + 3 * M_O
 M_FeO = M_Fe + M_O
 M_Na2O = 2 * M_Na + M_O
+M_PO4 = M_P = 4 * M_O
+M_O2 = 2 * M_O
 
 # solar composition from Lodders 09 in log10(N_X/N_H)
 ca_sol = 6.33 - 12
@@ -34,6 +37,7 @@ fe_sol = 7.45 - 12
 si_sol = 7.52 - 12
 mg_sol = 7.54 - 12
 na_sol = 6.30 - 12
+p_sol = 5.46 - 12
 
 # print(10 ** mg_sol / 10 ** si_sol)   # sun = 1.04
 # print(10 ** fe_sol / 10 ** mg_sol)   # sun = 0.81

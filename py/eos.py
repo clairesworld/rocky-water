@@ -449,8 +449,8 @@ def pt_profile(n, radius, density, gravity, alpha, cp, psurf, tsurf, i_cmb=None,
     temperature = np.zeros(n)
     pressure[-1] = psurf * 1e5  # surface pressure in Pa
     temperature[-1] = tsurf  # potential surface temperature, not real surface temperature
-    last_good_lapse_rate = alpha[-1] / cp[-1] * gravity[-1]  # temp
-    flag = True
+    # last_good_lapse_rate = alpha[-1] / cp[-1] * gravity[-1]  # temp
+    # flag = True
     for i in range(2, n + 1):  # M: 1:n-1; n-i from n-1...1; P: from n-2...0 -> i from 2...n
         dr = radius[n - i + 1] - radius[n - i]
         pressure[n - i] = pressure[n - i + 1] + dr * gravity[n - i] * density[n - i]
