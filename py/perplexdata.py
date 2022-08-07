@@ -297,7 +297,11 @@ class PerplexData:
     def write_star_composition(self, fname='nH_star.txt', path=None):
         if path is None:
             path = self.output_path
-        np.savetxt(path + fname, self.nH_star, delimiter=',')  # X is an array
+        try:
+            np.savetxt(path + fname, self.nH_star, delimiter=',')  # X is an array
+        except IndexError as e:
+            print(e)
+            print('ERROR: star composition possibly incomplete for', self.star, '; no file written')
 
     def get_mgsi(self, **kwargs):
         # if self.nH_star:
