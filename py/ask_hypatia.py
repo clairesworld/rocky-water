@@ -203,6 +203,8 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             nH_star = do_local()
         except Exception as e:
             print(e)
+            # try loading from file
+            nH_star = do_local()
             return None
     else:
         nH_star = do_local()
