@@ -20,7 +20,7 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, isother
                     output_parent_path=output_parent_path, perplex_path=perplex_path,
                     mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                     use_local_composition=True, existing_dir=output_sub,  # try local first
-                    restart='2MASS23155829+3127462'
+                    restart='2MASS 23155829+3127462'
                     )
 
 # # can (re)do fo2 calculations with this using existing vertex files
