@@ -251,8 +251,6 @@ class PerplexFugacity(px.PerplexData):
 
             # concat with full results dataframe
             px_phases = [col for col in df_c.columns if col not in ['P(bar)', 'T(K)']]
-            print('px_phases', px_phases)
-            print({phase: 'X_' + phase for phase in px_phases})
             df_c.rename(columns={phase: 'X_' + phase for phase in px_phases}, inplace=True)
             df_save = pd.concat([df_w, df_c], axis=1)
 
@@ -579,16 +577,21 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
                      output_parent_path=output_parent_default, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency})
-    pl_list = rw.planets_from_hypatia(n_sample=n_sample, names_file='host_names.txt', plot_all=False, restart=None,
+    pl_list = rw.planets_from_hypatia(n_sample=n_sample, names_file='host_names.txt', plot_all=False,
                                       get_saturation=False, solve_interior=False,
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
+    bad = []
     for pl in pl_list:
-        fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
+        okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
+        if not okay:
+            bad.append(pl.name)
+    print('bad cases:', bad)
+    return pl_list
 
 
 def fo2_from_local(output_parent_path=output_parent_default, **kwargs):
-    # perform fo2 calculations on local (existing) vertex data
+    # perform fo2 calculations on local (existing) vertex data in entire directory
     subfolders = rw.get_run_dirs(output_path=output_parent_path)
     if subfolders:
         for sub in subfolders:
@@ -598,7 +601,7 @@ def fo2_from_local(output_parent_path=output_parent_default, **kwargs):
             d = read_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
             dat = PerplexFugacity(name=name, output_parent_path=output_parent_path, **d, **kwargs)
             logfo2 = dat.fo2_calc(run=False, **d, **kwargs)
-            print('log fo2 of system:', logfo2)
+            # print('log fo2 of system:', logfo2)
     else:
         print('no local output found in', output_parent_path)
 
@@ -617,11 +620,17 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
         pl = rw.build_planet(name=name, star=star, get_saturation=False, solve_interior=False, verbose=verbose,
                              output_parent_path=output_parent_path, **planet_kwargs)
 
-    print('Starting fo2 calc for planet of', pl.star, 'with', [(v, k) for k, v in pl.wt_oxides.items()])
+    try:
+        tmp = pl.wt_oxides.items()
+    except AttributeError as e:
+        print(e)
+        print(name, 'has no wt_oxides composition')
+        return False
+    print('\n\n\n\n----------------------------------------\nStarting fo2 calc for planet of', pl.star)
     dat = PerplexFugacity(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                           **kwargs)
 
     logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max,
                           verbose=verbose, **kwargs)
-
-    print('log fo2 of system:', logfo2)
+    # print('log fo2 of system:', logfo2)
+    return True
