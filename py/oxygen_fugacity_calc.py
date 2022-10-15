@@ -15,7 +15,8 @@ perplex_path = '/raid1/cmg76/perple_x/'
 # # only need to run this once to get build files (i.e., bulk composition) and vertex output files
 # note this will first download the stellar composisions for the whole sample and then run perple_x
 pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, isotherm=T_iso,
-                    X_ferric=X_ferric, core_efficiency=core_eff, planet_kwargs={'Tp': 999}, solve_interior=False,
+                    X_ferric=X_ferric, core_efficiency=core_eff, planet_kwargs={'Tp': 999},
+                    #solve_interior=False, --> already a parameter
                     check_comp=True, suppress_output=False, run=True, verbose=True,
                     output_parent_path=output_parent_path, perplex_path=perplex_path,
                     mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
