@@ -21,7 +21,7 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, isother
                     output_parent_path=output_parent_path, perplex_path=perplex_path,
                     mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                     # use_local_compositon=False,
-                    use_local_composition=True, existing_dir='hypatia88Fe',  # try local first
+                    use_local_composition=True, existing_dir='hypatia88Fe/',  # try local first
                     # existing_output_parent=pf.output_parent_apollo,  <== existing kwarg
                     # restart='2MASS 23155829+3127462'
                     )

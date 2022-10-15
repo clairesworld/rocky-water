@@ -272,4 +272,5 @@ def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', e
             print('path', path)
             print('output_parent', existing_output_parent)
             print('output_parent + existing', existing_output_parent + existing_dir)
+            print('(missing forward slash?)')
             raise e
