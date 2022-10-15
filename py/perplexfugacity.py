@@ -576,9 +576,9 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
 def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
                      output_parent_path=output_parent_default, **kwargs):
-    planet_kwargs.update({'core_efficiency': core_efficiency})
+    planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
     pl_list = rw.planets_from_hypatia(n_sample=n_sample, names_file='host_names.txt', plot_all=False,
-                                      get_saturation=False, solve_interior=False,
+                                      get_saturation=False,
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
     bad = []
