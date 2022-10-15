@@ -581,8 +581,10 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwar
                                       get_saturation=False,
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
+    print('\nfinished generating compositions\n')
     bad = []
     for pl in pl_list:
+        print(pl.wt_oxides)
         okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
         if not okay:
             bad.append(pl.name)

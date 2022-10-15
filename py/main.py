@@ -186,10 +186,10 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         okay = dat.setup_interior(solve_interior=solve_interior, **kwargs)
 
     if not okay and solve_interior:
-        print('returning None')
+        print('planet is not okay - returning None')
         return None
 
-    elif solve_interior:
+    elif solve_interior:  # i.e .if meant to solve
         # rename and scale columns (for use with saturation calcs but being consistent regardless)
         df_all = dat.df_comp.copy()
         renamed_phases = rename_phases(dat.phases_px)
