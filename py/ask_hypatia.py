@@ -152,8 +152,10 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             return None
         try:
             path = find_existing_directory(star, existing_output_parent=output_parent_path, **kwargs)
+            print('found existing star at', path)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
+                print('loaded nH_star', nH_star)
                 try:  # check for empty
                     tmp = nH_star[1]
                 except IndexError:
