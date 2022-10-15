@@ -6,9 +6,9 @@ T_iso = 1373
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 
-X_ferric = 0.03
+X_ferric = 0.1
 core_eff = 0.88
-output_sub = 'hypatia' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric/'
+output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric/'
 output_parent_path = pf.output_parent_apollo + output_sub
 perplex_path = '/raid1/cmg76/perple_x/'
 
