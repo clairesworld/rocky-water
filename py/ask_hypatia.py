@@ -4,8 +4,10 @@ import random
 import pickle as pkl
 import os
 
+import simplejson
+
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = '4bde8b0bb6837cd97e8c50451a31499d'
+key = '40588d1b3c33595a5d6fde5f1755691a'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -186,10 +188,10 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         try:
             entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
                                  params=params)
+            print('retrieved from catalogue:', entry.json())
 
             if np.size(entry.json()) == 0:
                 raise Exception('No entry found in Hypatia Catalogue:', star)
-            # print('loaded json', entry.json())
             nH_star = []
             for ii, el in enumerate(els):
                 # absolute not working for some reason so get difference from solar via lodders norm
@@ -217,11 +219,17 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
 
         except (ConnectionError, requests.exceptions.ConnectionError) as e:
             # try loading from file
+            print('CONNECTION TIMEOUT\nERROR MESSAGE:', e)
+            print('    trying to load from file...')
             nH_star = do_local(tried_once=True)
-        except Exception as e:
+        except simplejson.JSONDecodeError as e:
             print(e)
-            # try loading from file
-            nH_star = do_local(tried_once=True)
+            raise Exception('probably need new API key!')
+        # except Exception as e:
+        #     print(e)
+        #     print('trying to load from file')
+        #     # try loading from file
+        #     nH_star = do_local(tried_once=True)
         return nH_star
 
     if use_local_composition:

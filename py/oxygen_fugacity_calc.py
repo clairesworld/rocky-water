@@ -6,8 +6,8 @@ T_iso = 1373
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 
-X_ferric = 0.1
-core_eff = 0.88
+X_ferric = 0.03
+core_eff = 0.99
 output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric/'
 output_parent_path = pf.output_parent_apollo + output_sub
 perplex_path = '/raid1/cmg76/perple_x/'
@@ -48,3 +48,6 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, isother
 #                 suppress_output=False, check_comp=True, verbose=True,
 #                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
 #                 )
+
+
+# def run_over_coreeff(coreeff_list):
