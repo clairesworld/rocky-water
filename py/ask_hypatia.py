@@ -151,7 +151,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         if tried_once:
             return None
         try:
-            path = find_existing_directory(star, output_parent=output_parent_path, **kwargs)
+            path = find_existing_directory(star, existing_output_parent=output_parent_path, **kwargs)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
                 try:  # check for empty
@@ -231,7 +231,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     return nH_star  # will always be in same order as oxides list
 
 
-def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', output_parent=None, **kwargs):
+def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', existing_output_parent=None, **kwargs):
     """
     Retrieve directory of already-existing run for a given star. Best with default use of paths as given in
     perplexdata.py; i.e., output_path_default / existing_dir / *star_name*
@@ -242,7 +242,7 @@ def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', o
         Name/ID of star as retrieved from Hypatia Catalogue
     existing_dir : str or Path
         Directory containing existing runs
-    output_parent : str or None
+    existing_output_parent : str or None
         Shared parent directory of existing_dir and
 
     Returns
@@ -253,21 +253,21 @@ def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', o
     from perplexdata import output_parent_default
     import glob
 
-    if output_parent is None:
-        output_parent = output_parent_default
+    if existing_output_parent is None:
+        existing_output_parent = output_parent_default
     sn = star_name.replace(' ', '')
     # print('searching for', output_parent_default + existing_dir + '*' + sn + '*')
     try:
-        path = glob.glob(output_parent + existing_dir + '*' + sn + '*')
+        path = glob.glob(existing_output_parent + existing_dir + '*' + sn + '*')
         return path[0]  # should only find one item; glob.glob returns list
     except IndexError as e:
         # try one more directory up
         try:
-            output_parent = '/' + os.path.join(*(output_parent.split(os.path.sep)[:-2])) + '/'
-            path = glob.glob(output_parent + existing_dir + '*' + sn + '*')
+            existing_output_parent = '/' + os.path.join(*(existing_output_parent.split(os.path.sep)[:-2])) + '/'
+            path = glob.glob(existing_output_parent + existing_dir + '*' + sn + '*')
             return path[0]  # should only be one but glob.glob returns list
         except IndexError as e:
             print('path', path)
-            print('output_parent', output_parent)
-            print('output_parent + existing', output_parent + existing_dir)
+            print('output_parent', existing_output_parent)
+            print('output_parent + existing', existing_output_parent + existing_dir)
             raise e
