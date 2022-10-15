@@ -5,13 +5,22 @@ import perplexdata as px
 import plot_perplex as plotpx
 import saturation as sat
 import main as rw
-import parameters as p
 import matplotlib.pyplot as plt
 from useful_and_bespoke import cornertext, colorize, colourbar, colourised_legend
 from UM_mass_scaling import um_mass_scaling
 import saturation as sat
 import matplotlib.lines as mlines
 import matplotlib.gridspec as gridspec
+
+dat = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.7244359600749921, px.wt_oxides_MD95),
+                      maxIter=30, tol=1e-4,  # n=800,
+                      Tp=1600, test_CMF=0.325,
+                      plot_all=False, get_saturation=True, verbose=True, clean=True,
+                      vertex_data='stx21ver', option_file='perplex_option_claire_mol', excluded_phases=[],
+                      name='1M_32CMF_27Mg_1600K_mol',
+                      output_parent_path=px.output_parent_default + 'MgSi_from_earth_fig1/',
+                      )
+dat.werami_garnet_composition()
 
 """ get earth benchmark """
 Tp = 1600
@@ -30,32 +39,29 @@ Tp = 1600
 # earth.femg_star = 0.81
 
 
-Mp = 2.25
-pl_E = rw.build_planet(M_p=Mp * p.M_E, test_oxides=px.wt_oxides_MD95,
-                        maxIter=30, tol=1e-4, #n=800,
-                        Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
-                        plot_all=False, get_saturation=True, verbose=True, clean=True,
-                        vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        # name='Earth_Si_test', x_Si_core=9,
-                        name='test1_' + str(Tp) + 'K',
-                        )
-rho = pl_E.M_p / (4/3 * np.pi * pl_E.R_p**3)
-print('Earth-like bulk density', rho, 'kg/m3')  # 6562 kg/m3
-
-wt_oxides_CaAl = {'SiO2': 27, 'MgO': 14, 'CaO': 16, 'Al2O3': 43, 'FeO': 0.1}
-pl_Ca = rw.build_planet(M_p=Mp * p.M_E, test_oxides=wt_oxides_CaAl,
-                        maxIter=30, tol=1e-4, #n=800,
-                        Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
-                        plot_all=False, get_saturation=True, verbose=True, clean=True,
-                        vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                        # name='Earth_Si_test', x_Si_core=9,
-                        name='test2_' + str(Tp) + 'K',
-                        )
-rho = pl_Ca.M_p / (4/3 * np.pi * pl_Ca.R_p**3)
-print('bulk density', rho, 'kg/m3')  # 6445 kg/m3
-
-
-
+# Mp = 2.25
+# pl_E = rw.build_planet(M_p=Mp * p.M_E, test_oxides=px.wt_oxides_MD95,
+#                         maxIter=30, tol=1e-4, #n=800,
+#                         Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         # name='Earth_Si_test', x_Si_core=9,
+#                         name='test1_' + str(Tp) + 'K',
+#                         )
+# rho = pl_E.M_p / (4/3 * np.pi * pl_E.R_p**3)
+# print('Earth-like bulk density', rho, 'kg/m3')  # 6562 kg/m3
+#
+# wt_oxides_CaAl = {'SiO2': 27, 'MgO': 14, 'CaO': 16, 'Al2O3': 43, 'FeO': 0.1}
+# pl_Ca = rw.build_planet(M_p=Mp * p.M_E, test_oxides=wt_oxides_CaAl,
+#                         maxIter=30, tol=1e-4, #n=800,
+#                         Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
+#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                         # name='Earth_Si_test', x_Si_core=9,
+#                         name='test2_' + str(Tp) + 'K',
+#                         )
+# rho = pl_Ca.M_p / (4/3 * np.pi * pl_Ca.R_p**3)
+# print('bulk density', rho, 'kg/m3')  # 6445 kg/m3
 
 
 # earth.get_obm_water()
@@ -293,9 +299,10 @@ def find_sd(nsd, dir_name, prop, dats=None):
             pass
     mean = np.mean(x)
     std = np.std(x)
-    pcen = (mean - nsd*std, mean + nsd*std)
+    pcen = (mean - nsd * std, mean + nsd * std)
     print(prop, pcen)
     return pcen
+
 
 def find_percentile(q, dir_name, prop, dats=None):
     # if np.size(q) > 1:
@@ -378,7 +385,8 @@ folder = 'hypatia1M_1600K_80Fe'
 #                              )
 
 """ hist of star iron content """
-# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1600K_80Fe/')
+# x_name = 'nH_star[-1]'
+# dats = rw.read_dir(px.perplex_path_default + 'output/hypatia1M_1900K_90Fe/')
 # plotpx.pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None,
 #                save=False, show=True, data_label=None,
 #                xlim=None, bins=None, showmedian=True)
@@ -405,6 +413,8 @@ folder = 'hypatia1M_1600K_80Fe'
 
 
 """ explain earth high water mass ? """
+
+
 # folder = 'hypatia1M_1600K_88Fe'
 # dats = rw.read_dir(px.perplex_path_default + 'output/' + folder + '/')
 # params = ['mass_um', 'mass_h2o_um', "wt_oxides['MgO']/dat.wt_oxides['FeO']", 'p_mtz', 'p_lm'] #]#, 'mgsi', 'femg_star']
@@ -482,8 +492,8 @@ def get_percentile_of_attr(target_dat=None, attr=None, x_target=None, dats=None,
 # # dirs = [px.perplex_path_default + 'output/hypatia1M_1600K_' + s + 'Fe/' for s in ['65', '70', '75', '80', '85', '90', '93', '95', '97', '99']]
 # dirs = [px.perplex_path_default + 'output/hypatia0,1M_1600K_88Fe/']  # 'output/hypatia1M_1900K_88Fe/'
 # for folder in dirs:
-    # dats = rw.update_dir(folder, px.PerplexData.write_star_composition, store=True)
-    # dats = rw.update_dir(folder, px.PerplexData.get_femg_star, store=True)
+# dats = rw.update_dir(folder, px.PerplexData.write_star_composition, store=True)
+# dats = rw.update_dir(folder, px.PerplexData.get_femg_star, store=True)
 #     # dats = rw.update_dir(folder, px.PerplexData.get_obm_water, store=True)
 #     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)
 #     # dats = rw.update_dir(folder, px.PerplexData.find_transition_zone, store=True)

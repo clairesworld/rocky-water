@@ -15,17 +15,22 @@ leg_loc = 'right'
 rc('text', usetex=True)  # turn off for running over ssh
 # rcParams['font.family'] = 'serif'
 # rcParams['font.serif'] = 'CMU Serif'
-legcolor='xkcd:off white'
+
+dark = False
+if dark:
+    legcolor = 'xkcd:off white'
+else:
+    legcolor = 'k'
 
 today = date.today().strftime("%b-%d-%Y")
-fig_path = '/home/claire/Desktop/rw-poster/'
+fig_path = '/home/claire/Documents/postdoc-apps/jesus/'
 rho_c = 2700
 rho_w = 1000
 M_E = 5.972e24  # earth mass in kg
 R_E = 6371e3
 g_E = 9.807  # earth grav
 Y = 100e6
-labelsize = 45  ##32
+labelsize = 32  # 45: poster
 ticksize = 25
 legsize = 25
 lw = 5
@@ -246,10 +251,10 @@ wmfs_dt_avg = np.log10((10 ** wmfs_dt_hot + 10 ** wmfs_dt_cold) / 2)
 """ DO PLOTTING """
 
 # plot_ss()
-plot_trappist_wmf(cmf=25, err_c='xkcd:off white')
+# plot_trappist_wmf(cmf=25, err_c='xkcd:off white')
 
-handles, labels = ax.get_legend_handles_labels()
-labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+# handles, labels = ax.get_legend_handles_labels()
+# labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
 
 # add mantle water capacity
 h_int = plot_interior_capacity()
@@ -265,17 +270,17 @@ elif leg_loc == 'right':
     bbox = (1.04, 0.7)
     loc = 'upper left'
 leg_trapp = ax.legend([
-    handles
-    ,p4,
+    # handles,
+    p4,
     h_int
 ],
     [
-        'TRAPPIST-1 system, 25\% Fe',
+        # 'TRAPPIST-1 system, 25\% Fe',
         'Earth, modern ocean',
-    'Entire mantle water capacity'
+    'Entire mantle water capacity\n(expected range for exoplanets)'
         ],
     ncol=1, frameon=False, fontsize=legsize,
-    title=r'\textbf{Ocean mass fractions}',
+    title=r'\textbf{Possible ocean mass fractions}',
     bbox_to_anchor=bbox,  # (0, 1.02, 1, 0.2),
     loc=loc,
     borderaxespad=0, labelcolor=[legcolor]*3)
@@ -284,22 +289,22 @@ c = '#b13c02ff'
 c_cr = '#c5927fff'  # 'xkcd:sand'
 c_dt = '#cc7832'  # 'xkcd:greey green'
 
-# # l1, = plt.plot(masses, wmfs_200, c=c_cr, lw=6, label='Crust strength, 200 MPa', zorder=2)
-l2, = plt.plot(masses, wmfs_100, c=c_cr, lw=6, label='Crust strength, 100 MPa', zorder=2)
-# # l3, = plt.plot(masses, wmfs_50, c=c_cr, lw=1, label='Crust strength, 50 MPa', zorder=1)
-l2 = mlines.Line2D([], [], color=c_cr, marker=None, lw=6, label='Crust strength, 100 MPa')  # dummy for leg
+# # # l1, = plt.plot(masses, wmfs_200, c=c_cr, lw=6, label='Crust strength, 200 MPa', zorder=2)
+# l2, = plt.plot(masses, wmfs_100, c=c_cr, lw=6, label='Crust strength, 100 MPa', zorder=2)
+# # # l3, = plt.plot(masses, wmfs_50, c=c_cr, lw=1, label='Crust strength, 50 MPa', zorder=1)
+# l2 = mlines.Line2D([], [], color=c_cr, marker=None, lw=6, label='Crust strength, 100 MPa')  # dummy for leg
 
 # l6 = plt.fill_between(masses, y1=wmfs_dt_hot, y2=wmfs_dt_cold, fc=c_dt, alpha=0.5, zorder=1)
 # l6 = plt.plot(masses, wmfs_dt_avg, c=c_dt, lw=3, zorder=2, visible=False)
 plt.errorbar(masses, wmfs_dt_hot, yerr=wmfs_dt_hot * 2e-1, c=c_dt, ls='-', lw=3, zorder=2,
              lolims=True)  # arbitrary constant error for plot
 plt.errorbar(masses, wmfs_dt_cold, yerr=wmfs_dt_cold * 2e-1, c=c_dt, ls='-', lw=3, zorder=2, uplims=True)
-l6 = mlines.Line2D([], [], color=c_dt, marker=None, lw=3, label='Dynamic topography limit')  # dummy for leg
+l6 = mlines.Line2D([], [], color=c_dt, marker=None, lw=3, label='Intrinsic topography limit\n(model uncertainty)')  # dummy for leg
 
 plt.fill_between(masses, wmfs_dt_cold, [1] * len(masses), zorder=0, fc='#131a30', alpha=0.6)
 plt.fill_between(masses, [1e-10] * len(masses), wmfs_dt_hot, zorder=0, fc='xkcd:stone', alpha=0.5)
-ax = cornertext(ax, 'WATER\nWORLD', pos='top right', size=legsize+7, c='xkcd:off white', pad=0.04)  # pad=0.05
-ax = cornertext(ax, 'BLUE\nMARBLE?', pos='bottom left', size=legsize+7, c='xkcd:off white', pad=0.04)
+ax = cornertext(ax, 'OCEAN\nWORLD', pos='top right', size=legsize+7, c=legcolor, pad=0.04)  # pad=0.05
+ax = cornertext(ax, 'BLUE\nMARBLE?', pos='bottom left', size=legsize+7, c=legcolor, pad=0.04)
 
 leg_trapp._legend_box.align = "left"
 
@@ -313,14 +318,16 @@ elif leg_loc == 'right':
     bbox = (1.04, 1)
     loc = 'upper left'
 leg_scale = ax.legend(handles=[
-    # # l1,
-    l2,
-    # # l3,
+    # # # l1,
+    # l2,
+    # # # l3,
     l6
 ],
     ncol=1, frameon=False, fontsize=legsize, loc=loc,
-    title=r'\textbf{Theoretical topographic capacity}',
-    bbox_to_anchor=bbox, borderaxespad=0, labelcolor=[legcolor]*len(handles))
+    title=r'\textbf{Theoretical ocean basin capacity}',
+    bbox_to_anchor=bbox, borderaxespad=0,
+    # labelcolor=[legcolor]*len(handles)
+)
 leg_scale._legend_box.align = "left"
 ax.add_artist(leg_scale)
 
@@ -338,12 +345,12 @@ ax.add_artist(leg_scale)
 #                        borderaxespad=0)
 # ax.add_artist(leg_mantle)
 
-plt.xlabel(r'Planet mass $(M_\oplus$)', fontsize=labelsize, labelpad=20)
-plt.ylabel('Waterworld limit\n(ocean mass fraction)', fontsize=labelsize, labelpad=20)
+plt.xlabel(r'Planet mass (Earth masses)', fontsize=labelsize, labelpad=20)
+plt.ylabel('Waterworld limit\n(maximum ocean mass fraction)', fontsize=labelsize, labelpad=20)
 plt.loglog()
 
 xticks = [0.1, 1, 5]
-ax.set_ylim(2E-5, 1E-1)
+ax.set_ylim(2E-5, 1E-2)  # ax.set_ylim(2E-5, 1E-1) - incl. trappist
 ax.set_xticks(xticks)
 ax.set_xlim(xticks[0], xticks[-1])
 ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%g'))
@@ -361,12 +368,13 @@ for axis in ['top', 'bottom', 'left', 'right']:
 ax.tick_params(width=4)
 
 
-plt.setp(leg_scale.get_title(), color='xkcd:off white')
-plt.setp(leg_trapp.get_title(), color='xkcd:off white')
-fig, ax = dark_background(fig, ax)
+if dark:
+    plt.setp(leg_scale.get_title(), color='xkcd:off white')
+    plt.setp(leg_trapp.get_title(), color='xkcd:off white')
+    fig, ax = dark_background(fig, ax)
 
 plt.savefig(fig_path + 'ww_lim.png', bbox_inches='tight', dpi=600,
-            transparent=True,
+            # transparent=True,
             # facecolor=fig.get_facecolor()
             )
 plt.show()

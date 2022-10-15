@@ -27,23 +27,49 @@ def rename_phases(phases_px):
 
 
 def update_MgSi(MgSi=None, oxides=px.wt_oxides_Earth):
-    # vary Mg/Si, use original otherwise
-    # update m_MgO and m_SiO2, preserving total mass
-    m_tot = oxides['MgO'] + oxides['SiO2']  # total mass (%) of MgO and SiO2 - conserve this
-    n_MgO = oxides['MgO'] / M_MgO  # convert to moles
-    n_SiO2 = oxides['SiO2'] / M_SiO2
-    n_MgSi_old = n_MgO / n_SiO2  # n_Mg = n_MgO etc
-    if MgSi is None:
-        MgSi = n_MgSi_old  # no update
+    """ given an oxide composition in wt%, change MgO and SiO2 to desired molar Mg/Si ratio """
+    # assume 100 g
+    oxides = {k: v * 100.0/sum(oxides.values()) for k, v in oxides.items()}
 
-    m_ratio_new = MgSi * (M_MgO / M_SiO2)  # m = nM, in % | new mass ratio
+    # update m_MgO and m_SiO2, preserving their total mass
+    print('assume 100 g')
+    print('m total =', sum(oxides.values()), 'g')
+    m_tot = oxides['MgO'] + oxides['SiO2']  # total mass (%) of MgO and SiO2 - conserve this
+    print('m_MgO + m_SiO2 =', m_tot, 'g')
+
+    # convert to moles
+    n_MgO = oxides['MgO'] / M_MgO
+    n_SiO2 = oxides['SiO2'] / M_SiO2
+    MgSi_old = n_MgO / n_SiO2  # n_Mg = n_MgO and n_Si = n_SiO2
+    if MgSi is None:
+        MgSi = MgSi_old  # no update
+    print('n total =', n_MgO + n_SiO2)
+    print('Mg/Si', MgSi_old)
+
+    m_ratio_new = MgSi * (M_MgO / M_SiO2)  # m = nM | new mass ratio
     x = m_ratio_new
-    y = m_tot
+    y = m_tot  # conserved
     m_MgO_new = x * y / (1 + x)
-    m_SiO2_new = m_tot - m_MgO_new
+    m_SiO2_new = y - m_MgO_new  # m_tot = m_MgO + m_SiO2
     oxides['MgO'] = m_MgO_new
     oxides['SiO2'] = m_SiO2_new
+
+    print('-------\nCHECK:')
+    m_tot = oxides['MgO'] + oxides['SiO2']  # total mass (%) of MgO and SiO2 - conserve this
+    print('m_MgO + m_SiO2 =', m_tot, 'g')
+    n_MgO = oxides['MgO'] / M_MgO  # convert to moles
+    n_SiO2 = oxides['SiO2'] / M_SiO2
+    MgSi_old = n_MgO / n_SiO2  # n_Mg = n_MgO etc
+    print('n total =', n_MgO + n_SiO2)
+    print('Mg/Si', MgSi_old, '\n\n\n\n\n\n\n\n')
+
     return oxides
+
+# update_MgSi(0.7)
+
+
+
+
 
 
 def update_MgFe(MgFe=None, oxides=px.wt_oxides_Earth):

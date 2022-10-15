@@ -29,6 +29,7 @@ def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', e
     names : list
         List of star names
     """
+    print('reading star names from Hypatia...')
     catalog = requests.get("https://hypatiacatalog.com/hypatia/api/v2/data", auth=(API_KEY, "api_token"))
     names_all = []
     # print(catalog.json()['values'])
@@ -146,7 +147,9 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     for ox in oxide_list:
         els.append(ox[:2].lower())
 
-    def do_local():
+    def do_local(tried_once=False):
+        if tried_once:
+            return None
         try:
             path = find_existing_directory(star, output_parent=output_parent_path, **kwargs)
             try:
@@ -154,12 +157,12 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                 try:  # check for empty
                     tmp = nH_star[1]
                 except IndexError:
-                    nH_star = do_remote()
+                    nH_star = do_remote(tried_once=True)
             except OSError as e:
                 # no data?
                 print(e)
                 print('trying remote...')
-                nH_star = do_remote()
+                nH_star = do_remote(tried_once=True)
                 return nH_star
             except FileNotFoundError:  # try pickled file
                 with open(path + '/dat.pkl', "rb") as pfile:
@@ -168,11 +171,14 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         except FileNotFoundError as e:
             print(e)
             print('trying remote...')
-            nH_star = do_remote()  # try remote
+            nH_star = do_remote(tried_once=True)  # try remote
             return nH_star
         return nH_star
 
-    def do_remote():
+
+    def do_remote(tried_once=False):
+        if tried_once:
+            return None
         import parameters as p
         params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
         try:
@@ -209,11 +215,11 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
 
         except (ConnectionError, requests.exceptions.ConnectionError) as e:
             # try loading from file
-            nH_star = do_local()
+            nH_star = do_local(tried_once=True)
         except Exception as e:
             print(e)
             # try loading from file
-            nH_star = do_local()
+            nH_star = do_local(tried_once=True)
         return nH_star
 
     if use_local_composition:

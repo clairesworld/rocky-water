@@ -36,12 +36,39 @@ def check_subsolidus(df):
 
 def check_nonmonotonic(df):
     """ find non-monotonically increasing fo2 """
-    idx = [True] + [df['logfo2'].iloc[ii] < df['logfo2'].iloc[ii - 1] for ii in range(1, len(df))]
-    tmp = df[idx]
-    if len(tmp) > 0:
-        print('bad idx', idx)
-        return False
-    return True
+    return ~df['logfo2'].is_monotonic_increasing
+
+
+def apply_filters(df, name, p_min=None, p_max=None):
+    """ do all checks """
+    try:
+        tmp = df['P(bar)']
+    except KeyError:
+        # accidentally saved with external editor as ,-delimited
+        df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep=',')
+
+    # checks for bad data
+    if not check_subsolidus(df):
+        raise Exception('ERROR: melt phases present in', name)
+    df = remove_bad(df)  # drop solutionless rows
+
+    if not check_nonmonotonic(df):
+        print(name, 'non-monotonic')
+
+    # extract and subset pressure
+    if p_min is None:
+        p_min = df['P(bar)'].min() * 1e-4
+    if p_max is None:
+        p_max = df['P(bar)'].max() * 1e-4
+    df = df[(df['P(bar)'] * 1e-4 >= p_min) & (df['P(bar)'] * 1e-4 <= p_max)]
+
+    # # check high-fo2 scenarios
+    # if (df['delta_qfm'] > 0).any():
+    #     print(name, ': fo2 > QFM')
+    #     dat = pf.init_from_build(name, output_parent_path=output_parent_path)
+    #     print('      Mg/Si =', dat.mgsi)
+
+    return df
 
 
 def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=None, xlabel=None, ylabel=None,
@@ -56,21 +83,7 @@ def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=No
 
     # read in results
     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
-
-    # checks for bad data
-    if not check_subsolidus(df):
-        raise Exception('ERROR: melt phases present in', name)
-    df = remove_bad(df)  # drop solutionless rows
-
-    if not check_nonmonotonic(df):
-        print(name, 'non-monotonic!!!!!!!!!!!')
-
-    # extract and subset pressure
-    if p_min is None:
-        p_min = df['P(bar)'].min() * 1e-4
-    if p_max is None:
-        p_max = df['P(bar)'].max() * 1e-4
-    df = df[(df['P(bar)'] * 1e-4 >= p_min) & (df['P(bar)'] * 1e-4 <= p_max)]
+    df = apply_filters(df, name, p_min, p_max)
     pressure = df['P(bar)'] * 1e-4
     T = df['T(K)'].unique()[0]
 
@@ -81,12 +94,6 @@ def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=No
     if show_buffer:
         fo2_qfm = df['logfo2_qfm']
         ax.plot(pressure, fo2_qfm, c='k', lw=1, ls=(0, (10, 4)), label='FMQ')
-
-    # check high-fo2 scenarios
-    if (delta_qfm > 0).any():
-        print(name, ': fo2 > QFM')
-        dat = pf.init_from_build(name, output_parent_path=output_parent_path)
-        print('      Mg/Si =', dat.mgsi)
 
     # set legends and labels, clean up axes
     if make_legend:
@@ -115,17 +122,7 @@ def phases_xsection(name, output_parent_path=output_parent_default, fig=None, ax
         fig, ax = plt.subplots(1, 1)
 
     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
-
-    if not check_subsolidus(df):
-        raise Exception('ERROR: melt phases present in', name)
-    df = remove_bad(df)  # drop solutionless rows
-
-    # extract and subset pressure
-    if p_min is None:
-        p_min = df['P(bar)'].min() * 1e-4
-    if p_max is None:
-        p_max = df['P(bar)'].max() * 1e-4
-    df = df[(df['P(bar)'] * 1e-4 >= p_min) & (df['P(bar)'] * 1e-4 <= p_max)]
+    df = apply_filters(df, name, p_min, p_max)
     pressure = df['P(bar)'] * 1e-4
     T = df['T(K)'].unique()[0]
 
@@ -173,7 +170,7 @@ def phases_xsection(name, output_parent_path=output_parent_default, fig=None, ax
 
 def multicomp_xsection(output_parent_path=output_parent_default, fig=None, ax=None, save=True, hist_y=False, ax_histy=None,
                        fname=None, cmap='summer', cmap_var=None, vmin=None, vmax=None, verbose=False, has_cbar=False,
-                       cbar_label=None, exclude_names=None, **kwargs):
+                       cbar_label=None, exclude_names=[], bins=15, **kwargs):
 
     if fname is None:
         fname = 'fo2_variation'
@@ -209,7 +206,7 @@ def multicomp_xsection(output_parent_path=output_parent_default, fig=None, ax=No
         for ii, sub in enumerate(subfolders):
             if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                 name = os.path.basename(sub)
-                if exclude_names and (name not in exclude_names):
+                if name not in exclude_names:
                     # get colouring
                     if cmap_var is not None:
                         dat = pf.init_from_build(name, output_parent_path=output_parent_path)
@@ -236,7 +233,7 @@ def multicomp_xsection(output_parent_path=output_parent_default, fig=None, ax=No
         for line in lines:
             y.append(line.get_ydata()[-1])  # get rightmost value for hist plotting
         ax_histy.hist(y, #range=ylim,
-                      density=True, orientation='horizontal', color='w', edgecolor='k')
+                      density=True, orientation='horizontal', color='w', edgecolor='k', bins=bins)
 
     if has_cbar:
         if cbar_label is None:
@@ -277,26 +274,118 @@ def stolper_subplot(name=None, fname=None, save=True, fig=None, axes=None, **kwa
         fig.savefig(figpath + fname + '.png')
 
 
-def element_xplot():
-    """ plot fo2 vs. wt% of some element """
+def element_xplot(p_of_interest=3, components=[], output_parent_path=output_parent_default, fig=None, axes=None,
+                  xlabel=None, ylabel=None, ylim=(-11.5, -7),
+    linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
+    make_legend=True,verbose=False, **kwargs):
+    """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
+    components can be bulk oxides or mineral phase proportion """
+
+    if fname is None:
+        fname = 'crossplot'
+
+    # setup gridspec
+    ncols = len(components)
+    if fig is None:
+        fig = plt.figure(figsize=(ncols*4, 4))
+    gs = fig.add_gridspec(1, ncols + 1, width_ratios=[10]*ncols + [1],
+                              left=0.1, right=0.9,
+                              wspace=0.05)
+    axes = []
+    for ii in range(ncols):
+        axes.append(fig.add_subplot(gs[0, ii]))
+        axes[ii].set_xlabel(components[ii], fontsize=labelsize)
+        axes[ii].set_ylim(ylim)
+        if ii > 0:
+            axes[ii].set_yticks([])
+    axes[0].set_ylabel('log($fO_2$)', fontsize=labelsize)
+
+    # get directory names in folder
+    subfolders = rw.get_run_dirs(output_path=output_parent_path)
+    if subfolders:  # nonzero
+        once = True
+        # loop over runs
+        ys = []
+        for ii, sub in enumerate(subfolders):
+            if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
+                name = os.path.basename(sub)
+                if name not in exclude_names:
+                    df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
+                    df = apply_filters(df, name)
+                    idx = df['P(bar)'].sub(p_of_interest * 1e4).abs().idxmin()
+                    row = df.iloc[idx]
+                    d = pf.read_from_build(name=name, output_parent_path=output_parent_path)
+
+                    # loop over components to check (subplots)
+                    for ii, (ax, component) in enumerate(zip(axes, components)):
+
+                        # search for component in oxides
+                        if component in d['wt_oxides'].keys():
+                            x = d['wt_oxides'][component]
+                        elif 'X_' + component in row.index:
+                            x = row['X_' + component]
+                        else:
+                            print(name, ':', component, 'not found in', d['wt_oxides'].keys(), 'or', row.index)
+                            continue
+                        y = row['logfo2']
+                        ax.scatter(x, y, c=linec, s=5)
+                        if once:
+                            ys.append(y)
+                            T = df['T(K)'].unique()[0]  # isothermal
+
+            elif verbose:
+                print(sub, 'is empty')
+        once = False
+
+    # make hist
+    ax_histy = fig.add_subplot(gs[0, -1], sharey=axes[-1])
+    ax_histy.hist(ys,  # range=ylim,
+                  density=True, orientation='horizontal', color='w', edgecolor='k', bins=15)
+    ax_histy.set_xticks([])
+    ax_histy.set_yticks([])
+    ax_histy.spines.bottom.set_visible(False)
+    ax_histy.spines.right.set_visible(False)
+    ax_histy.spines.top.set_visible(False)
+    ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
+
+    plt.suptitle(str(p_of_interest) + ' GPa, ' + str(T) + ' K', fontsize=labelsize)
+
+    if save:
+        fig.savefig(figpath + fname + '.png')
+    return fig, axes
 
 
-output_parent_path = output_parent_default + 'hypatia88Fe/'
-names = [
-    'Stolper'
-          # '1M_88Ceff_HIP58237_999K',
-    # 'dmm'
+exclude_names = [
+    # '1M_88Ceff_HIP58237_999K'
 ]
-exclude_names = ['1M_88Ceff_HIP58237_999K']
+output_parent_path = output_parent_default + 'hypatia88Fe/'
 
-# # like figure 3 from Stolper+2020
-# for name in names:
+# # cmap_var, vmin, vmax = 'mg_number', 86, 94
+# cmap_var, vmin, vmax, cbar_label = 'mgsi', 0.7, 1.3, 'Mg/Si'
+# multicomp_xsection(output_parent_path=output_parent_path, cmap='spring', cmap_var=cmap_var, vmin=vmin, vmax=vmax, has_cbar=True, cbar_label=cbar_label,
+#                    save=True, fname=None, alpha=0.9, lw=0.5, p_min=1.1, ymin=-13, ymax=-6,
+#                    hist_y=True, exclude_names=exclude_names, **plot_kwargs)
+
+element_xplot(p_of_interest=3, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'], output_parent_path=output_parent_path,
+    linec='k',  labelsize=16, save=True, fname='crossplot_oxides',)
+
+element_xplot(p_of_interest=3, components=['Ol', 'Opx', 'Cpx', 'Gt'], output_parent_path=output_parent_path,
+    linec='k',  labelsize=16, save=True, fname='crossplot_phases',)
+
+""" checking weird cases? """
+# names_nonmono = ['1M_88Ceff_2MASS07324421+3350061_999K', '1M_88Ceff_2MASS18484459+4426041_999K',
+# '1M_88Ceff_HIP60644_999K', '1M_88Ceff_HIP12048_999K', '1M_88Ceff_HIP110813_999K', '1M_88Ceff_HIP30114_999K',
+# '1M_88Ceff_HIP13291_999K', '1M_88Ceff_HIP99825_999K', '1M_88Ceff_HIP31246_999K', '1M_88Ceff_HIP90593_999K',
+# '1M_88Ceff_HIP18387_999K', '1M_88Ceff_2MASS19171110+4627286_999K', '1M_88Ceff_HIP64792_999K',
+# '1M_88Ceff_2MASS19535587+4647370_999K', '1M_88Ceff_HIP106353_999K', '1M_88Ceff_HIP68469_999K',
+# '1M_88Ceff_2MASS19304273+4643361_999K', '1M_88Ceff_HIP2611_999K', '1M_88Ceff_HIP79219_999K',
+# '1M_88Ceff_HIP10085_999K', '1M_88Ceff_HIP1499_999K', '1M_88Ceff_2MASS18452371+4417428_999K',
+# '1M_88Ceff_HIP114855_999K', '1M_88Ceff_HIP34801_999K', '1M_88Ceff_HIP58237_999K']
+# for name in names_nonmono:
 #     stolper_subplot(name, output_parent_path=output_parent_path, show_buffer=True, save=True, p_min=1.1, lw=2, **plot_kwargs)
 
-# cmap_var, vmin, vmax = 'mg_number', 86, 94
-cmap_var, vmin, vmax, cbar_label = 'mgsi', 0.7, 1.3, 'Mg/Si'
-multicomp_xsection(output_parent_path=output_parent_path, cmap='spring', cmap_var=cmap_var, vmin=vmin, vmax=vmax, has_cbar=True, cbar_label=cbar_label,
-                   save=True, fname=None, alpha=0.9, lw=0.5, p_min=1.1, ymin=-13, ymax=-6,
-                   hist_y=True, exclude_names=exclude_names, **plot_kwargs)
+""" Stolper fig 3 benchmark """
+# stolper_subplot('Stolper', output_parent_path=output_parent_default , show_buffer=True, save=True, p_min=1.1, lw=2,
+#                 **plot_kwargs)
 
 plt.show()

@@ -85,7 +85,7 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
                        show=False, legtitle=None, override_ax_arrow=False, ylabelpad=None, xlabelpad=None,
                        xlabel=None, ylabel=None, cmap='tab20', labelsize=16, plot_phases_order=None, p_max=None,
                        verbose=False, fig=None, ax=None, title=None, extension='.png', make_legend=True,
-                       leg_bbox_to_anchor=(1, 1), legsize=10, **kwargs):
+                       leg_bbox_to_anchor=(1, 1), legsize=10, orientation='horizontal', scale=100, **plot_kwargs):
     """ comp_stacked: plot cumulative modes
     p_max: maximum pressure to plot in GPa (e.g., to see UM and MTZ better"""
     if which != 'pressure':
@@ -107,16 +107,23 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
         ylabel = ylabelauto
     if title is None:
         title = dat.name
-    ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
-    ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
-    fig.suptitle(title, fontsize=labelsize)
+    ax.set_title(title, fontsize=labelsize)
 
     # p_max_orig = p_max
     if p_max is None:
         p_max = np.max(x)
     elif not override_ax_arrow:
         ax = annotate_ax_continuation(ax, 'x')
-    ax.set_xlim(1000e-4, p_max)
+
+    if orientation == 'horizontal':
+        ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
+        ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
+        ax.set_xlim(1000e-4, p_max)
+    elif orientation == 'vertical':
+        ax.set_ylabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
+        ax.set_xlabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
+        ax.set_ylim(1000e-4, p_max)
+        ax.invert_yaxis()
 
     # get modes of each phase from dataframe
     if plot_phases_order is None:  # use all phases from dataframe (default)
@@ -139,7 +146,8 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
         elif modality_type == 'water':
             col = 'frac_h2o_' + phase.lower()  # fraction of layer's water in this phase
         try:
-            y = dat.df_all[col].to_numpy(dtype=float) * 100
+            # dat.df_all[col].replace(0, np.nan, inplace=True)
+            y = dat.df_all[col].to_numpy(dtype=float) * scale
         except KeyError:
             print(col, 'not found in df_all')
             if plot_phases_order is not None:  # this should always be true...
@@ -154,12 +162,22 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
                 y_stacked = np.vstack((y_stacked, y))
         else:
             # or, if not a stackplot, plot immediately
-            ax.plot(x, y, c=colours[ii], label=phase_map[phase])
-
+            if orientation == 'horizontal':
+                ax.plot(x, y, c=colours[ii], label=phase_map[phase], **plot_kwargs)
+            elif orientation == 'vertical':
+                ax.plot(y, x, c=colours[ii], label=phase_map[phase], **plot_kwargs)
     # make stackplot at this point
     if comp_stacked:
-        ax.stackplot(x, y_stacked, labels=[phase_map[s] for s in phases], colors=colours)
-        ax.set_ylim(0, 100)
+        # print('y_stacked', np.shape(y_stacked))
+        if orientation == 'horizontal':
+            ax.stackplot(x, y_stacked, labels=[phase_map[s] for s in phases], colors=colours)
+            ax.set_ylim(0, 100)
+        elif orientation == 'vertical':
+            y_trans = np.cumsum(y_stacked, axis=0)
+            # print('y_trans', np.shape(y_trans))
+            for s, col in enumerate(phases):
+                ax.fill_betweenx(x, y_trans[s, :], label=phase_map[col], fc=colours[s], zorder=-s)
+            ax.set_xlim(0, 100)
         # ax.scatter(x, [50]*len(x), marker='.', s=20, c='k', zorder=100)  # show perple_x resolution
 
     if make_legend:
@@ -207,9 +225,9 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
             alpha=1,
             xmin=None, xmax=None, ymin=None, ymax=None, ax_ticks=None, label_x=True, label_y=True, labelsize=14,
             fig=None, ax=None, log=False, leg_label=None, orientation='vertical', figsize=None, fname=None,
-            legtitle=None,
+            legtitle=None, xlabelpad=None, ylabelpad=None, legloc='upper left',
             y2var=None, y2label=None, y2scale=None, save=True, fig_path=fig_path, legsize=12, leg_bbox_to_anchor=None,
-            **kwargs):
+            cumulative=False, show_legend=True, leg_kwargs={}, **kwargs):
     if fig is None and ax is None:
         fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -222,6 +240,10 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
     if fname is None:
         fname = dat.name + '_' + parameter
 
+    if cumulative:
+        x = np.cumsum(x)
+
+    print('x[0]', x[0])
     y, independent_ax_label = set_independent_var(dat, independent_ax)
 
     # set plot limits and labels
@@ -234,7 +256,7 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
     if ax_label is None:
         ax_label = parameter
     if orientation == 'vertical':
-        ax.plot(x, y, c=c, lw=lw, label=leg_label, alpha=alpha)
+        ax.plot(x, y, c=c, lw=lw, ls=ls, label=leg_label, alpha=alpha)
         if log:
             ax.set_xscale('log')
         if ax_ticks is not None:
@@ -253,15 +275,16 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
         ylabel = ax_label
 
     if label_x:
-        ax.set_xlabel(xlabel, fontsize=labelsize)
+        ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
     if label_y:
-        ax.set_ylabel(ylabel, fontsize=labelsize)
+        ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
 
-    leg = ax.legend(frameon=False, fontsize=legsize, title=legtitle, loc='upper left',
-                    bbox_to_anchor=leg_bbox_to_anchor,
+    if show_legend:
+        leg = ax.legend(frameon=False, fontsize=legsize, title=legtitle, loc=legloc,
+                    bbox_to_anchor=leg_bbox_to_anchor, **leg_kwargs
                     )
-    if legtitle is not None:
-        leg.get_title().set_fontsize(legsize)  # legend 'Title' fontsize
+        if legtitle is not None:
+            leg.get_title().set_fontsize(legsize)  # legend 'Title' fontsize
 
     if y2var is not None:
         raise NotImplementedError('second independent axis not implemented')
@@ -410,9 +433,9 @@ def pop_hist1D(dats, x_name, scale=1, earth=None, xlabel=None, title=None, c_his
 
 def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=None, ylabel=None, filename=None,
                 ticksize=10, legsize=12, xlabelpad=None, ylabelpad=None, range_min=None, range_max=None,
-                data_label=None, earth=False, fig_path=fig_path,
+                data_label=None, earth=False, fig_path=fig_path, min_mgsi=None,
                 extension='.png', fig=None, ax=None, xlim=None, ylim=None, labelsize=14, save=True, show=True, x=None,
-                y=None,
+                y=None, c='k', show_corr=False, transparent_edge=False,
                 return_data=False, annotate_n=True, ms=200, **scatter_kwargs):
     # for list of planet objects, make scatter plot of 2 properties
     print('range_min', range_min)
@@ -429,10 +452,15 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
             try:
                 xi = eval('dat.' + x_name)
                 yi = eval('dat.' + y_name)
+                if min_mgsi:
+                    mgsi = dat.mgsi
                 if (range_min is None) or (range_min is not None and xi >= range_min):
                     if (range_max is None) or (range_max is not None and xi <= range_max):
-                        x.append(xi * x_scale)
-                        y.append(yi * y_scale)
+                        if (min_mgsi is None) or (min_mgsi is not None and mgsi >= min_mgsi):
+                            x.append(xi * x_scale)
+                            y.append(yi * y_scale)
+                        else:
+                            print('Mg/Si', mgsi, 'excluded')
 
             except KeyError:
                 print(dat.name, 'does not have attribute', x_name, 'or', y_name)
@@ -442,11 +470,31 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-    print('max', y_name, '=', np.max(y))
-    ax.scatter(x, y, label=data_label, **scatter_kwargs)
+    # print('max', y_name, '=', np.max(y))
+    if transparent_edge:
+        scatter_kwargs['edgecolors'] = 'none'
+    ax.scatter(x, y, label=data_label, c=c, s=ms, **scatter_kwargs)
     if earth:
         ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth', c='k',
                    marker='$\oplus$', s=ms, zorder=200)
+
+    if show_corr:
+        if not min_mgsi:
+            print('warning: trying to calculate correlation with low Mg/Si included - not monotonic')
+        corr = np.corrcoef([np.array(x), np.array(y)])[1, 0]
+        cmap = matplotlib.cm.get_cmap('seismic_r')
+        # rgba = cmap((corr - -0.4) / (0.4 - -0.4))
+        if corr >= 0.5:
+            rgba = cmap(0.85)
+        elif corr <= -0.5:
+            rgba = cmap(0.05)
+        elif corr >= 0.3:
+            rgba = cmap(0.65)
+        elif corr <= -0.3:
+            rgba = cmap(0.2)
+        else:
+            rgba = '0.6'
+        ax = cornertext(ax, r'$r$' + ' = {:.2f}'.format(corr), pos='bottom right', size=labelsize, c=rgba)
 
     ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
     ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
@@ -515,8 +563,9 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
                     show_histx=False, show_histy=False, histx_kwargs={}, histy_kwargs={}, data_label=None, earth=False,
                     fig_path=fig_path, range_min=None, range_max=None,
                     extension='.png', fig=None, ax=None, ax_histx=None, ax_histy=None, xlim=None, ylim=None,
-                    save=True, show=True, ratios=[7, 1], lim_histx=None, lim_histy=None, **kwargs):
+                    save=True, show=True, ratios=[7, 1], lim_histx=None, lim_histy=None, c='k', **kwargs):
     x, y = [], []
+    v = []
     for dat in dats:
         try:
             xi = eval('dat.' + x_name)
@@ -527,6 +576,14 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
                     y.append(yi * y_scale)
         except KeyError:
             print(dat.name, 'does not have attribute', x_name, 'or', y_name)
+        if hasattr(dat, str(c)):
+            v.append(eval('dat.' + c))
+        # except KeyError:
+        #     pass
+        #     # nothing - c is just a colour
+    if len(v) > 0:
+        c = v
+        print('vmin', min(v), 'vmax', max(v))
 
     if fig is None:
         fig = plt.figure()
@@ -562,7 +619,7 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
     fig, ax = pop_scatter(dats, x_name, y_name, x_scale, y_scale, title, xlabel, ylabel, filename='',
                           data_label=data_label, earth=earth, fig_path=fig_path, range_min=range_min, range_max=range_max,
                           extension=extension, fig=fig, ax=ax, xlim=xlim, ylim=ylim, save=False,
-                          show=False, x=x, y=y, **kwargs)
+                          show=False, x=x, y=y, c=c, **kwargs)
 
     if show_histx:
         if 'range' not in histx_kwargs.keys():

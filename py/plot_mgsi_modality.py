@@ -9,14 +9,17 @@ import matplotlib.colors
 from useful_and_bespoke import cornertext, colorize, colourbar, colourised_legend
 import matplotlib.lines as mlines
 import matplotlib.gridspec as gridspec
+from matplotlib.transforms import Affine2D
+import mpl_toolkits.axisartist.floating_axes as floating_axes
 
 """ plot water profiles and compositoin gridspec for median and extrema """
 
 
 def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=None, ls_comp=None, labelsize=14,
-                              legsize=10, M_p=1, Tp=1600,
-                              p_max=30, phases_order='default', log_profile=False,
-                              comp_var='mgsi', cmap='tab20', figtitle='phase_demo', save=True, fformat='.png'):
+                              legsize=10, M_p=1, Tp=1600, cumulative=False, profile_var='c_h2o', ylim=(0, 1),
+                              p_max=30, phases_order='default', log_profile=False, orientation='horizontal',
+                              comp_var='mgsi', cmap='tab20', figtitle='phase_demo', save=True, fformat='.png', comp_labels=None,
+                              prof_ax_label=r'Saturation (wt.\% H$_2$O)', profile_scale=1e2, show_cum_mass=False):
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
     if phases_order == 'default':
@@ -61,21 +64,38 @@ def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=Non
         cmap = matplotlib.colors.ListedColormap(c_phases)
 
     fig = plt.figure()
-    gs = fig.add_gridspec(2, 1,
-                          # width_ratios=(2, 1, 1, 1),
-                          height_ratios=(2, 3),
-                          # left=0.1, right=0.9, bottom=0.1, top=0.9,
-                          wspace=0.05, hspace=0.15)
+    if orientation == 'horizontal':
+        if show_cum_mass:
+            gs = fig.add_gridspec(3, 1,
+                                  # width_ratios=(2, 1, 1, 1),
+                                  height_ratios=(2, 2, 3),
+                                  # left=0.1, right=0.9, bottom=0.1, top=0.9,
+                                  wspace=0.05, hspace=0.15)
+        else:
+            gs = fig.add_gridspec(2, 1,
+                                  # width_ratios=(2, 1, 1, 1),
+                                  height_ratios=(2, 3),
+                                  # left=0.1, right=0.9, bottom=0.1, top=0.9,
+                                  wspace=0.05, hspace=0.15)
+        gs0 = gridspec.GridSpecFromSubplotSpec(len(dats), 1, height_ratios=[1] * len(dats), hspace=0.07,
+                                               subplot_spec=gs[-1])
+        ax_profs = fig.add_subplot(gs[0])
+        ax_mass = fig.add_subplot(gs[1])
+    elif orientation == 'vertical':
+        gs = fig.add_gridspec(1, 2,
+                              width_ratios=(5, 2),
+                              hspace=0.05, wspace=0.15)
+        gs0 = gridspec.GridSpecFromSubplotSpec(1, len(dats), width_ratios=[1] * len(dats), wspace=0.07,
+                                               subplot_spec=gs[0])
 
-    gs0 = gridspec.GridSpecFromSubplotSpec(len(dats), 1, height_ratios=[1] * len(dats), hspace=0.07, subplot_spec=gs[1])
-    ax_profs = fig.add_subplot(gs[0])
+        ax_profs = fig.add_subplot(gs[1])
     axes_comp = [fig.add_subplot(gs0[ii]) for ii in range(len(dats))]
 
     comp_ax_legend = True
     # compositions
     for ii, (dat, ax) in enumerate(zip(dats, axes_comp)):
         if ii == 1:
-            comp_ax_ylabel = 'Mineral mode'  # \n(wt.%)'
+            comp_ax_ylabel = r'Mineral mode (wt.\%)'
         else:
             comp_ax_ylabel = ''
         if ii == 2:
@@ -94,46 +114,91 @@ def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=Non
             comp_leg_title = r'$\bf{T_p}$'
             prof_leg_label = '{:.1f}'.format(dat.temperature[-1])
             comp_ax_title = r'$T_p$ = ' + prof_leg_label
+        else:
+            comp_ax_title = ''
+            comp_leg_title = ''
+            prof_leg_label = comp_labels[ii]
 
+
+        if orientation == 'horizontal':
+            leg_bbox_to_anchor = (1.02, 2.1)
+            comptitle = ''
+        elif orientation == 'vertical':
+            leg_bbox_to_anchor = (1.02, 0.5)
+            comptitle = comp_ax_title
         fig, ax = plotpx.single_composition(dat, which='pressure', modality_type='phase', comp_stacked=True, save=False,
                                             ylabel=comp_ax_ylabel, xlabel=xlabel, cmap=cmap, override_ax_arrow=True,
                                             labelsize=labelsize, legsize=legsize,
-                                            plot_phases_order=phases_order, p_max=p_max,
-                                            fig=fig, ax=ax, title='', make_legend=comp_ax_legend, ylabelpad=10,
-                                            leg_bbox_to_anchor=(1.02, 2.1), legtitle=r'$\bf{Phase}$')
-        ax.set_yticks([])
-        ax.text(0.98, 0.4, comp_ax_title, transform=ax.transAxes, fontsize=legsize,  # weight='bold',
-                va='center', ha='right', c=['k', 'k', 'w'][ii],
-                bbox=dict(boxstyle='round', fc=colours_comp[ii], ec='k', alpha=0.4, ls=ls_comp[ii]))
+                                            plot_phases_order=phases_order, p_max=p_max, orientation=orientation,
+                                            fig=fig, ax=ax, title=comptitle, make_legend=comp_ax_legend, ylabelpad=10,
+                                            xlabelpad=10,
+                                            leg_bbox_to_anchor=leg_bbox_to_anchor, legtitle=r'$\bf{Phase}$')
+        # ax.set_yticks([])
+        if orientation == 'horizontal':
+            # only label Mg/Si in bbox for horizontal, otherwise it's title
+            ax.text(0.98, 0.4, comp_ax_title, transform=ax.transAxes, fontsize=legsize,  # weight='bold',
+                    va='center', ha='right', c=['k', 'k', 'w'][ii],
+                    bbox=dict(boxstyle='round', fc=colours_comp[ii], ec='k', alpha=0.4, ls=ls_comp[ii]))
         # ax.text(0.98, 0.4, comp_ax_title, transform=ax.transAxes, fontsize=legsize,
         #         va='center', ha='right', c='k',
         #         bbox=dict(boxstyle='round', fc=(0, 0, 0, 0), ec=colours_comp[ii], ls=ls_comp[ii], lw=2))
-        if ii < len(dats) - 1:
-            # ax.tick_params(axis="x", labelbottom=False)
-            ax.set_xticks([])
 
-        fig, ax_profs = plotpx.profile(dat, 'c_h2o', independent_ax='pressure', reverse_y=False,
-                                       ax_label=r'Saturation (wt.\% H$_2$O)', scale=1e2,
+        if orientation == 'horizontal':
+            profile_kwargs = {'reverse_y': False, 'xmin':1000e-4, 'xmax':p_max, 'ymin':ylim[0], 'ymax':ylim[1], 'label_x':False,
+                              'label_y': True, 'leg_bbox_to_anchor':(1.02, 1.1), 'ax_ticks':None}
+            if p_max is None:
+                print('WARNING: possible problem setting axes limits with p_max = None')
+        elif orientation == 'vertical':
+            profile_kwargs = {'reverse_y': True, 'ymin': 1000e-4, 'ymax': p_max, 'xmin': ylim[0], 'xmax': ylim[1],
+                              'label_x': True,
+                              'label_y': False, #'leg_bbox_to_anchor': (1.02, 1.1)
+                              'xlabelpad':10,
+                              }
+        fig, ax_profs = plotpx.profile(dat, profile_var, independent_ax='pressure', cumulative=cumulative,
+                                       ax_label=prof_ax_label,
+                                       scale=profile_scale,
                                        c=colours_comp[ii], ls=ls_comp[ii], lw=1.5, alpha=0.8,
-                                       xmin=1000e-4, xmax=p_max, ymin=0, ymax=1, ax_ticks=None, label_x=False,
-                                       label_y=True, labelsize=labelsize, legsize=legsize, legtitle=comp_leg_title,
+                                       labelsize=labelsize, legsize=legsize, legtitle=comp_leg_title,
                                        fig=fig, ax=ax_profs, log=log_profile, leg_label=prof_leg_label,
-                                       orientation='horizontal', leg_bbox_to_anchor=(1.02, 1.1), save=False)
-        ax_profs.tick_params(axis="x", labelbottom=False)
-        comp_ax_legend = False
+                                       orientation=orientation, save=False, **profile_kwargs)
+
+        if show_cum_mass:
+            profile_kwargs2 = profile_kwargs.copy()
+            profile_kwargs2['ymax'] = dat.M_p
+            fig, ax_mass = plotpx.profile(dat, 'mass(kg)', independent_ax='pressure', cumulative=True,
+                                           ax_label='Cumulative\nmass (kg)',
+                                           scale=1, show_legend=False,
+                                           c=colours_comp[ii], ls=ls_comp[ii], lw=1.5, alpha=0.8,
+                                           labelsize=labelsize, legsize=legsize, legtitle=comp_leg_title,
+                                           fig=fig, ax=ax_mass, log=log_profile, leg_label=prof_leg_label,
+                                           orientation=orientation, save=False, **profile_kwargs2)
+            ax_mass.set_xticks([])
+
+        if orientation == 'horizontal':
+            if ii < len(dats) - 1:
+                ax.tick_params(axis="x", labelbottom=False)
+                ax.set_xticks([])
+            ax_profs.tick_params(axis="x", labelbottom=False)
+        if orientation == 'vertical':
+            if ii > 0:
+                ax.tick_params(axis="y", labelleft=False)
+                ax.set_yticks([])
+            ax_profs.tick_params(axis="y", labelleft=False)
+        comp_ax_legend = False  # only make legend once
 
         print('\n', dat.name, 'um water mass', dat.mass_h2o_um / p.TO, 'total water mass', dat.mass_h2o_total / p.TO,
-              'TO')
-        print('c_ppv', dat.df_all['sat_corr_ppv'].iloc[-1] * 1e6, 'ppm', 'D_ppv_pv',
-              dat.df_all['sat_corr_ppv'].iloc[-1] / dat.df_all['sat_corr_pv'].iloc[-1])
+              'TO', '\n')
+        # print('c_ppv', dat.df_all['sat_corr_ppv'].iloc[-1] * 1e6, 'ppm', 'D_ppv_pv',
+        #       dat.df_all['sat_corr_ppv'].iloc[-1] / dat.df_all['sat_corr_pv'].iloc[-1])
 
     if save:
         plt.tight_layout()
         fig.savefig(plotpx.fig_path + figtitle + fformat, bbox_inches='tight', dpi=300)
 
 
-demo_composition_gridspec(mgsi=[1.4125375446227555, 1.0715193052376069, 0.7244359600749921],
-                          comp_var='mgsi', labelsize=12, legsize=10, cmap=None, fformat='.pdf')
+# demo_composition_gridspec(mgsi=[1.4125375446227555, 1.0715193052376069, 0.7244359600749921],
+#                           comp_var='mgsi', labelsize=12, legsize=10, cmap=None, fformat='.pdf',
+#                           figtitle='phase_demo_ver', orientation='vertical')
 
 """ test with LM included """
 # demo_composition_gridspec(mgsi=[1.4125375446227555, 1.0715193052376069, 0.7244359600749921],

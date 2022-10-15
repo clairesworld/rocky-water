@@ -37,17 +37,20 @@ n_sample = -1
 
 """vary Mg/Si with otherwise Earth compositon and CMF for fig. 4"""
 Tp = 1600
-test_CMF = 0.325
-Mp = 1
-directory = 'output/MgSi_from_earth/'
-for ms in np.linspace(0.6, 2, num=12, endpoint=True):
-# for ms in [0.7244359600749921, 1.0715193052376069, 1.4125375446227555]:  # or, hypatia 2sigma range
-    oxides = rw.update_MgSi(MgSi=ms, oxides=px.wt_oxides_MD95)
-    planet_dict = {'M_p': Mp*p.M_E, 'Tp': Tp, 'test_CMF': test_CMF, 'test_oxides': oxides,
-                   'maxIter': 30, 'tol': 1e-4, #'n': 1600,
-                   'get_saturation': True, 'verbose': True, 'star': None,
-                   'output_parent_path': px.perplex_path_default + directory}
-    rw.build_planet(plot_all=False, **planet_dict)
+# test_CMF = 0.325
+core_eff = 0.8831461545794602
+for Mp in [0.1, 0.5, 2, 3]:
+    directory = 'output/MgSi_from_earth_M' + str(Mp).replace('.', ',') + '/'
+    for ms in np.linspace(0.6, 2, num=12, endpoint=True):
+    # for ms in [0.7244359600749921, 1.0715193052376069, 1.4125375446227555]:  # or, hypatia 2sigma range
+        oxides = rw.update_MgSi(MgSi=ms, oxides=px.wt_oxides_MD95)
+        planet_dict = {'M_p': Mp*p.M_E, 'Tp': Tp, #'test_CMF': test_CMF,
+                       'core_efficiency': core_eff,
+                       'test_oxides': oxides,
+                       'maxIter': 30, 'tol': 1e-4, #'n': 1600,
+                       'get_saturation': True, 'verbose': True, 'star': None,
+                       'output_parent_path': px.perplex_path_default + directory}
+        rw.build_planet(plot_all=False, **planet_dict)
 
 
 """start with solar composition, vary FeO in mantle via tuning core efficiency (so also change CMF)"""

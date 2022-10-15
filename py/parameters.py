@@ -41,3 +41,4 @@ p_sol = 5.46 - 12
 
 # print(10 ** mg_sol / 10 ** si_sol)   # sun = 1.04
 # print(10 ** fe_sol / 10 ** mg_sol)   # sun = 0.81
+

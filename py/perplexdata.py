@@ -334,7 +334,7 @@ class PerplexData:
 
     def get_um_mass(self):
         from saturation import total_water_mass
-        i_um_base = self.find_lower_mantle() - 1  # base of lower mantle
+        i_um_base = self.find_lower_mantle() - 1  # base of upper mantle
         # print('pressure at um base', self.df_all['P(bar)'][i_um_base], 'bar')
         self.mass_um = np.sum(self.df_all['mass(kg)'][:i_um_base + 1])
 
@@ -677,6 +677,7 @@ class PerplexData:
     def iterate_structure(self, Psurf=1000, Tp=1600, n='auto', maxIter=100, tol=0.0001, clean=True,
                           deltaT_cmb=0, rho_m0=None, profile='adiabat', parameterise_lm=True,
                           p_max_perplex=200e9 * 1e-5,  # maximum pressure in bar for perplex if parameterise_lm=True
+                          core_density_fudge=None,
                           **kwargs):
         """ tweaked from Noack+
         Tsurf is potential surface temperature in K (was 1600), Psurf is surface pressure in bar
@@ -799,6 +800,10 @@ class PerplexData:
                         # plt.axvline(radius[i_cmb] * 1e-3)
                         # plt.show()
                     _, density[i], alpha[i], cp[i] = eos.EOS_all(pressure[i] * 1e-9, temperature[i], 4)
+
+                    if core_density_fudge:
+                        density[i] = density[i] * core_density_fudge
+
                     if cp[i] == 0:
                         print('i', i, 'cp[i]', cp[i], 'problem with core EoS')
                         raise ZeroDivisionError
@@ -991,7 +996,7 @@ class PerplexData:
         i_lm = self.find_lower_mantle()
         self.mass_h2o_lm = total_water_mass(self.df_all, i_min=i_lm)
 
-    def setup_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None,
+    def setup_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None, test_nH_star=None,
                      parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
         """ procedure for setting up interior composition and structure of planet """
 
@@ -1000,9 +1005,12 @@ class PerplexData:
             oxides = oxide_list_default
         if test_oxides is None:
             # print('kwargs get_interior', kwargs)
-            self.get_star_compositon(**kwargs)
-            if self.nH_star is None:
-                return None  # e.g. missing element in hypatia catalogue
+            if test_nH_star is None:
+                self.get_star_compositon(**kwargs)
+                if self.nH_star is None:
+                    return None  # e.g. missing element in hypatia catalogue
+            else:  # use fixed for testing
+                self.nH_star = test_nH_star
             self.star_to_oxide(**kwargs)
         else:
             if self.star == 'sun':
@@ -1013,6 +1021,8 @@ class PerplexData:
             # ensure bulk oxide composition sums to 100% (necessary for cmf calculations
             sum_wt_oxides = sum(test_oxides.values())
             self.wt_oxides = {k: test_oxides[k] / sum_wt_oxides * 100 for k in oxides}
+
+        print('wt oxides', self.wt_oxides)
         self.get_mgsi()  # molar mg/si ratio
         self.get_mg_number()
         if self.nH_star is not None:

@@ -35,10 +35,11 @@ print('sun CMF', sun.CMF)
 """ plot variable across masses with composition continuity """
 plt.rc('text', usetex=True)
 plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
-dirs = [perplex_path_default + 'output/hypatia' + s + 'M_1600K_88Fe/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '4', '5')]
-fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E ** -1, y_scale=1e-24, xlog=False, ylog=False,
-                           ylabel='Upper mantle mass ($10^{24}$ kg)', xlabel='Planet mass ($M_\oplus$)', sigma=2,
-                            save=True, show=False, extension='.pdf', xlim=(0.1, 5), ylim=(0.4, 1.8), show_n=False,
+dirs = [perplex_path_default + 'output/apollo/hypatia' + s + 'M_1600K_88Fe_hires/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '4', '5')]
+fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E ** -1, y_scale=p.M_E ** -1, xlog=False, ylog=False,
+                           ylabel='Upper mantle mass ($M_\oplus$)', xlabel='Planet mass ($M_\oplus$)', sigma=2,
+                            save=True, show=False, extension='.pdf', xlim=(0.1, 5), ylim=(None, 0.3), #(0.4, 1.8),
+                                         show_n=False,
                            labelsize=16, legsize=14, ticksize=14, earth=earth, sun=sun, earth_real=None, #1.06e24,
                                          show_scaling_fn=um_mass_scaling, scalinglabel=r'Constant-$\rho$ scaling',
                                          c='xkcd:peach',dpi=400)

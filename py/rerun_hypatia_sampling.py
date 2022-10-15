@@ -1,6 +1,6 @@
 # import numpy as np
 # import parameters as p
-# import ask_hypatia as hyp
+import ask_hypatia as hyp
 from perplexdata import perplex_path_default
 # import pickle as pkl
 # import plot_perplex as plotpx
@@ -9,12 +9,12 @@ import main as rw
 
 """ get every star from hypatia (run once) - todo only with measured mg?"""
 # hyp.retrieve_star_names(exo_hosts=False, writeto='all_hypatia_names.txt')
-# hyp.retrieve_star_names(exo_hosts=True, writeto='host_names.txt')
+# hyp.retrieve_star_names(exo_hosts=True, writeto='host_names_full.txt')
 
 """ run over names list """
 def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-1, n='auto', restart=None,
                    perplex_path='/raid1/cmg76/perple_x/', tail='_hires',  # apollo hires defaults
-                   use_local_composition=True):
+                   use_local_composition=True, **kwargs):
     # run at higher res over masses (primarily to get upper mantle)
 
     if masses is None:
@@ -36,7 +36,7 @@ def run_all_masses(masses=None, Tp=1600, core_eff=0.8831461545794602, n_sample=-
                                           use_local_composition=use_local_composition,
                                           perplex_path=perplex_path,
                                           output_parent_path=perplex_path + directory,
-                                          **planet_dict)
+                                          **planet_dict, **kwargs)
         restart = None  # reset
 
 def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', restart=None,
@@ -51,7 +51,7 @@ def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', re
             mass_str = str(Mp).replace('.', ',')
         elif isinstance(Mp, int):
             mass_str = str(Mp)
-        directory = 'output/hypatia' + mass_str + 'M_' + str(Tp) + 'K_' + str(int(core_eff * 100)) + 'Fe' + tail + '/'
+        directory = 'output/test/hypatia' + mass_str + 'M_' + str(Tp) + 'K_' + str(int(core_eff * 100)) + 'Fe' + tail + '/'
         planet_dict = {'M_p': Mp, 'Tp': Tp, 'core_efficiency': core_eff,
                        'maxIter': 30, 'tol': 1e-4, 'n': n,
                        'get_saturation': True, 'verbose': True,
@@ -73,13 +73,14 @@ def run_Fe_partitioning(core_effs=None, Tp=1600, Mp=1, n_sample=-1, n='auto', re
 # tail = '_hires'
 
 # set planet parameters
-# Tp = 1600
-# core_eff = 0.8831461545794602
-# n = 'auto'  # 1200
-#
-# run_all_masses(masses=[1.1],
-#                Tp=Tp, core_eff=core_eff, perplex_path=perplex_path_default, use_local_composition=False
-#             )
+Tp = 1600
+core_eff = 0.8831461545794602
+n = 600  # 1200
+
+run_all_masses(masses=[1],
+               Tp=Tp, core_eff=core_eff, perplex_path=perplex_path_default, use_local_composition=False,
+               names_file='host_names_full.txt', restart='2MASS 19592683+4549384',
+            )
 
 # # or, load from pickle
 # planets = rw.read_dir(px.perplex_path_default + 'output/hypatia2M/')

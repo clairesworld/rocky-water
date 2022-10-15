@@ -7,6 +7,7 @@ import parameters as p
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.colors as mcolors
+from useful_and_bespoke import dark_background, cornertext
 import matplotlib.lines as mlines
 import matplotlib.gridspec as gridspec
 from useful_and_bespoke import cornertext, colorize, colourbar, colourised_legend
@@ -52,6 +53,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
     if ylabel is None:
         ylabel = 'Water capacity (OM)'
     if which == 'um':
+        print('\n\n\n\n----------------------\nUPPER MANTLE')
         key = 'mass_h2o_um'
         textstr = 'Upper mantle'
         fname = 'viol-Mp_w_um'
@@ -60,6 +62,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
             ylim = (0, 4)
         points = 200
     elif which == 'total':
+        print('\n\n\n\n----------------------\nWHOLE MANTLE')
         key = 'mass_h2o_total'
         textstr = 'Whole mantle'
         fname = 'viol-Mp_w_tot'
@@ -211,13 +214,16 @@ def make_subplot(masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5], save=True, ylabel='
 
     fig.supylabel(ylabel, fontsize=labelsize, x=0.035)
     plt.subplots_adjust(hspace=0.1)
+
+    # fig, ax = dark_background(fig, ax)
     if save:
         plt.tight_layout()
         plt.savefig(fig_path + fname + extension, bbox_inches='tight', dpi=300)
     return fig, axes
 
 
-make_subplot(save=True, fname='viol-Mp', exclude=False, extension='.pdf', masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5])
+make_subplot(save=True, fname='viol-Mp', exclude=False, extension='.pdf', masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
+             fig_path='/home/claire/Desktop/')
 # fig, ax = viol_saturation_mass(masses = [0.1, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
 #                                which='total', earth=earth, sun=sun,  show_legend=True, save=False,
 #                                    ylabel='', )

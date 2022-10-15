@@ -148,107 +148,107 @@ def scatterhist_mgsi_allmasses(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rain
     fig.savefig(plotpx.fig_path + fname + '.png', bbox_inches='tight', dpi=300)
 
 
-def scatterhist_mgsi_allmasses_multipanel(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rainbow', earth=None, alpha=0.4,
-                                          ylims=None,
-                                          labelsize=14, ticksize=12, legsize=12, xlim=(0, 3), vmin=None, vmax=None,
-                                          show_histy=True,
-                                          ms=200):
-    plt.rc('text', usetex=True)
-    plt.rc('font', **{'family': 'serif',
-                      'serif': ['Computer Modern Roman']})  # this only works if outside function for some reason
-    ii_1M = masses.index(1)
-
-    y_vars = ["mass_h2o_total", "c_h2o_obm"]
-    ylabels = ['Total H$_2$O storage capacity (ppm)', 'Olivine-bearing mantle H$_2$O content (ppm)']
-    fname = 'mgsi_c_h2o_obm'
-    if ylims is None:
-        ylims = [(100, 2000), (0, 450)]
-    mass_str = []
-    for Mp in masses:
-        if isinstance(Mp, float):  # Tp = 1600
-            mass_str.append(str(Mp).replace('.', ','))
-        elif isinstance(Mp, int):
-            mass_str.append(str(Mp))
-        else:
-            print('MP is', type(Mp))
-    dirs = ['hypatia' + ms + 'M_1600K_88Fe' for ms in mass_str]
-    colours = colorize(np.arange(len(dirs)), cmap=cmap, vmin=vmin, vmax=vmax)[0]
-
-    # get colour for 1ME
-    c_1M_alpha = colours[ii_1M]
-    c_1M_alpha[3] = 0.25  # set alpha
-
-    # set up scatter & histogram gridspec
-    fig = plt.figure(figsize=(8, 12))
-    dats = rw.read_dir(px.perplex_path_default + 'output/' + dirs[ii_1M] + '/')
-    fig, axes, ax_histx, axes_histy = plotpx.pop_scatterhist_subplotwrapper(dats, "mgsi", y_vars,
-                                                                            y_scales=[1e6 / (masses[ii_1M] * p.M_E),
-                                                                                      1e6],
-                                                                            xlabel='Mg/Si', ylabels=ylabels,
-                                                                            histx_kwargs={'color': '0.9',
-                                                                                          'edgecolor': 'k',
-                                                                                          'linewidth': 0.5, 'bins': 55},
-                                                                            histy_kwargs={'color': c_1M_alpha,
-                                                                                          'edgecolor': colours[ii_1M],
-                                                                                          'linewidth': 0.9, 'bins': 40},
-                                                                            earth=False, xlim=xlim, ylims=ylims, ms=ms,
-                                                                            save=False, show=False, lim_histx=(0, 6),
-                                                                            lims_histy=[(0, 0.01)] * 2,
-                                                                            annotate_n=False, labelsize=labelsize,
-                                                                            legsize=legsize,
-                                                                            c=colours[ii_1M], alpha=alpha, fig=fig)
-    # show Earth vline
-    for axx in [axes[0], axes[1], ax_histx]:
-        axx.axvline(earth.mgsi, c='k', alpha=0.2, lw=0.5, ls=(10, (15, 10)))
-
-    # overplot other masses
-    for ii, d in enumerate(dirs):
-        for iax, ax in enumerate(axes):
-            if ii != ii_1M:
-                dats = rw.read_dir(px.perplex_path_default + 'output/' + d + '/')
-                fig, ax = plotpx.pop_scatter(dats, "mgsi", y_vars[iax], y_scale=[1e6 / (masses[ii] * p.M_E), 1e6][iax],
-                                             xlabel='Mg/Si',
-                                             ylabel='', annotate_n=False,
-                                             earth=False, fig=fig, ax=ax, xlim=xlim, ms=ms,
-                                             ylim=ylims[iax], labelsize=labelsize, ticksize=ticksize, legsize=legsize,
-                                             save=False,
-                                             show=False, c=colours[ii], alpha=alpha)
-
-    # show Earth scaled Mg/Si
-    dats_e = rw.read_dir(px.perplex_path_default + 'output/MgSi_from_earth/')
-    for ii, ax in enumerate(axes):
-        x_e, y_e = [], []
-        for dat in dats_e:
-            x_e.append(dat.mgsi)
-            y_e.append(eval('dat.' + y_vars[ii]) / p.M_E * 1e6)
-        x_e, y_e = zip(*sorted(zip(x_e, y_e)))
-        ax.plot(x_e, y_e, c='k', ls=':', label='Compositionally-scaled Earth')
-        ax.scatter(earth.mgsi, eval('earth.' + y_vars[ii]) * [1e6 / (masses[ii_1M] * p.M_E), 1e6][ii], label='Earth',
-                   c='k',
-                   marker='$\oplus$', s=200, zorder=200)
-
-    # make legends
-    leg_bbox_to_anchor = (1.01, 1)
-    cax = colourised_legend(axes[0], colours, [str(m) + ' $M_\oplus$' for m in masses], title=None,
-                            # r'$\bf{Planet}$ $\bf{mass}$',
-                            legsize=legsize, titlesize=legsize, markersize=5, bbox_to_anchor=leg_bbox_to_anchor,
-                            handletextpad=0.1)
-    for ax_histy in axes_histy:
-        ax_histy.set_zorder(-1)  # to go below leg
-    # axes[0].set_xticks([])
-    axes[0].legend(handles=[mlines.Line2D([], [], color='k', marker='$\oplus$',
-                                          markersize=13, lw=0, label='Earth'),
-                            mlines.Line2D([], [], color='k', marker=None,
-                                          lw=1, ls=':', label='Compositionally-scaled Earth'),
-                            ], frameon=False, fontsize=legsize)
-    # fig.supylabel(ylabel, fontsize=labelsize, y=0.45)
-    fig.savefig(plotpx.fig_path + fname + '.png', bbox_inches='tight', dpi=300)
+# def scatterhist_mgsi_allmasses_multipanel(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rainbow', earth=None, alpha=0.4,
+#                                           ylims=None,
+#                                           labelsize=14, ticksize=12, legsize=12, xlim=(0, 3), vmin=None, vmax=None,
+#                                           show_histy=True,
+#                                           ms=200):
+#     plt.rc('text', usetex=True)
+#     plt.rc('font', **{'family': 'serif',
+#                       'serif': ['Computer Modern Roman']})  # this only works if outside function for some reason
+#     ii_1M = masses.index(1)
+#
+#     y_vars = ["mass_h2o_total", "c_h2o_obm"]
+#     ylabels = ['Total H$_2$O storage capacity (ppm)', 'Olivine-bearing mantle H$_2$O content (ppm)']
+#     fname = 'mgsi_c_h2o_obm'
+#     if ylims is None:
+#         ylims = [(100, 2000), (0, 450)]
+#     mass_str = []
+#     for Mp in masses:
+#         if isinstance(Mp, float):  # Tp = 1600
+#             mass_str.append(str(Mp).replace('.', ','))
+#         elif isinstance(Mp, int):
+#             mass_str.append(str(Mp))
+#         else:
+#             print('MP is', type(Mp))
+#     dirs = ['hypatia' + ms + 'M_1600K_88Fe' for ms in mass_str]
+#     colours = colorize(np.arange(len(dirs)), cmap=cmap, vmin=vmin, vmax=vmax)[0]
+#
+#     # get colour for 1ME
+#     c_1M_alpha = colours[ii_1M]
+#     c_1M_alpha[3] = 0.25  # set alpha
+#
+#     # set up scatter & histogram gridspec
+#     fig = plt.figure(figsize=(8, 12))
+#     dats = rw.read_dir(px.perplex_path_default + 'output/' + dirs[ii_1M] + '/')
+#     fig, axes, ax_histx, axes_histy = plotpx.pop_scatterhist_subplotwrapper(dats, "mgsi", y_vars,
+#                                                                             y_scales=[1e6 / (masses[ii_1M] * p.M_E),
+#                                                                                       1e6],
+#                                                                             xlabel='Mg/Si', ylabels=ylabels,
+#                                                                             histx_kwargs={'color': '0.9',
+#                                                                                           'edgecolor': 'k',
+#                                                                                           'linewidth': 0.5, 'bins': 55},
+#                                                                             histy_kwargs={'color': c_1M_alpha,
+#                                                                                           'edgecolor': colours[ii_1M],
+#                                                                                           'linewidth': 0.9, 'bins': 40},
+#                                                                             earth=False, xlim=xlim, ylims=ylims, ms=ms,
+#                                                                             save=False, show=False, lim_histx=(0, 6),
+#                                                                             lims_histy=[(0, 0.01)] * 2,
+#                                                                             annotate_n=False, labelsize=labelsize,
+#                                                                             legsize=legsize,
+#                                                                             c=colours[ii_1M], alpha=alpha, fig=fig)
+#     # show Earth vline
+#     for axx in [axes[0], axes[1], ax_histx]:
+#         axx.axvline(earth.mgsi, c='k', alpha=0.2, lw=0.5, ls=(10, (15, 10)))
+#
+#     # overplot other masses
+#     for ii, d in enumerate(dirs):
+#         for iax, ax in enumerate(axes):
+#             if ii != ii_1M:
+#                 dats = rw.read_dir(px.perplex_path_default + 'output/' + d + '/')
+#                 fig, ax = plotpx.pop_scatter(dats, "mgsi", y_vars[iax], y_scale=[1e6 / (masses[ii] * p.M_E), 1e6][iax],
+#                                              xlabel='Mg/Si',
+#                                              ylabel='', annotate_n=False,
+#                                              earth=False, fig=fig, ax=ax, xlim=xlim, ms=ms,
+#                                              ylim=ylims[iax], labelsize=labelsize, ticksize=ticksize, legsize=legsize,
+#                                              save=False,
+#                                              show=False, c=colours[ii], alpha=alpha)
+#
+#     # show Earth scaled Mg/Si
+#     dats_e = rw.read_dir(px.perplex_path_default + 'output/MgSi_from_earth/')
+#     for ii, ax in enumerate(axes):
+#         x_e, y_e = [], []
+#         for dat in dats_e:
+#             x_e.append(dat.mgsi)
+#             y_e.append(eval('dat.' + y_vars[ii]) / p.M_E * 1e6)
+#         x_e, y_e = zip(*sorted(zip(x_e, y_e)))
+#         ax.plot(x_e, y_e, c='k', ls=':', label='Compositionally-scaled Earth')
+#         ax.scatter(earth.mgsi, eval('earth.' + y_vars[ii]) * [1e6 / (masses[ii_1M] * p.M_E), 1e6][ii], label='Earth',
+#                    c='k',
+#                    marker='$\oplus$', s=200, zorder=200)
+#
+#     # make legends
+#     leg_bbox_to_anchor = (1.01, 1)
+#     cax = colourised_legend(axes[0], colours, [str(m) + ' $M_\oplus$' for m in masses], title=None,
+#                             # r'$\bf{Planet}$ $\bf{mass}$',
+#                             legsize=legsize, titlesize=legsize, markersize=5, bbox_to_anchor=leg_bbox_to_anchor,
+#                             handletextpad=0.1)
+#     for ax_histy in axes_histy:
+#         ax_histy.set_zorder(-1)  # to go below leg
+#     # axes[0].set_xticks([])
+#     axes[0].legend(handles=[mlines.Line2D([], [], color='k', marker='$\oplus$',
+#                                           markersize=13, lw=0, label='Earth'),
+#                             mlines.Line2D([], [], color='k', marker=None,
+#                                           lw=1, ls=':', label='Compositionally-scaled Earth'),
+#                             ], frameon=False, fontsize=legsize)
+#     # fig.supylabel(ylabel, fontsize=labelsize, y=0.45)
+#     fig.savefig(plotpx.fig_path + fname + '.png', bbox_inches='tight', dpi=300)
 
 
 def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rainbow', earth=None, sun=None,
-                                      alpha=0.4, ylim=None, fformat='.png',
+                                      alpha=0.4, ylim=None, fformat='.png', xlabelpad=9,
                                       labelsize=14, ticksize=12, legsize=12, xlim=(0, 3), vmin=None, vmax=None,
-                                      ms=200, ratios=[7, 1], output_path=px.perplex_path_default + 'output/', **kwargs):
+                                      ms=200, ratios=[7, 1], output_path=px.perplex_path_default + 'output/apollo/', **kwargs):
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family': 'serif',
                       'serif': ['Computer Modern Roman']})  # this only works if outside function for some reason
@@ -257,7 +257,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
 
     y_var = "mass_h2o_total"
     ylabel = 'Water capacity (ppm wt)'
-    fname = 'mgsi_c_h2o_exo'
+    fname = 'mgsi_c_h2o_exo_r2'
     if ylim is None:
         ylim = (100, 2000)
     mass_str = []
@@ -323,7 +323,16 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
                                               save=False,
                                               show=False, c=colours[ii], alpha=alpha)
 
-    # show Earth scaled Mg/Si
+            # # show Earth-scaled Mg/Si
+            # dats_e = rw.read_dir(px.perplex_path_default + 'output/MgSi_from_earth_M' + str(masses[ii]) + '/')
+            # x_e, y_e = [], []
+            # for dat in dats_e:
+            #     x_e.append(dat.mgsi)
+            #     y_e.append(eval('dat.' + y_var) / (p.M_E * masses[ii]) * 1e6)
+            # x_e, y_e = zip(*sorted(zip(x_e, y_e)))
+            # axes[0].plot(x_e, y_e, c=colours[ii], ls=':', label=None, alpha=0.5)
+
+    # only 1 ME comp scaling for lower plot & show markers
     dats_e = rw.read_dir(px.perplex_path_default + 'output/MgSi_from_earth/')
     x_e, y_e = [], []
     for dat in dats_e:
@@ -348,7 +357,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
     ax.set_ylim([250, 700])
     ax.set_xlim(xlim)
     ax.tick_params(axis='both', which='major', labelsize=ticksize)
-    ax.set_xlabel('Mg/Si', fontsize=labelsize)
+    ax.set_xlabel('Mg/Si', fontsize=labelsize, labelpad=xlabelpad)
 
     # errorbars
     exo_names_min, _, exo_ys_min = load_exoplanets('earthsize_planets_1600K_88Fe_mgsimin/', y_var, scale=1)
@@ -416,7 +425,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
                                           lw=1, ls=':', label='Compositionally-scaled Earth'),
                             ], frameon=False, fontsize=legsize)
 
-    fig.supylabel(ylabel, fontsize=labelsize, y=0.45)
+    fig.supylabel(ylabel, fontsize=labelsize, y=0.46, x=0.005)
     fig.savefig(plotpx.fig_path + fname + fformat, bbox_inches='tight', dpi=200)
 
 
@@ -428,8 +437,8 @@ masses = [0.1, 0.5, 1, 2, 3]
 # scatterhist_mgsi_allmasses_multipanel(masses=masses, cmap='YlOrBr_r', earth=earth, alpha=0.4, vmax=len(masses), xlim=(0.25, 2), ms=100)
 
 scatterhist_mgsi_allmasses_kepler(masses=masses, cmap='YlOrBr_r', earth=earth, sun=sun, alpha=0.4, vmin=0.1, vmax=4,
-                                  xlim=(0.25, 2), ms=100,
-                                  output_path=px.perplex_path_default + 'output/apollo/', fformat='.png')
+                                  xlim=(0.25, 2), ms=50,
+                                  output_path=px.perplex_path_default + 'output/apollo/', fformat='.pdf')
 
 # some of these 0.1 M_E planets with low Mg/Si have no ol/wad, some ring at bottom but lots of qtz/coes/stv
 # so have a kind of gradual incline of increased c_h2o from 10-20 GPa rather than sharp mtz at 1 GPa, same as 1ME planets in figure 1 just cut at 20 GPa.
