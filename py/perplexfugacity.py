@@ -215,7 +215,8 @@ class PerplexFugacity(px.PerplexData):
             # create build file
             self.write_build(title='Planet', p_min=p_min, p_max=p_max,  # adiabat_file=points_file,
                              verbose=verbose, overwrite=True, vertex_data=vertex_data, option_file='perplex_option_fo2',
-                             excluded_phases=None, use_solutions=True, build_file_end=build_file_end,
+                             excluded_phases=['ctjL', 'dijL'],  # melt phases
+                             use_solutions=True, build_file_end=build_file_end,
                              calculation_type='5',  # '5' for grid
                              T_min=T_min, T_max=T_max, **kwargs)
 
