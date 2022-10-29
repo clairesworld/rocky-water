@@ -27,10 +27,10 @@ X_ferric = 0.03
 core_eff = [0.88]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
 
 for ce in core_eff:
-    output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
+    output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
     output_parent_path = output_parent_apollo + output_sub
 
-    mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, core_efficiency=core_eff, X_ferric=X_ferric,
+    mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, core_efficiency=ce, X_ferric=X_ferric,
                         T_final=T_iso, verbose=True, oxide_list=oxide_list,
                         planet_kwargs={}, compare_buffer='qfm',
                         output_parent_path=output_parent_path,
