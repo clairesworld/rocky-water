@@ -22,7 +22,7 @@ oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
 X_ferric = 0.03
-core_eff = [0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.99]
+core_eff = [0.88, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
 
 for ce in core_eff:
     output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'

@@ -55,6 +55,11 @@ class PerplexFugacityData(px.PerplexData):
         self.delta_qfm_1GPa = None
         self.delta_qfm_4GPa = None
 
+        # remove TiO2 from bulk composition - no phase that incorporates it
+        if 'TiO2' in self.oxide_list:
+            self.oxide_list.remove('TiO2')
+            self.wt_oxides.pop('TiO2')
+
     def command_vertex_grid(self, build_file_end=''):
         """ string for vertex command file - only entry is project name in operational mode 5 """
         s = self.name + build_file_end
@@ -181,7 +186,7 @@ class PerplexFugacityData(px.PerplexData):
 
     def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, isotherm=None, verbose=True, build_file_end='',
                  vertex_data='hp622ver', run=True, compare_buffer=None, check_comp=False, points_file=None,
-                 mu0_file=None, save=True, **kwargs):
+                 mu0_file=None, save=True, excluded_phases=[], **kwargs):
         """
         Parameters
         ----------
@@ -227,7 +232,7 @@ class PerplexFugacityData(px.PerplexData):
             # create build file
             self.write_build(title='Planet', p_min=p_min, p_max=p_max,  # adiabat_file=points_file,
                              verbose=verbose, overwrite=True, vertex_data=vertex_data, option_file='perplex_option_fo2',
-                             excluded_phases=['ctjL', 'dijL'],  # melt phases
+                             excluded_phases=excluded_phases,  # melt phases
                              use_solutions=True, build_file_end=build_file_end,
                              calculation_type='5',  # '5' for grid
                              T_min=T_min, T_max=T_max, **kwargs)
