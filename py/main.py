@@ -5,7 +5,6 @@ import py.saturation as sat
 import time
 import py.perplexdata as px
 import py.ask_hypatia as hyp
-import py.plot_perplex as plotpx
 import pickle as pkl
 import random
 
@@ -249,6 +248,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
     print('\n>>>>>> COMPLETED', dat.name, 'in', time_end - time_start, 's\n\n')
 
     if plot_all:
+        import py.plot_perplex as plotpx
         # plot
         plotpx.single_structure(dat, fig_path=dat.output_path, **plot_kwargs)
         plotpx.single_composition(dat, fig_path=dat.output_path, **plot_kwargs)
