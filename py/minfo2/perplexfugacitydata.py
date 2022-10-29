@@ -186,7 +186,7 @@ class PerplexFugacityData(px.PerplexData):
 
     def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, isotherm=None, verbose=True, build_file_end='',
                  vertex_data='hp622ver', run=True, compare_buffer=None, check_comp=False, points_file=None,
-                 mu0_file=None, save=True, excluded_phases=[], **kwargs):
+                 mu0_file=None, save=True, excluded_phases=[], run_vertex='auto', **kwargs):
         """
         Parameters
         ----------
@@ -243,7 +243,7 @@ class PerplexFugacityData(px.PerplexData):
                              werami_command_text_fn=self.command_werami_mu,
                              vertex_command_text_fn=self.command_vertex_grid,
                              output_file_end='_mu.tab', build_file_end=build_file_end, verbose=verbose, clean=True,
-                             werami_kwargs={'points_file': points_file}, run_vertex='auto',
+                             werami_kwargs={'points_file': points_file}, run_vertex=run_vertex,
                              store_vertex_output=True,
                              **kwargs)
 
@@ -252,7 +252,7 @@ class PerplexFugacityData(px.PerplexData):
                                  werami_command_text_fn=self.command_werami_composition_grid,
                                  vertex_command_text_fn=self.command_vertex_grid,
                                  output_file_end='_comp.tab', build_file_end=build_file_end, verbose=verbose,
-                                 clean=True, werami_kwargs={'points_file': points_file}, run_vertex='auto',
+                                 clean=True, werami_kwargs={'points_file': points_file}, run_vertex=run_vertex,
                                  **kwargs)
 
         # extract mu and T of interest from output data
