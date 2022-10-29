@@ -1,6 +1,10 @@
 import numpy as np
 import perplexfugacitydata as pf
 
+"""
+source /raid1/cmg76/venv/bin/activate
+cd ~/Works/rocky-water/
+"""
 
 T_iso = 1373
 p_min, p_max = 1e4, 4e4

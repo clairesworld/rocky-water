@@ -3,12 +3,12 @@ import pandas as pd
 import os
 import pathlib
 import subprocess
-import py.perplexdata as px
-import py.bulk_composition as bulk
-import py.main as rw
+from .. import perplexdata as px
+from .. import bulk_composition as bulk
+from .. import main as rw
 from scipy import interpolate
-import py.parameters as p
-from py.useful_and_bespoke import find_nearest_idx
+from .. import parameters as p
+from ..useful_and_bespoke import find_nearest_idx
 
 # import ask_hypatia as hyp
 
