@@ -20,7 +20,7 @@ pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
-X_ferric = 0.03
+X_ferric = 0.05
 core_eff = 0.88
 output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
 
@@ -37,8 +37,8 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, isother
                     output_parent_path=output_parent_path, perplex_path=perplex_path,
                     mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                     names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
-                    # use_local_compositon=False,
-                    use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
+                    use_local_compositon=False,
+                    # use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
                     # existing_output_parent=pf.output_parent_apollo,  # <== existing kwarg
                     # restart='2MASS 23155829+3127462'
                     )
