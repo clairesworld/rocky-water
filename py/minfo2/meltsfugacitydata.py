@@ -317,7 +317,7 @@ class MeltsFugacityData:
 def fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=0.88, planet_kwargs={},
                      output_parent_path=output_parent_default, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
-    pl_list = rw.planets_from_hypatia(n_sample=n_sample, names_file='host_names.txt', plot_all=False,
+    pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
                                       get_saturation=False,
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
