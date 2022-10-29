@@ -4,6 +4,7 @@ import os
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 print('SCRIPT_DIR', SCRIPT_DIR)
+
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import perplexfugacitydata as pf
