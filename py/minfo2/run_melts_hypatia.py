@@ -1,4 +1,11 @@
 import numpy as np
+import sys
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+
 import meltsfugacitydata as mf
 
 alphamelts_path_apollo = '/raid1/cmg76/Works/alphamelts/'
