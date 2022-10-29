@@ -333,11 +333,11 @@ def update_dir(output_path, func, store=False, **func_args):
     return new_dats
 
 
-def planets_from_hypatia(n_sample=-1, M_p=1, names_file='host_names.txt', plot_all=False, restart=None,
+def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
                          stopafter=None, **kwargs):
     """ restart is string name of last star that worked"""
 
-    sample_names = hyp.random_star(n_sample, names_file=names_file)
+    sample_names = hyp.random_star(n_sample, **kwargs)
     planets = []
 
     if restart is not None and n_sample == -1:
