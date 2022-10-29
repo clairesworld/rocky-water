@@ -8,6 +8,12 @@ sys.path.append(os.path.dirname(PARENT_DIR))
 
 import py.minfo2.meltsfugacitydata as mf
 
+"""
+source /raid1/cmg76/venv/bin/activate
+cd ~/Works/rocky-water/
+"""
+
+
 alphamelts_path_apollo = '/raid1/cmg76/Works/alphamelts/'
 output_parent_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/'
 
@@ -28,5 +34,7 @@ for ce in core_eff:
                         T_final=T_iso, verbose=True, oxide_list=oxide_list,
                         planet_kwargs={}, compare_buffer='qfm',
                         output_parent_path=output_parent_path,
-                        alphamelts_path=alphamelts_path_apollo)
+                        alphamelts_path=alphamelts_path_apollo,
+                        names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
+                        suffix=str(X_ferric*100).replace('.', ',') + 'fer',)
 
