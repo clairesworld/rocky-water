@@ -21,7 +21,7 @@ pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
-X_ferric = 0.07
+X_ferric = 0.01
 core_eff = [0.88, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
 
 for ce in core_eff:
@@ -42,5 +42,5 @@ for ce in core_eff:
                         use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
                         # existing_output_parent=pf.output_parent_apollo,  # <== existing kwarg
                         # restart='2MASS 23155829+3127462'
-                        run_vertex=True,
+                        run_vertex=True, suffix=str(X_ferric*100).replace('.', ',') + 'fer',
                         )

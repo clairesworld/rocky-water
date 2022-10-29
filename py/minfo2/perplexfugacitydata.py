@@ -701,3 +701,31 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
     if verbose:
         print('log fo2 of system:', logfo2)
     return True
+
+
+
+# def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None,
+#              **kwargs):
+#     mass_str = str(M_p / p.M_E) + 'M'
+#     if test_CMF is not None:
+#         cmf_str = str(int(test_CMF * 100)) + 'CMF'
+#     else:
+#         cmf_str = str(int(core_efficiency * 100)) + 'Ceff'
+#     if test_oxides is not None:
+#         comp_str = str(int(np.round(test_oxides['MgO']))) + 'Mg'
+#     elif star is not None:
+#         comp_str = star.replace(' ', '')
+#     else:
+#         raise NotImplementedError('no bulk composition scenario input (need star or test_oxides)')
+#     if 'profile' in kwargs:
+#         if kwargs['profile'] != 'adiabat':
+#             temp_str = kwargs['profile']
+#     elif Tp is not None:
+#         temp_str = str(int(Tp)) + 'K'
+#     else:
+#         raise NotImplementedError('no temperature scenario input (need Tp or profile name)')
+#     name = mass_str + '_' + cmf_str + '_' + comp_str + '_' + temp_str
+#     if suffix is not None:
+#         name = name + '_' + suffix
+#     name = name.replace('.', ',')  # dots will crash file i/o
+#     return name
