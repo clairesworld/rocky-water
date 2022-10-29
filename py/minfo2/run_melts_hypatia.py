@@ -7,7 +7,7 @@ PARENT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.append(os.path.dirname(PARENT_DIR))
 
 
-import meltsfugacitydata as mf
+import py.minfo2.meltsfugacitydata as mf
 
 alphamelts_path_apollo = '/raid1/cmg76/Works/alphamelts/'
 output_parent_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/'
@@ -23,7 +23,7 @@ core_eff = 0.88
 output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
 output_parent_path = output_parent_apollo + output_sub
 
-mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=core_eff, X_ferric=X_ferric,
+mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, core_efficiency=core_eff, X_ferric=X_ferric,
                     T_final=T_iso, verbose=True, oxide_list=oxide_list,
                     planet_kwargs={}, compare_buffer='qfm',
                     output_parent_path=output_parent_path,

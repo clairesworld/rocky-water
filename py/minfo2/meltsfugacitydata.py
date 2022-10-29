@@ -127,7 +127,7 @@ class MeltsFugacityData:
                                      batch_text_fn=self.batchfile_text_fo2calc,
                                      melts_text_fn=self.meltsfile_text_fo2calc, **kwargs)
 
-    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=True, clean=True, verbose=True,
+    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=False, clean=True, verbose=True,
                             batch_text_fn=None, melts_text_fn=None,
                             env_file=None,
                             melts_kwargs=None, overwrite=False, **kwargs):

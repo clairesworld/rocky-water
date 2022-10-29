@@ -75,17 +75,19 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=1, T_min=T_min, T_max=T_max, isotherm
 
 """direct compare alphamelts and perplex"""
 
-# name = 'dmm_ext'
-# star = None
-# test_oxides = pf.wt_oxides_DMM_ext
-# mf.fo2_from_oxides(name=name, pressures_of_interest=pressures_of_interest, T_final=T_iso, test_oxides=test_oxides,
-#                    core_efficiency=core_eff, X_ferric=X_ferric, star=star, verbose=True, planet_kwargs={},
-#                    output_parent_path=output_parent_path_melts, oxide_list=oxide_list,
-#                    compare_buffer='qfm',)  # need oxide_list for MELTS?
+output_parent_path_melts = '/raid1/cmg76/alphamelts/output/rocky-fo2/'
+name = 'dmm_ext'
+star = None
+test_oxides = pf.wt_oxides_DMM_ext
+mf.fo2_from_oxides(name=name, pressures_of_interest=pressures_of_interest, T_final=T_iso, test_oxides=test_oxides,
+                   core_efficiency=core_eff, X_ferric=X_ferric, star=star, verbose=True, planet_kwargs={},
+                   output_parent_path=output_parent_path_melts, oxide_list=oxide_list,
+                   alphamelts_path='/raid1/cmg76/alphamelts/',
+                   compare_buffer='qfm',)  # need oxide_list for MELTS?
 
-# pf.fo2_from_oxides(name=name, p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=test_oxides,
-#                    X_ferric=X_ferric, isotherm=T_iso, core_efficiency=core_eff, star=star,
-#                    run=True, compare_buffer='qfm',
-#                    suppress_output=True, check_comp=True, verbose=True,
-#                    mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
-#                    )
+pf.fo2_from_oxides(name=name, p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=test_oxides,
+                   X_ferric=X_ferric, isotherm=T_iso, core_efficiency=core_eff, star=star,
+                   run=True, compare_buffer='qfm',
+                   suppress_output=True, check_comp=True, verbose=True,
+                   mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
+                   )
