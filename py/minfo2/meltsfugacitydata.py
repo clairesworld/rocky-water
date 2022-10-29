@@ -281,7 +281,7 @@ class MeltsFugacityData:
 
     def fo2_calc(self, compare_buffer='qfm', save=True, **kwargs):
         # run alphamelts
-        self.run_alphamelts_all_p()
+        self.run_alphamelts_all_p(**kwargs)
 
         # retrieve fo2
         self.read_melts_fo2()
@@ -290,13 +290,18 @@ class MeltsFugacityData:
         self.read_melts_phases(which='mass')
 
         if compare_buffer == 'qfm':
-            logfo2_buffer = pf.read_qfm_os(self.df_all['T(K)'].to_numpy(), self.df_all['P(bar)'].to_numpy(),
+            try:
+                logfo2_buffer = pf.read_qfm_os(self.df_all['T(K)'].to_numpy(), self.df_all['P(bar)'].to_numpy(),
                                            verbose=False, perplex_path=px.perplex_path_default)
-            # print('logfo2_qfm', logfo2_buffer)
-            # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-            self.df_all['logfo2_qfm'] = logfo2_buffer
-            self.df_all['delta_qfm'] = self.df_all.logfo2 - logfo2_buffer
-            logfo2 = self.df_all['delta_qfm']
+                # print('logfo2_qfm', logfo2_buffer)
+                # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
+                self.df_all['logfo2_qfm'] = logfo2_buffer
+                self.df_all['delta_qfm'] = self.df_all.logfo2 - logfo2_buffer
+                logfo2 = self.df_all['delta_qfm']
+            except NotImplementedError:
+                # probably didn't get to 1100 C
+                pass
+
         else:
             logfo2 = self.df_all.logfo2
 
@@ -307,7 +312,6 @@ class MeltsFugacityData:
             print('saved to', self.output_path + self.name + '_results.csv')
 
         return logfo2
-
 
 
 def fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=0.88, planet_kwargs={},

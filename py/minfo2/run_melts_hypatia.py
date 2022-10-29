@@ -6,7 +6,6 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.append(os.path.dirname(PARENT_DIR))
 
-
 import py.minfo2.meltsfugacitydata as mf
 
 alphamelts_path_apollo = '/raid1/cmg76/Works/alphamelts/'
@@ -19,13 +18,15 @@ pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']
 
 X_ferric = 0.03
-core_eff = 0.88
-output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
-output_parent_path = output_parent_apollo + output_sub
+core_eff = [0.88]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
 
-mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, core_efficiency=core_eff, X_ferric=X_ferric,
-                    T_final=T_iso, verbose=True, oxide_list=oxide_list,
-                    planet_kwargs={}, compare_buffer='qfm',
-                    output_parent_path=output_parent_path,
-                    alphamelts_path=alphamelts_path_apollo)
+for ce in core_eff:
+    output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
+    output_parent_path = output_parent_apollo + output_sub
+
+    mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, core_efficiency=core_eff, X_ferric=X_ferric,
+                        T_final=T_iso, verbose=True, oxide_list=oxide_list,
+                        planet_kwargs={}, compare_buffer='qfm',
+                        output_parent_path=output_parent_path,
+                        alphamelts_path=alphamelts_path_apollo)
 
