@@ -85,6 +85,8 @@ mf.fo2_from_oxides(name=name, pressures_of_interest=pressures_of_interest, T_fin
                    alphamelts_path='/raid1/cmg76/alphamelts/',
                    compare_buffer='qfm',)  # need oxide_list for MELTS?
 
+
+
 pf.fo2_from_oxides(name=name, p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=test_oxides,
                    X_ferric=X_ferric, isotherm=T_iso, core_efficiency=core_eff, star=star,
                    run=True, compare_buffer='qfm',
