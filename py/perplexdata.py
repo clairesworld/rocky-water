@@ -297,7 +297,6 @@ class PerplexData:
                 print('oxide list in kwargs', kwargs['oxide_list'])
             else:
                 kwargs['oxide_list'] = [ox for ox in self.oxide_list if ox != 'O2']
-            print('self.oxide_list', self.oxide_list)
             self.nH_star = hyp.star_composition(**kwargs)
 
     def write_star_composition(self, fname='nH_star.txt', path=None):
@@ -1010,14 +1009,12 @@ class PerplexData:
                      parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
         """ procedure for setting up interior composition and structure of planet """
 
-        print('calling setup_interior() with oxides =', oxides, 'test_oxides =', test_oxides, 'star', self.star)
         # first, get oxide bulk composition and CMF (skip if input a testing value)
         if oxides is None:
             oxides = oxide_list_default
         if test_oxides is None:
             # print('kwargs get_interior', kwargs)
             if test_nH_star is None:
-                print('calling get_star_composition()')
                 self.get_star_compositon(**kwargs)
                 if self.nH_star is None:
                     return None  # e.g. missing element in hypatia catalogue
@@ -1034,7 +1031,6 @@ class PerplexData:
             sum_wt_oxides = sum(test_oxides.values())
             self.wt_oxides = {k: test_oxides[k] / sum_wt_oxides * 100 for k in oxides}
 
-        print('wt oxides', self.wt_oxides)
         self.get_mgsi()  # molar mg/si ratio
         self.get_mg_number()
         if self.nH_star is not None:

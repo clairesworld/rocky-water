@@ -5,7 +5,7 @@ import py.bulk_composition as bulk
 import os
 import subprocess
 import py.main as rw
-import perplexfugacitydata as pf
+import py.minfo2.perplexfugacitydata as pf
 import py.parameters as p
 
 output_parent_default = '/home/claire/Works/min-fo2/alphamelts_output/'

@@ -189,7 +189,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         try:
             entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
                                  params=params)
-            print('retrieved from catalogue:', entry.json())
+            # print('retrieved from catalogue:', entry.json())
 
             if np.size(entry.json()) == 0:
                 raise Exception('No entry found in Hypatia Catalogue:', star)
