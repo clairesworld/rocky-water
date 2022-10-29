@@ -1,12 +1,12 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 import pandas as pd
-from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
+from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
 import pathlib
 import subprocess
-from bulk_composition import stellar_mantle
-import ask_hypatia as hyp
+from py.bulk_composition import stellar_mantle
+import py.ask_hypatia as hyp
 
 perplex_path_default = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
 output_parent_default = perplex_path_default + 'output/'
@@ -293,7 +293,12 @@ class PerplexData:
             solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol, 'na_sol': na_sol}
             self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list if ox != 'O2']
         else:
-            self.nH_star = hyp.star_composition(oxide_list=[ox for ox in self.oxide_list if ox != 'O2'], **kwargs)
+            if 'oxide_list' in kwargs:
+                print('oxide list in kwargs', kwargs['oxide_list'])
+            else:
+                kwargs['oxide_list'] = [ox for ox in self.oxide_list if ox != 'O2']
+            print('self.oxide_list', self.oxide_list)
+            self.nH_star = hyp.star_composition(**kwargs)
 
     def write_star_composition(self, fname='nH_star.txt', path=None):
         if path is None:
@@ -868,7 +873,8 @@ class PerplexData:
             # update mass and radius - 1st mass entry never changes
             for i in range(2, n + 1):  # goes to i = n-1
                 mass[n - i] = mass[n - i + 1] - M / n  # such that it never goes to 0 (would cause numerical errors)
-            radius[0] = np.cbrt(mass[0] / density[0] / (4 * np.pi / 3))
+            radius[0] = 0  #np.cbrt(mass[0] / density[0] / (4 * np.pi / 3))
+            print('radius[0]', radius)
             for i in range(1, n):
                 dmass = mass[i] - mass[i - 1]
                 radius[i] = np.cbrt((dmass / density[i] / (4 * np.pi / 3)) + radius[i - 1] ** 3)
@@ -933,6 +939,8 @@ class PerplexData:
         self.radius = radius
         self.density = density
         self.gravity = gravity
+        print('gravity stored', self.gravity, 'len', len(self.gravity))
+        print('radius stored', self.radius, 'len', len(self.radius))
         self.temperature = temperature
         self.pressure = pressure
         self.alpha = alpha
@@ -971,6 +979,7 @@ class PerplexData:
             return len(
                 self.df_comp)  # so retrieving UM will retrieve whole mantle, and retrieving LM will retrieve empty
         self.p_lm = self.df_comp['P(bar)'].iloc[i_lm] * 1e5  # Pa
+        self.z_lm = self.df_all['z(m)'].iloc[i_lm]  # m
         return i_lm
 
     def find_transition_zone(self):

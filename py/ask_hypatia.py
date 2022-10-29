@@ -93,7 +93,8 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
     wd = abspath(getsourcefile(lambda: 0))  # get absolute path of this file
 
     if names_file is not None:
-        with open('/' + os.path.join(*(wd.split(os.path.sep)[:-1])) + '/' + names_file, 'r') as filehandle:
+        with open(names_file, 'r') as filehandle:
+        # with open('/' + os.path.join(*(wd.split(os.path.sep)[:-1])) + '/' + names_file, 'r') as filehandle:
             names = [a.rstrip() for a in filehandle.readlines()]  # read file line by line into list
     else:
         names = retrieve_star_names(**kwargs)
@@ -183,7 +184,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     def do_remote(tried_once=False):
         if tried_once:
             return None
-        import parameters as p
+        import py.parameters as p
         params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
         try:
             entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),

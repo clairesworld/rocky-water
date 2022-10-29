@@ -2,13 +2,12 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.gridspec import GridSpec
 import numpy as np
-from useful_and_bespoke import colorize, cornertext, dark_background, iterable_not_string, colourbar, not_string
-import perplexdata as px
+from py.useful_and_bespoke import colorize, cornertext, dark_background, iterable_not_string, colourbar, not_string
+import py.perplexdata as px
 from mpl_toolkits.axisartist.axislines import SubplotZero
-from saturation import TO
+from py.saturation import TO
 from pprint import pprint
-import parameters as p
-import main as rw
+import py.main as rw
 
 fig_path = '/home/claire/Works/rocky-water/figs_scratch/'  # path to save figures
 test_phases_order = ['cpx', 'gt', 'opx', 'hpcpx', 'ol', 'pl', 'wad', 'ring', 'st', 'capv', 'wus', 'aki', 'cf',
@@ -436,7 +435,7 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
                 data_label=None, earth=False, fig_path=fig_path, min_mgsi=None,
                 extension='.png', fig=None, ax=None, xlim=None, ylim=None, labelsize=14, save=True, show=True, x=None,
                 y=None, c='k', show_corr=False, transparent_edge=False,
-                return_data=False, annotate_n=True, ms=200, **scatter_kwargs):
+                return_data=False, annotate_n=True, ms=200, thin=None, **scatter_kwargs):
     # for list of planet objects, make scatter plot of 2 properties
     print('range_min', range_min)
     if x is None and y is None:
@@ -471,6 +470,11 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
         ax = fig.add_subplot(111)
 
     # print('max', y_name, '=', np.max(y))
+
+    if thin is not None:
+        x = x[::thin]
+        y = y[::thin]
+        print('len(x)', len(x))
     if transparent_edge:
         scatter_kwargs['edgecolors'] = 'none'
     ax.scatter(x, y, label=data_label, c=c, s=ms, **scatter_kwargs)
@@ -782,7 +786,7 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
         # add naive scaling
         xhat = np.linspace(np.min(x), np.max(x))
         y_naive = show_scaling_fn(xhat)
-        ax.plot(xhat * x_scale, y_naive * y_scale, c='k', lw=0.5, ls=':', label=scalinglabel)
+        ax.plot(xhat * x_scale, y_naive * y_scale, c='k', lw=1, ls=(0, (1, 8)), label=scalinglabel)
 
     # finish plot labelling, axis limits etc
     if show_n:

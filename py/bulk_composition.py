@@ -1,8 +1,25 @@
 import numpy as np
-import parameters as p
+import py.parameters as p
 
 
-def stellar_mantle(oxide_list, nH_star, core_eff, **kwargs):
+def mass_ratio_to_mol_ratio(m_i, m_j, s_i='', s_j=''):
+    """ convert mass ratio i/j of oxides to mol ratio where s_i is a string of the oxide chemical formula """
+    try:
+        n_i = int(s_i[2])  # get oxide stoichiometry
+    except ValueError:
+        n_i = 1
+    try:
+        n_j = int(s_j[2])
+    except ValueError:
+        n_j = 1
+    return (m_i / eval('p.M_' + s_i) / n_i) / (m_j / eval('p.M_' + s_j) / n_j)
+
+
+NaTi_sol = 10 ** p.na_sol / 10 ** p.ti_sol
+NaTi_bse = mass_ratio_to_mol_ratio(0.36, 0.2, 'Na2O', 'TiO2')
+
+
+def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs):
     """
     Convert stellar abundances directly to bulk mantle composition in terms of wt% oxides. Requires file parameters.py
     definining molar masses of each desired element in g/mol; e.g. M_Mg = 24.305
@@ -15,6 +32,8 @@ def stellar_mantle(oxide_list, nH_star, core_eff, **kwargs):
         Absolute log10(N_X/N_H) for the star; must be in same order as oxide_list
     core_eff : float
         Mole fraction of Fe in core (instead of FeO in mantle) with respect to total bulk planet Fe
+    depletion_NaTi : float
+        Depletion of Na/Ti in Earth BSE with respect to solar
 
     Returns
     -------
@@ -22,6 +41,9 @@ def stellar_mantle(oxide_list, nH_star, core_eff, **kwargs):
         Dictionary where keys are from oxide_list and entries are the mantle's proportion of that oxide in weight
         percent
     """
+
+    if depletion_NaTi is None:
+        depletion_NaTi = NaTi_bse / NaTi_sol
 
     # get molar masses
     try:
@@ -33,32 +55,35 @@ def stellar_mantle(oxide_list, nH_star, core_eff, **kwargs):
         raise Exception('missing molar mass in parameters.py :', e)
 
     wt_oxides = [1]  # give denomenator 1 for now
+    X_ratio_mol = [1]
     for ii, ox in enumerate(oxide_list):
         if ii > 0:
             if ox == 'AL2O3' or ox == 'Al2O3':
-                X_ratio_mol = 0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0]  # 2 mols Al per 1 mol Al2O3
+                X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Al per 1 mol Al2O3
             elif ox == 'NA2O' or ox == 'Na2O':
-                X_ratio_mol = 0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0]  # 2 mols Na per 1 mol Na2O3
+                X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Na per 1 mol Na2O3
             else:
-                X_ratio_mol = 10 ** nH_star[ii] / 10 ** nH_star[0]  # cancel out H abundance
+                X_ratio_mol.append(10 ** nH_star[ii] / 10 ** nH_star[0])  # cancel out H abundance
 
+            # now do special mods
             if ox == 'FEO' or ox == 'FeO':
                 # some molar percentage of Fe goes to core instead of to mantle FeO
                 # this is the stage where core Fe is extracted from wt_oxides (being the bulk mantle composition)
-                X_ratio_mol = X_ratio_mol * (1 - core_eff)
-                idx_FeO = ii
+                X_ratio_mol[ii] = X_ratio_mol[ii] * (1 - core_eff)
 
-            if ox == 'O2':
-                # get oxygen abundance from Fe3+/Fe2+ ratio
+            if ox == 'NA2O' or ox == 'Na2O':
+                # account for depletion: Na2O
                 try:
-                    X_FeO = X_ratio_mol[idx_FeO]
-                except:
-                    raise Exception("Can't get O2 abundance without FeO in system")
-                X_ratio_mol = o2_molar_ratio(X_FeO, **kwargs)
+                    idx_Ti = oxide_list.index('TiO2')
+                    NaTi_star = X_ratio_mol[ii] / X_ratio_mol[idx_Ti]
+                    X_ratio_mol[ii] = depletion_NaTi * NaTi_star * X_ratio_mol[idx_Ti]
+                except ValueError:
+                    raise NotImplementedError(
+                        'ERROR: Can only define Na depletion with respect to Ti, must enter Ti first in oxide_list')
 
             # convert from mole ratio to mass ratio assuming all metals in oxides
             M_ratio = M_oxides[ii] / M_oxides[0]
-            m_ratio = X_ratio_mol * M_ratio
+            m_ratio = X_ratio_mol[ii] * M_ratio
             wt_oxides.append(m_ratio)
 
     # now have ratios in wt% 1:X1:X2:X3
@@ -86,6 +111,8 @@ def o2_molar_ratio(n_FeO, X_ferric=0.05, **kwargs):
 
     print('n_Fe2+', n_ferrous, 'n_O2', n_O2, 'n_Fe3+', n_ferric, 'r', X_ferric)
     return n_O2
+
+
 # o2_molar_ratio(10, 0.05)
 
 
@@ -98,10 +125,12 @@ def ferric_ratio(n_FeO, n_O2):
     n_ferrous_extra = n_FeO - n_ferric_eq  # number of mol Fe2+ left = 8
     X_ferric = n_ferric_eq / n_FeO  # molar ratio of Fe(3+) to total Fe
     print('n_Fe2+', n_ferrous_extra, 'n_O2', n_O2, 'n_Fe3+', n_ferric_eq, 'r', X_ferric)
+
+
 # ferric_ratio(n_FeO=10, n_O2=0.12)
 
 
-def o2_from_wt_comp(wt_oxides_dict, **kwargs):
+def insert_o2_from_wt_comp(wt_oxides_dict, **kwargs):
     """ Get O2 abundance in wt% given existing oxide composition in wt% """
 
     # convert to mole fraction
@@ -133,3 +162,49 @@ def o2_from_wt_comp(wt_oxides_dict, **kwargs):
         new_wt_dict[k] = new_wt_dict[k] * factor
         print("{0:<7}".format(k), "{:5.2f}%".format(new_wt_dict[k]))
     return new_wt_dict
+
+
+def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100):
+    m_FeOstar = wt_oxides_dict['FeO']
+    # A = (2 * (1 - X_ferric) * p.M_FeO) / (X_ferric * p.M_Fe2O3)
+    # m_FeO = A / (1 + A)
+    # m_Fe2O3 = m_FeOstar - m_FeO
+    m_FeO = 2 * p.M_FeO * m_FeOstar * (1 - X_ferric) / (p.M_Fe2O3 * X_ferric - 2 * p.M_FeO * X_ferric + 2 * p.M_FeO)
+    m_Fe2O3 = p.M_Fe2O3 * X_ferric * m_FeOstar / (p.M_Fe2O3 * X_ferric - 2 * p.M_FeO * X_ferric + 2 * p.M_FeO)
+
+    # print('m_FeO', m_FeO, 'g')
+    # print('m_Fe2O3', m_Fe2O3, 'g')
+
+    # renormalise
+    wt_oxides_dict['FeO'] = m_FeO
+    wt_oxides_dict['Fe2O3'] = m_Fe2O3
+
+    print('wt.% oxides\n-----------')
+    factor = mass_tot / sum(wt_oxides_dict.values())
+    for k in wt_oxides_dict:
+        wt_oxides_dict[k] = wt_oxides_dict[k] * factor
+        print("{0:<7}".format(k), "{:5.2f}%".format(wt_oxides_dict[k]))
+
+    return wt_oxides_dict
+
+
+def test_ferric_ratio(m_FeO, m_Fe2O3):
+    n_Fe2O3 = m_Fe2O3 / p.M_Fe2O3
+    n_FeIII = 2 * n_Fe2O3
+    n_FeO = m_FeO / p.M_FeO
+    n_FeII = n_FeO
+    Xfer = n_FeIII / n_FeII
+    print('X ferric', Xfer)
+
+# dmm = {'SiO2': 44.71, 'Al2O3':3.98, 'FeO': 8.008 + 0.191, 'MgO': 38.73, 'CaO': 3.17}
+# test_ferric_ratio(8.008, 0.191)
+# insert_fe2o3(dmm, 0.03, mass_tot=sum(dmm.values()))
+#
+#
+# import sympy as sym
+#
+# m_FeOstar, X_ferric, m_FeO, m_Fe2O3, M_FeO, M_Fe2O3 = sym.symbols('m_FeOstar,X_ferric,m_FeO,m_Fe2O3,M_FeO,M_Fe2O3')
+# eq1 = sym.Eq(m_FeO+m_Fe2O3,m_FeOstar)
+# eq2 = sym.Eq((2*m_Fe2O3/M_Fe2O3) / (m_FeO / M_FeO + 2*m_Fe2O3/M_Fe2O3),X_ferric)
+# result = sym.solve([eq1,eq2],(m_FeO,m_Fe2O3))
+# print(result)

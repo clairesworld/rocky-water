@@ -12,15 +12,15 @@ import saturation as sat
 import matplotlib.lines as mlines
 import matplotlib.gridspec as gridspec
 
-dat = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.7244359600749921, px.wt_oxides_MD95),
-                      maxIter=30, tol=1e-4,  # n=800,
-                      Tp=1600, test_CMF=0.325,
-                      plot_all=False, get_saturation=True, verbose=True, clean=True,
-                      vertex_data='stx21ver', option_file='perplex_option_claire_mol', excluded_phases=[],
-                      name='1M_32CMF_27Mg_1600K_mol',
-                      output_parent_path=px.output_parent_default + 'MgSi_from_earth_fig1/',
-                      )
-dat.werami_garnet_composition()
+# dat = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.7244359600749921, px.wt_oxides_MD95),
+#                       maxIter=30, tol=1e-4,  # n=800,
+#                       Tp=1600, test_CMF=0.325,
+#                       plot_all=False, get_saturation=True, verbose=True, clean=True,
+#                       vertex_data='stx21ver', option_file='perplex_option_claire_mol', excluded_phases=[],
+#                       name='1M_32CMF_27Mg_1600K_mol',
+#                       output_parent_path=px.output_parent_default + 'MgSi_from_earth_fig1/',
+#                       )
+# dat.werami_garnet_composition()
 
 """ get earth benchmark """
 Tp = 1600
@@ -498,5 +498,20 @@ def get_percentile_of_attr(target_dat=None, attr=None, x_target=None, dats=None,
 #     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)
 #     # dats = rw.update_dir(folder, px.PerplexData.find_transition_zone, store=True)
 #     dats = rw.update_dir(folder, px.PerplexData.get_um_mass, store=True)
+
+
+""" depth to lm """
+dirs = [px.perplex_path_default + 'output/apollo/hypatia' + mp + 'M_1600K_88Fe_hires/' for mp in ['1', '2', '3', '4']]
+# for folder in dirs:
+#     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)
+
+fig, ax = plotpx.compare_pop_scatter(dirs, "M_p", 'z_lm', x_scale=p.M_E**-1,
+                                     y_scale=1e-3,
+                                     c='r', alpha=0.2, lw=0,
+                                     xlabel='Mp', ylabel='z lm (km)', #fig=fig, ax=axes[1],
+                                     save=False, show=False,# ylim=ylim,
+                                     # earth=earth,
+                                     )
+
 
 plt.show()

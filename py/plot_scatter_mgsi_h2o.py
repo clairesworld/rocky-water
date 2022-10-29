@@ -247,7 +247,7 @@ def scatterhist_mgsi_allmasses(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rain
 
 def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cmap='rainbow', earth=None, sun=None,
                                       alpha=0.4, ylim=None, fformat='.png', xlabelpad=9,
-                                      labelsize=14, ticksize=12, legsize=12, xlim=(0, 3), vmin=None, vmax=None,
+                                      labelsize=14, ticksize=12, legsize=12, xlim=(0, 3), vmin=None, vmax=None, thin=None,
                                       ms=200, ratios=[7, 1], output_path=px.perplex_path_default + 'output/apollo/', **kwargs):
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family': 'serif',
@@ -304,7 +304,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
                                                               annotate_n=False, labelsize=labelsize, legsize=legsize,
                                                               c=colours[ii_1M], alpha=alpha,
                                                               fig=fig, ax=axes[0], ax_histy=ax_histy, ax_histx=ax_histx,
-                                                              show_histx=True, show_histy=True)
+                                                              show_histx=True, show_histy=True, thin=thin)
     # show Earth vline
     for axx in [axes[0], axes[1], ax_histx]:
         axx.axvline(earth.mgsi, c='k', alpha=0.2, lw=0.5, ls=(10, (15, 10)))
@@ -321,7 +321,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
                                               earth=False, fig=fig, ax=axes[0], xlim=xlim, ms=ms,
                                               ylim=ylim, labelsize=labelsize, ticksize=ticksize, legsize=legsize,
                                               save=False,
-                                              show=False, c=colours[ii], alpha=alpha)
+                                              show=False, c=colours[ii], alpha=alpha, thin=thin)
 
             # # show Earth-scaled Mg/Si
             # dats_e = rw.read_dir(px.perplex_path_default + 'output/MgSi_from_earth_M' + str(masses[ii]) + '/')
@@ -367,7 +367,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
 
     medy, minw, maxw = [], [], []
     for ii, pl in enumerate(exo_names):
-        print('name', pl, '=', exo_names_min[ii], '=', exo_names_max[ii])
+        # print('name', pl, '=', exo_names_min[ii], '=', exo_names_max[ii])
         medy.append(exo_w[ii] / (exo_masses[ii] * p.M_E) * 1e6)
         minw.append(exo_ys_min[ii] / (exo_masses[ii] * p.M_E) * 1e6)
         maxw.append(exo_ys_max[ii] / (exo_masses[ii] * p.M_E) * 1e6)
@@ -382,9 +382,8 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
     xerr = np.vstack((xerr_min, xerr_max))
 
     for jj, xx in enumerate(exo_mgsi):
-        # print('yerr[: , jj]', np.shape(yerr[:, jj].T), yerr[:, jj])
-        print(['xerr', [xerr[0, jj]], [xerr[1, jj]]])
-        print(['yerr', [yerr[0, jj]], [yerr[1, jj]]])
+        # print(['xerr', [xerr[0, jj]], [xerr[1, jj]]])
+        # print(['yerr', [yerr[0, jj]], [yerr[1, jj]]])
         ax.errorbar(xx, exo_w[jj] / (exo_masses[jj] * p.M_E) * 1e6,
                     xerr=[[xerr[0, jj]], [xerr[1, jj]]],
                     yerr=[[yerr[0, jj]], [yerr[1, jj]]],
@@ -437,7 +436,7 @@ masses = [0.1, 0.5, 1, 2, 3]
 # scatterhist_mgsi_allmasses_multipanel(masses=masses, cmap='YlOrBr_r', earth=earth, alpha=0.4, vmax=len(masses), xlim=(0.25, 2), ms=100)
 
 scatterhist_mgsi_allmasses_kepler(masses=masses, cmap='YlOrBr_r', earth=earth, sun=sun, alpha=0.4, vmin=0.1, vmax=4,
-                                  xlim=(0.25, 2), ms=50,
+                                  xlim=(0.25, 2), ms=30, thin=3,
                                   output_path=px.perplex_path_default + 'output/apollo/', fformat='.pdf')
 
 # some of these 0.1 M_E planets with low Mg/Si have no ol/wad, some ring at bottom but lots of qtz/coes/stv

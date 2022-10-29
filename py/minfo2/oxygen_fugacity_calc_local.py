@@ -1,5 +1,5 @@
 import numpy as np
-import perplexfugacity as pf
+import perplexfugacitydata as pf
 
 # match Stolper fig 3 @ 1373 K?
 T_iso = 1373

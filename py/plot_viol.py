@@ -41,7 +41,8 @@ sun = rw.build_planet(M_p=1 * p.M_E,star='sun',
 """ upper mantle water mass - violin plot """
 def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None, ylabel=None,
                          labelsize=18, legsize=14, ticksize=14, yticks=None, save=True, xlim='default', ylim='default', fig=None, ax=None,
-                         fig_path=plotpx.fig_path, extension='.png', show_legend=True, earth=None, sun=None, exclude=True):
+                         fig_path=plotpx.fig_path, extension='.png', show_legend=True, earth=None, sun=None,
+                         exclude=True, show_lm_with_total=False):
     plt.rc('text', usetex=True)
     plt.rc('font', **{'family': 'serif', 'serif': ['Computer Modern Roman']})
     if masses is None:
@@ -70,6 +71,7 @@ def viol_saturation_mass(which='um', masses=None, yscale=p.TO ** -1, xlabel=None
         if ylim == 'default':
             ylim = (0, 15)
         points = 500  # because extremes look weird
+
 
     if ax is None:
         fig, ax = plt.subplots(1, 1)
@@ -223,7 +225,7 @@ def make_subplot(masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5], save=True, ylabel='
 
 
 make_subplot(save=True, fname='viol-Mp', exclude=False, extension='.pdf', masses=[0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
-             fig_path='/home/claire/Desktop/')
+             fig_path='/home/claire/Desktop/', show_lm_with_total=True)
 # fig, ax = viol_saturation_mass(masses = [0.1, 0.3, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5],
 #                                which='total', earth=earth, sun=sun,  show_legend=True, save=False,
 #                                    ylabel='', )

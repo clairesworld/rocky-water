@@ -430,7 +430,7 @@ def EOS_all(P, T, material):
     return [V, rho, alpha, Cp]
 
 
-def g_profile(n, radius, density):
+def g_profile(n, radius, density, old_g_quadrature=False):
     # gravity has boundary condition 0 in center (and not at surface)
     # analogously, a surface gravity can be determind from M and
     # guessed R, and gravity can be interpolated from surface downwards
@@ -438,8 +438,7 @@ def g_profile(n, radius, density):
     gravity = np.zeros(n)
     for i in range(1, n):
         dr = radius[i] - radius[i - 1]
-        gravity[i] = gravity[i - 1] + dr * (
-                4 * math.pi * G * density[i - 1] - 2 * gravity[i - 1] / radius[i - 1])
+        gravity[i] = (radius[i - 1]**2 * gravity[i - 1] + 4 * np.pi * G / 3 * density[i] * (radius[i]**3 - radius[i - 1]**3)) / radius[i]**2
     return gravity
 
 

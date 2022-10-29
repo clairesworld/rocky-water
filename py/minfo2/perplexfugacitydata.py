@@ -3,11 +3,12 @@ import pandas as pd
 import os
 import pathlib
 import subprocess
-import perplexdata as px
-import bulk_composition as bulk
-import main as rw
+import py.perplexdata as px
+import py.bulk_composition as bulk
+import py.main as rw
 from scipy import interpolate
-import parameters as p
+import py.parameters as p
+from py.useful_and_bespoke import find_nearest_idx
 
 # import ask_hypatia as hyp
 
@@ -15,25 +16,27 @@ Rb = 8.31446261815324
 output_parent_default = '/home/claire/Works/min-fo2/perplex_output/'
 output_parent_apollo = '/raid1/cmg76/perple_x/output/rocky-fo2/'
 wt_oxides_DMM = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'FeO': 8.18}  # Workman & Hart depleted mantle
-solution_phases_default = ['Cpx(JH)', 'O(JH)', 'Sp(JH)', 'Grt(JH)', 'Opx(JH)']
+solution_phases_default = ['Cpx(JH)', 'O(JH)', 'Sp(JH)', 'Grt(JH)', 'Opx(JH)', 'Pl(JH)']
 
 wt_oxides_DMM_ext = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'FeO': 8.17,
-                     'Na2O': 0.13, 'Cr2O3': 0.57}  # Workman & Hart depleted mantle, extended
+                     'Na2O': 0.28, 'TiO2': 0.13}  # Workman & Hart depleted mantle, extended
 
-class PerplexFugacity(px.PerplexData):
+class PerplexFugacityData(px.PerplexData):
 
     def __init__(self, name='test', star=None, solution_phases=solution_phases_default,
                  output_parent_path=output_parent_default, wt_oxides=wt_oxides_DMM, X_ferric=0.03,
-                 perplex_path=px.perplex_path_default,
+                 perplex_path=px.perplex_path_default, core_efficiency=None,
                  **kwargs):
         # super().__init__(output_parent_path=output_parent_path, **kwargs)
 
         self.name = name
         self.star = star
+        self.X_ferric = X_ferric
+        self.core_eff = core_efficiency
 
         if 'O2' not in wt_oxides:
             # get O2 mantle fraction
-            self.wt_oxides = bulk.o2_from_wt_comp(wt_oxides, X_ferric=X_ferric)
+            self.wt_oxides = bulk.insert_o2_from_wt_comp(wt_oxides, X_ferric=X_ferric)
         else:
             self.wt_oxides = wt_oxides
         self.oxide_list = [k for k in self.wt_oxides.keys()]
@@ -42,6 +45,15 @@ class PerplexFugacity(px.PerplexData):
         self.solution_phases = solution_phases
         self.output_path = output_parent_path + self.name + '/'
         self.perplex_path = perplex_path
+
+        self.pressure = None  # GPa
+        self.temperature = None  # bar
+        self.logfo2 = None
+        self.delta_qfm = None
+        self.logfo2_1GPa = None  # spinel field
+        self.logfo2_4GPa = None  # garnet field
+        self.delta_qfm_1GPa = None
+        self.delta_qfm_4GPa = None
 
     def command_vertex_grid(self, build_file_end=''):
         """ string for vertex command file - only entry is project name in operational mode 5 """
@@ -367,14 +379,55 @@ class PerplexFugacity(px.PerplexData):
             self.write_adiabat(P, T, fout=self.perplex_path + 'points_files/' + fname, verbose=False, overwrite=True)
         return 'points_files/' + fname
 
+    def read_fo2_results(self):
+        df = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+        self.logfo2 = df['logfo2'].to_numpy()
+        self.delta_qfm = df['delta_qfm'].to_numpy()
 
-def init_from_build(name, **kwargs):
-    return PerplexFugacity(**read_from_build(name, **kwargs))
+        pressure = df['P(bar)'].to_numpy() * 1e-4
+        temperature = df['T(K)'].to_numpy()
+        if self.pressure is None:
+            self.pressure = pressure
+        elif (self.pressure != pressure).any():
+            print('pressure', pressure)
+            print('self.pressure', self.pressure)
+            raise Exception('attempting to read in mismatching pressure data!')
+        if self.temperature is None:
+            self.temperature = temperature
+        elif (self.temperature != temperature).any():
+            print('temperature', temperature)
+            print('self.temperature', self.temperature)
+            raise Exception('attempting to read in mismatching temperature data!')
+
+        # save 1 GPa i.e. spinel stability field
+        idx = find_nearest_idx(self.pressure, 1)
+        self.logfo2_1GPa = self.logfo2[idx]
+        self.delta_qfm_1GPa = self.delta_qfm[idx]
+
+        # save 4 GPa i.e. garnet stability field
+        idx = find_nearest_idx(self.pressure, 4)
+        self.logfo2_4GPa = self.logfo2[idx]
+        self.delta_qfm_4GPa = self.delta_qfm[idx]
 
 
-def read_from_build(name, output_parent_path=output_parent_default, verbose=False, **kwargs):
+def init_from_build(name, X_ferric=None, **kwargs):
+    """ currently not saving X_ferric in directory name so must enter known value manually """
+    # TODO parse star from name using possible prefixes
+
+    # from py.parameters import M_E
+
+    spl = name.split('_')
+    # M_p = float(''.join(filter(str.isdigit, spl[0]))) * M_E  # get planet mass - not good if decimal
+    core_efficiency = int(''.join(filter(str.isdigit, spl[1]))) / 100.0
+    star = spl[2]
+    kwargs.update({'name': name, 'X_ferric': X_ferric, 'star': star, 'core_efficiency': core_efficiency})
+    kwargs.update(**read_dict_from_build(**kwargs))  # get other important input stuff from build file
+    return PerplexFugacityData(**kwargs)
+
+
+def read_dict_from_build(name=None, output_parent_path=output_parent_default, verbose=False, **kwargs):
     import re
-    # parse the parameters file into a python dictionary
+    """ parse the parameters file into a python dictionary """
 
     fin = output_parent_path + name + '/' + name + '.dat'
     if verbose:
@@ -425,7 +478,6 @@ def read_from_build(name, output_parent_path=output_parent_default, verbose=Fals
     d = {'vertex_data': vertex_data, 'wt_oxides': wt_oxides, 'excluded_phases': excluded_phases,
          'solution_phases': solution_phases, 'p_min': p_min, 'p_max': p_max, 'T_min': T_min, 'T_max': T_max}
 
-    # TODO parse star from name using possible prefixes
     if verbose:
         print('d', d)
     return d
@@ -475,7 +527,6 @@ def read_from_build(name, output_parent_path=output_parent_default, verbose=Fals
     #     keys.pop()
     # return d
 
-
 def mu_to_logfo2(mu, mu_0, T):
     return np.log(np.exp((mu - mu_0) / (Rb * T))) / np.log(10)
 
@@ -485,6 +536,11 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
     Parameters
     ----------
+    T :
+    verbose :
+    fin :
+    perplex_path :
+    P :
     **kwargs :
     """
 
@@ -560,6 +616,8 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
     if T_is_mult:  # for input multiple values
         if P_is_mult:
+            print('P', P)
+            print('T', T)
             raise NotImplementedError('ERROR: cannot interpolate buffer fo2 for gridded P, T of interest')
         else:
             logfo2 = []
@@ -578,7 +636,7 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
                      output_parent_path=output_parent_default, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
-    pl_list = rw.planets_from_hypatia(n_sample=n_sample, names_file='host_names.txt', plot_all=False,
+    pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
                                       get_saturation=False,
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
@@ -601,8 +659,8 @@ def fo2_from_local(output_parent_path=output_parent_default, **kwargs):
             name = os.path.basename(sub)
             # star = name.split('_')[2]
 
-            d = read_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
-            dat = PerplexFugacity(name=name, output_parent_path=output_parent_path, **d, **kwargs)
+            d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
+            dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
             logfo2 = dat.fo2_calc(run=False, **d, **kwargs)
             # print('log fo2 of system:', logfo2)
     else:
@@ -629,11 +687,12 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
         print(e)
         print(name, 'has no wt_oxides composition')
         return False
-    print('\n\n\n\n----------------------------------------\nStarting fo2 calc for planet of', pl.star)
-    dat = PerplexFugacity(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
-                          **kwargs)
+    print('\n\n\n\n----------------------------------------\nStarting fO2 calculation for planet of', pl.star)
+    dat = PerplexFugacityData(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
+                              core_efficiency=core_efficiency, **kwargs)
 
     logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max,
                           verbose=verbose, **kwargs)
-    # print('log fo2 of system:', logfo2)
+    if verbose:
+        print('log fo2 of system:', logfo2)
     return True

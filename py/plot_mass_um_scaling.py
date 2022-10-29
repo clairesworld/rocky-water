@@ -42,7 +42,7 @@ fig, ax = plotpx.compare_pop_fillbetween(dirs, 'M_p', 'mass_um', x_scale=p.M_E *
                                          show_n=False,
                            labelsize=16, legsize=14, ticksize=14, earth=earth, sun=sun, earth_real=None, #1.06e24,
                                          show_scaling_fn=um_mass_scaling, scalinglabel=r'Constant-$\rho$ scaling',
-                                         c='xkcd:peach',dpi=400)
+                                         c='xkcd:peach', dpi=400)
 
 
 # dirs = [perplex_path_default + 'output/apollo/hypatia' + s + 'M_1600K_99Fe_hires/' for s in ('0,1', '0,3', '0,5', '1', '1,5', '2', '2,5', '3', '4', '5')]
