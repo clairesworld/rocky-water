@@ -261,10 +261,10 @@ def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', e
     path[0] : str
         Directory containing output data for desired existing run
     """
-    from perplexdata import output_parent_default
     import glob
 
     if existing_output_parent is None:
+        from perplexdata import output_parent_default
         existing_output_parent = output_parent_default
     sn = star_name.replace(' ', '')
     # print('searching for', output_parent_default + existing_dir + '*' + sn + '*')
