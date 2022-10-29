@@ -20,7 +20,7 @@ pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
-X_ferric = 0.05
+X_ferric = 0.07
 core_eff = 0.88
 output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
 
