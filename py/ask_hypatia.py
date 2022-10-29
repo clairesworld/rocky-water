@@ -110,7 +110,7 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
 
 
 def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composition=False,
-                     output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True,
+                     output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, existing_output_parent=None,
                      **kwargs):
     """
     Retrieve the elemental abundances of an individual star. Requires file parameters.py definining solar abundances for
@@ -141,6 +141,8 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     nH_star : list
         Absolute stellar abundances for each item in oxide_list X, as log10(N_X/N_H)
     """
+    if existing_output_parent is None:
+        existing_output_parent = output_parent_path
     if get_hypatia_min is None:  # elements for which you want the minimum value
         get_hypatia_min = []
     if get_hypatia_max is None:  # elements for which you want the maximum value
@@ -154,7 +156,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         if tried_once:
             return None
         try:
-            path = find_existing_directory(star, existing_output_parent=output_parent_path, **kwargs)
+            path = find_existing_directory(star, existing_output_parent=existing_output_parent, **kwargs)
             print('found existing star at', path)
             try:
                 nH_star = np.loadtxt(path + '/nH_star.txt')
