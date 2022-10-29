@@ -14,7 +14,7 @@ cd ~/Works/rocky-water/
 """
 
 
-alphamelts_path_apollo = '/raid1/cmg76/Works/alphamelts/'
+alphamelts_path_apollo = '/raid1/cmg76/alphamelts/'
 output_parent_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/'
 
 T_iso = 1373
