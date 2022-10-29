@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import pathlib
 import subprocess
-from py import perplexdata as px
+from .. import perplexdata as px
 from py import bulk_composition as bulk
 from py import main as rw
 from scipy import interpolate
