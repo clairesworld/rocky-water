@@ -35,7 +35,8 @@ for ce in core_eff:
     mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=ce, X_ferric=X_ferric,
                         T_final=T_iso, verbose=True,
                         oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
-                        planet_kwargs={}, compare_buffer='qfm',
+                        planet_kwargs={},
+                        #compare_buffer='qfm',
                         output_parent_path=output_parent_path,
                         alphamelts_path=alphamelts_path_apollo,
                         perplex_path='/raid1/cmg76/perple_x/',  # for qfm data table
