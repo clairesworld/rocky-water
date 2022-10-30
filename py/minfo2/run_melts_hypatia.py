@@ -32,7 +32,7 @@ for ce in core_eff:
     output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
     output_parent_path = output_parent_apollo + output_sub
 
-    mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, core_efficiency=ce, X_ferric=X_ferric,
+    mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=ce, X_ferric=X_ferric,
                         T_final=T_iso, verbose=True,
                         oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
                         planet_kwargs={}, compare_buffer='qfm',
