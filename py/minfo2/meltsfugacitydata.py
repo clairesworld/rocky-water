@@ -127,7 +127,7 @@ class MeltsFugacityData:
                                      batch_text_fn=self.batchfile_text_fo2calc,
                                      melts_text_fn=self.meltsfile_text_fo2calc, **kwargs)
 
-    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=False, clean=True,
+    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=True, clean=True,
                             verbose=True,
                             batch_text_fn=None, melts_text_fn=None,
                             env_file=None,
@@ -285,7 +285,7 @@ class MeltsFugacityData:
                 raise Exception(error_str)
         print('...done loading fO2!')
 
-    def fo2_calc(self, compare_buffer='qfm', save=True, perplex_path=px.perplex_path_default, **kwargs):
+    def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, **kwargs):
         # run alphamelts
         self.run_alphamelts_all_p(**kwargs)
 

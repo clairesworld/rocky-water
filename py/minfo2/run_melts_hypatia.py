@@ -36,7 +36,7 @@ for ce in core_eff:
                         T_final=T_iso, verbose=True,
                         oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
                         planet_kwargs={},
-                        #compare_buffer='qfm',
+                        # compare_buffer='qfm',
                         output_parent_path=output_parent_path,
                         alphamelts_path=alphamelts_path_apollo,
                         perplex_path='/raid1/cmg76/perple_x/',  # for qfm data table
