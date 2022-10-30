@@ -131,7 +131,7 @@ class MeltsFugacityData:
                             verbose=True,
                             batch_text_fn=None, melts_text_fn=None,
                             env_file=None,
-                            melts_kwargs=None, overwrite=False, **kwargs):
+                            melts_kwargs=None, overwrite=False, verify_on_path=False, **kwargs):
 
         if output_p_path is None:
             output_p_path = self.output_path + str(p_of_interest).replace('.', ',') + 'GPa/'
@@ -144,7 +144,6 @@ class MeltsFugacityData:
         if (not os.path.isfile(output_p_path + 'System_main_tbl.txt')) or overwrite:
 
             os.chdir(self.alphamelts_path)
-            print('cwd: ', os.getcwd())
 
             if suppress_output:
                 stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
@@ -161,7 +160,8 @@ class MeltsFugacityData:
                 file.write(melts_text_fn(p_of_interest, **melts_kwargs))
 
             # make sure installation is on path
-            subprocess.call(['sh', './verify_path.sh'])  # should be in alphamelts directory
+            if verify_on_path:
+                subprocess.call(['sh', './verify_path.sh'])  # should be in alphamelts directory
 
             # run alphamelts
             cmd = 'run_alphamelts.command -p "{}" -f "{}" -m "{}" -b "{}"'.format(output_p_path, env_file,
@@ -178,7 +178,7 @@ class MeltsFugacityData:
                         os.remove(output_p_path + fend)
                     else:
                         print('cannot find file: ', output_p_path + fend)
-                        raise Exception(
+                        raise FileNotFoundError(
                             'ERROR: alphamelts did not complete, try running again with suppress_output=False')
 
             # return to original dir
@@ -208,13 +208,13 @@ class MeltsFugacityData:
             elif self.df_all.loc[row, 'P(bar)'] != df['Pressure'].iloc[-1]:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
                     df['Pressure'].iloc[-1], output_file, self.df_all['P(bar)'].iloc[row])
-                raise Exception(error_str)
+                raise RuntimeError(error_str)
             if np.isnan(self.df_all['T(K)'].iloc[row]):
                 self.df_all.loc[row, 'T(K)'] = df['Temperature'].iloc[-1]  # K
             elif self.df_all.loc[row, 'T(K)'] != df['Temperature'].iloc[-1]:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
                     df['Temperature'].iloc[-1], output_file, self.df_all['T(K)'].iloc[row])
-                raise Exception(error_str)
+                raise RuntimeError(error_str)
 
         if check_isothermal:
             # check if all runs did indeed complete to desired T_final
@@ -276,46 +276,50 @@ class MeltsFugacityData:
             elif self.df_all['P(bar)'].iloc[row] != df['Pressure'].iloc[-1]:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
                     df['Pressure'].iloc[-1], output_file, self.df_all['P(bar)'].iloc[row])
-                raise Exception(error_str)
+                raise RuntimeError(error_str)
             if np.isnan(self.df_all['T(K)'].iloc[row]):
                 self.df_all['T(K)'].iloc[row] = df['Temperature'].iloc[-1]  # K
             elif self.df_all['T(K)'].iloc[row] != df['Temperature'].iloc[-1]:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
                     df['Temperature'].iloc[-1], output_file, self.df_all['T(K)'].iloc[row])
-                raise Exception(error_str)
+                raise RuntimeError(error_str)
         print('...done loading fO2!')
 
     def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, **kwargs):
-        # run alphamelts
-        self.run_alphamelts_all_p(**kwargs)
 
-        # retrieve fo2
-        self.read_melts_fo2()
+        try:
+            # run alphamelts
+            self.run_alphamelts_all_p(**kwargs)
 
-        # retrieve phases
-        self.read_melts_phases(which='mass')
+            # retrieve fo2
+            self.read_melts_fo2()
 
-        if compare_buffer == 'qfm':
-            try:
-                logfo2_buffer = pf.read_qfm_os(self.df_all['T(K)'].to_numpy(), self.df_all['P(bar)'].to_numpy(),
-                                               verbose=False, perplex_path=perplex_path)
-                # print('logfo2_qfm', logfo2_buffer)
-                # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-                self.df_all['logfo2_qfm'] = logfo2_buffer
-                self.df_all['delta_qfm'] = self.df_all.logfo2 - logfo2_buffer
-                logfo2 = self.df_all['delta_qfm']
-            except NotImplementedError:
-                # probably didn't get to 1100 C
-                pass
+            # retrieve phases
+            self.read_melts_phases(which='mass')
 
-        else:
-            logfo2 = self.df_all.logfo2
+            if compare_buffer == 'qfm':
+                try:
+                    logfo2_buffer = pf.read_qfm_os(self.df_all['T(K)'].to_numpy(), self.df_all['P(bar)'].to_numpy(),
+                                                   verbose=False, perplex_path=perplex_path)
+                    # print('logfo2_qfm', logfo2_buffer)
+                    # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
+                    self.df_all['logfo2_qfm'] = logfo2_buffer
+                    self.df_all['delta_qfm'] = self.df_all.logfo2 - logfo2_buffer
+                except NotImplementedError:
+                    # probably didn't get to 1100 C
+                    pass
+            okay = True
+        except FileNotFoundError as e:
+            print(e)
+            # alphamelts did not work at all for whatever reason
+            okay = False
 
         # store mega df
         df_save = self.df_all.loc[:, ~self.df_all.columns.duplicated()].copy()
         if save:
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
             print('saved to', self.output_path + self.name + '_results.csv')
+        return okay
 
 
 def fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=0.88, planet_kwargs={},
@@ -360,5 +364,5 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
     dat = MeltsFugacityData(name=name, pressures_of_interest=pressures_of_interest,
                             wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                             **kwargs)
-    dat.fo2_calc(**kwargs)
-    return True
+    okay = dat.fo2_calc(**kwargs)
+    return okay

@@ -45,6 +45,6 @@ for ce in core_eff:
                         use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
                         # existing_output_parent='/raid1/cmg76/perple_x/output/rocky-fo2/',
                         suffix=str(X_ferric*100).replace('.', ',') + 'fer',
-                        # restart='2MASS 09202471+3352567'
+                        restart='2MASS 19490218+4650354'
                         )
 
