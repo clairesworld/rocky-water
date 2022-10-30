@@ -41,7 +41,6 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs)
         Dictionary where keys are from oxide_list and entries are the mantle's proportion of that oxide in weight
         percent
     """
-    print('oxide_list in bulk_composition', oxide_list)
 
     if depletion_NaTi is None:
         depletion_NaTi = NaTi_bse / NaTi_sol

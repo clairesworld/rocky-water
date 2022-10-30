@@ -38,6 +38,7 @@ for ce in core_eff:
                         planet_kwargs={}, compare_buffer='qfm',
                         output_parent_path=output_parent_path,
                         alphamelts_path=alphamelts_path_apollo,
+                        perplex_path='/raid1/cmg76/perple_x/',  # for qfm data table
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                         # use_local_composition=False,
                         use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first

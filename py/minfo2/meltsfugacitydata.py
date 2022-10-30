@@ -127,11 +127,11 @@ class MeltsFugacityData:
                                      batch_text_fn=self.batchfile_text_fo2calc,
                                      melts_text_fn=self.meltsfile_text_fo2calc, **kwargs)
 
-    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=False, clean=True, verbose=True,
+    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=False, clean=True,
+                            verbose=True,
                             batch_text_fn=None, melts_text_fn=None,
                             env_file=None,
                             melts_kwargs=None, overwrite=False, **kwargs):
-
 
         if output_p_path is None:
             output_p_path = self.output_path + str(p_of_interest).replace('.', ',') + 'GPa/'
@@ -178,13 +178,14 @@ class MeltsFugacityData:
                         os.remove(output_p_path + fend)
                     else:
                         print('cannot find file: ', output_p_path + fend)
-                        raise Exception('ERROR: alphamelts did not complete, try running again with suppress_output=False')
+                        raise Exception(
+                            'ERROR: alphamelts did not complete, try running again with suppress_output=False')
 
             # return to original dir
             os.chdir(os.path.dirname(os.path.abspath(__file__)))
         else:
-            print('Run', self.name, 'at p =', p_of_interest, 'bar already exists! To execute, delete files or set overwrite=True\n---------------------------------------------')
-
+            print('Run', self.name, 'at p =', p_of_interest,
+                  'bar already exists! To execute, delete files or set overwrite=True\n---------------------------------------------')
 
     def read_melts_TP(self, check_isothermal=True, reload_TP=False):
 
@@ -220,7 +221,6 @@ class MeltsFugacityData:
             print('TODO: check isothermal')
             pass
 
-
     def read_melts_phases(self, which='mass', **kwargs):
         """ make csv of phase proportions in same format as perple_x - isothermal x-section for several pressures """
 
@@ -243,12 +243,13 @@ class MeltsFugacityData:
             for ph in [col for col in df.columns if col.endswith('_0')]:
                 if ph != 'liquid_0':
                     try:
-                        self.df_all.loc[row, ph] = df[ph].iloc[-1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
+                        self.df_all.loc[row, ph] = df[ph].iloc[
+                                                       -1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
                     except KeyError:
-                        self.df_all[ph] = np.nan   # add column
+                        self.df_all[ph] = np.nan  # add column
                         self.df_all.loc[row, ph] = df[
-                                                       ph].iloc[-1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
-
+                                                       ph].iloc[
+                                                       -1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
 
         print('done loading phases!')
         print(self.df_all.head())
@@ -273,7 +274,8 @@ class MeltsFugacityData:
             if np.isnan(self.df_all['P(bar)'].iloc[row]):
                 self.df_all['P(bar)'].iloc[row] = df['Pressure'].iloc[-1]
             elif self.df_all['P(bar)'].iloc[row] != df['Pressure'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(df['Pressure'].iloc[-1], output_file, self.df_all['P(bar)'].iloc[row])
+                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
+                    df['Pressure'].iloc[-1], output_file, self.df_all['P(bar)'].iloc[row])
                 raise Exception(error_str)
             if np.isnan(self.df_all['T(K)'].iloc[row]):
                 self.df_all['T(K)'].iloc[row] = df['Temperature'].iloc[-1]  # K
@@ -283,7 +285,7 @@ class MeltsFugacityData:
                 raise Exception(error_str)
         print('...done loading fO2!')
 
-    def fo2_calc(self, compare_buffer='qfm', save=True, **kwargs):
+    def fo2_calc(self, compare_buffer='qfm', save=True, perplex_path=px.perplex_path_default, **kwargs):
         # run alphamelts
         self.run_alphamelts_all_p(**kwargs)
 
@@ -296,7 +298,7 @@ class MeltsFugacityData:
         if compare_buffer == 'qfm':
             try:
                 logfo2_buffer = pf.read_qfm_os(self.df_all['T(K)'].to_numpy(), self.df_all['P(bar)'].to_numpy(),
-                                           verbose=False, perplex_path=px.perplex_path_default)
+                                               verbose=False, perplex_path=perplex_path)
                 # print('logfo2_qfm', logfo2_buffer)
                 # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
                 self.df_all['logfo2_qfm'] = logfo2_buffer
