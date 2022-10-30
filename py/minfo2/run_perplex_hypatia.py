@@ -42,5 +42,6 @@ for ce in core_eff:
                         use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
                         # existing_output_parent=pf.output_parent_apollo,  # <== existing kwarg
                         # restart='2MASS 23155829+3127462'
-                        run_vertex=True, suffix=str(X_ferric*100).replace('.', ',') + 'fer',
+                        run_vertex=False,  # overwrite existing vertex files
+                        suffix=str(X_ferric*100).replace('.', ',') + 'fer',
                         )

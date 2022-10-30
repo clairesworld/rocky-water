@@ -41,6 +41,7 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs)
         Dictionary where keys are from oxide_list and entries are the mantle's proportion of that oxide in weight
         percent
     """
+    print('oxide_list in bulk_composition', oxide_list)
 
     if depletion_NaTi is None:
         depletion_NaTi = NaTi_bse / NaTi_sol
@@ -57,6 +58,7 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs)
     wt_oxides = [1]  # give denomenator 1 for now
     X_ratio_mol = [1]
     for ii, ox in enumerate(oxide_list):
+        print('calculating oxide', ox)
         if ii > 0:
             if ox == 'AL2O3' or ox == 'Al2O3':
                 X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Al per 1 mol Al2O3
@@ -88,6 +90,7 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs)
 
     # now have ratios in wt% 1:X1:X2:X3
     wt_oxides = np.array(wt_oxides)
+    print('len wt_oxides', len(wt_oxides))
     wt_oxides = wt_oxides / sum(wt_oxides) * 100  # normalise so total wt% is 100
 
     print('wt.% oxides\n-----------')

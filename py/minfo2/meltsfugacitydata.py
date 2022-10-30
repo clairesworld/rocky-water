@@ -127,7 +127,7 @@ class MeltsFugacityData:
                                      batch_text_fn=self.batchfile_text_fo2calc,
                                      melts_text_fn=self.meltsfile_text_fo2calc, **kwargs)
 
-    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=False, clean=True, verbose=True,
+    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=True, clean=True, verbose=True,
                             batch_text_fn=None, melts_text_fn=None,
                             env_file=None,
                             melts_kwargs=None, overwrite=False, **kwargs):
@@ -311,8 +311,6 @@ class MeltsFugacityData:
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
             print('saved to', self.output_path + self.name + '_results.csv')
 
-        return logfo2
-
 
 def fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=0.88, planet_kwargs={},
                      output_parent_path=output_parent_default, **kwargs):
@@ -352,11 +350,9 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
         print(e)
         print(name, 'has no wt_oxides composition')
         return False
-    print('\n\n\n\n----------------------------------------\nStarting fo2 calc for planet of', pl.star)
+    print('\n\n\n\n----------------------------------------\nStarting fo2 calc for planet at', pl.star)
     dat = MeltsFugacityData(name=name, pressures_of_interest=pressures_of_interest,
                             wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                             **kwargs)
-    logfo2 = dat.fo2_calc(**kwargs)
-
-    print('log fo2 of system:', logfo2)
+    dat.fo2_calc(**kwargs)
     return True

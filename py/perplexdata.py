@@ -31,6 +31,7 @@ class PerplexData:
         self.c_h2o_obm = None
         if solution_phases is None:
             solution_phases = solution_phases_default
+        print('oxides in init PerplexData', oxides)
         if oxides is None:
             oxides = oxide_list_default
         self.name = name
@@ -294,7 +295,8 @@ class PerplexData:
             self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list if ox != 'O2']
         else:
             if 'oxide_list' in kwargs:
-                print('oxide list in kwargs', kwargs['oxide_list'])
+                pass
+                # print('oxide list in kwargs', kwargs['oxide_list'])
             else:
                 kwargs['oxide_list'] = [ox for ox in self.oxide_list if ox != 'O2']
             self.nH_star = hyp.star_composition(**kwargs)

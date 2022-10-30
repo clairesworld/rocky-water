@@ -7,7 +7,7 @@ import os
 import simplejson
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = 'a00f921c6e6cbbdbd3a364d1cf92fec6'
+key = 'b346ff08491374ed6b65797e76bff102'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -226,6 +226,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
             print('    trying to load from file...')
             nH_star = do_local(tried_once=True)
         except simplejson.JSONDecodeError as e:
+            print('entry\n', entry)
             print(e)
             raise Exception('probably need new API key!')
         # except Exception as e:
