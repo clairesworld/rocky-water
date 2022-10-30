@@ -131,8 +131,7 @@ class MeltsFugacityData:
                             batch_text_fn=None, melts_text_fn=None,
                             env_file=None,
                             melts_kwargs=None, overwrite=False, **kwargs):
-        """ run_vertex = 'auto' will check for vertex output files in run output directory, False will require output
-        files already in perple_x working directory"""
+
 
         if output_p_path is None:
             output_p_path = self.output_path + str(p_of_interest).replace('.', ',') + 'GPa/'
@@ -145,6 +144,7 @@ class MeltsFugacityData:
         if (not os.path.isfile(output_p_path + 'System_main_tbl.txt')) or overwrite:
 
             os.chdir(self.alphamelts_path)
+
             if suppress_output:
                 stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
             else:
@@ -159,7 +159,10 @@ class MeltsFugacityData:
             with open(melts_file, 'w') as file:
                 file.write(melts_text_fn(p_of_interest, **melts_kwargs))
 
-            # run vertex
+            # make sure installation is on path
+            subprocess.call(['sh', './verify_path.sh'])  # should be in alphamelts directory
+
+            # run alphamelts
             cmd = 'run_alphamelts.command -p "{}" -f "{}" -m "{}" -b "{}"'.format(output_p_path, env_file,
                                                                                   melts_file, batch_file)
             output = subprocess.run(cmd, shell=True, stdout=stdout, stderr=stderr)
