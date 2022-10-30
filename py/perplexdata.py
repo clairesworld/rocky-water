@@ -31,7 +31,6 @@ class PerplexData:
         self.c_h2o_obm = None
         if solution_phases is None:
             solution_phases = solution_phases_default
-        print('oxides in init PerplexData', oxides)
         if oxides is None:
             oxides = oxide_list_default
         self.name = name

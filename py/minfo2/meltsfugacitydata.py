@@ -320,13 +320,13 @@ def fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=0.88, p
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
     print('\nfinished generating compositions\n')
-    bad = []
-    for pl in pl_list:
-        print(pl.wt_oxides)
-        okay = fo2_from_oxides(pl.name, pressures_of_interest, pl=pl, output_parent_path=output_parent_path, **kwargs)
-        if not okay:
-            bad.append(pl.name)
-    print('bad cases:', bad)
+    # bad = []
+    # for pl in pl_list:
+    #     print(pl.wt_oxides)
+    #     okay = fo2_from_oxides(pl.name, pressures_of_interest, pl=pl, output_parent_path=output_parent_path, **kwargs)
+    #     if not okay:
+    #         bad.append(pl.name)
+    # print('bad cases:', bad)
     return pl_list
 
 
