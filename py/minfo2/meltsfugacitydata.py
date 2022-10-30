@@ -144,6 +144,7 @@ class MeltsFugacityData:
         if (not os.path.isfile(output_p_path + 'System_main_tbl.txt')) or overwrite:
 
             os.chdir(self.alphamelts_path)
+            print('cwd: ', os.getcwd())
 
             if suppress_output:
                 stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
