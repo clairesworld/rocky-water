@@ -404,15 +404,15 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
         legtitle = z_var
 
     fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-    for jj, output_parent_path in enumerate(dirs):
-        spl = os.path.dirname(output_parent_path).split('/')[-1].split('_')
+    for jj, opp in enumerate(dirs):
+        spl = os.path.dirname(opp).split('/')[-1].split('_')
         X_ferric = None
         for sp in spl:
             if 'ferric' in sp:
                 X_ferric = int(''.join(filter(str.isdigit, sp)))
 
         # get directory names in folder
-        subfolders = rw.get_run_dirs(output_path=output_parent_path)
+        subfolders = rw.get_run_dirs(output_path=opp)
         once = True
         x = []
         if subfolders:  # nonzero
@@ -420,9 +420,10 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                 if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                     name = os.path.basename(sub)
                     if name not in exclude_names:
-                        dat = pf.init_from_build(name, output_parent_path=output_parent_path, X_ferric=X_ferric)
+                        dat = pf.init_from_build(name, output_parent_path=opp, X_ferric=X_ferric)
                         dat.read_fo2_results()
                         x.append(eval('dat.' + x_var) * x_scale)
+            print(opp, 'n_runs =', len(x))
 
             z = eval('dat.' + z_var) * z_scale  # only need 1 (last in this case)
             if cmap:
@@ -470,19 +471,6 @@ core_eff = 88
 # element_xplot(p_of_interest=3, components=['Ol', 'Opx', 'Cpx', 'Gt'], output_parent_path=output_parent_path,
 #     linec='k',  labelsize=16, save=True, fname='crossplot_phases',)
 
-
-""" compare fo2 hist for multiple runs """
-X_ferric_list = [3, 10]
-dirs = [output_parent_default + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric/' for Xf in X_ferric_list]
-compare_pop_hist(dirs, x_var='logfo2_1GPa', z_var='X_ferric', x_scale=1, z_scale=1, fname='compare_pop_hist_Xferric',
-                 legtitle=r'Fe$^{3+}$ percentage', save=True,
-                     ls='-', cmap='cool', vmin=1, vmax=12, xlabel='log(fO$_2$) at 1 GPa', bins=40)
-
-# coreeff_list = [70, 88, 99]
-# dirs = [output_parent_default + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric/' for ce in coreeff_list]
-# compare_pop_hist(dirs, x_var='logfo2_1GPa', z_var='core_eff', x_scale=1, z_scale=1, fname='compare_pop_hist_coreeff', figpath=figpath,
-#                  save=True, exclude_names=[], legtitle=r'$\chi^m_{\rm Fe}$',
-#                  ls='-', cmap='cool', vmin=0.65, vmax=1, xlabel='log(fO$_2$) at 1 GPa', bins=40)
 
 """ checking weird cases? """
 # names_nonmono = ['1M_88Ceff_2MASS07324421+3350061_999K', '1M_88Ceff_2MASS18484459+4426041_999K',

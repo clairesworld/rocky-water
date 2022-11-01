@@ -321,6 +321,53 @@ class MeltsFugacityData:
             print('saved to', self.output_path + self.name + '_results.csv')
         return okay
 
+    def find_common_T_final_from_results(self):
+        # for already-ran melts data, get the last temperature that all pressures cooled to
+        fname = 'Phase_mass_tbl.txt'
+        T_min = self.T_final
+        mass_melt_min = 0
+        for ii, path in enumerate(self.output_p_paths):
+            # load output csv from pMELTS
+            output_file = path + fname
+            df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                             dtype=np.float64).tail(1)
+            T_last = df['Temperature']
+            if T_last >= T_min:
+                T_min = T_last  # want highest value of min T
+                mass_melt_min = df['liquid_0']  # also retrieve final melt mass fraction
+        self.T_min = T_min
+        self.mass_melt_min = mass_melt_min
+
+
+
+def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default, T_final=1373, verbose=True, **kwargs):
+
+    parts = name.split('_')
+    star = parts[2]
+    X_ferric = parts[4]
+    wt_oxides = {}
+
+    subfolders = [f.name for f in os.scandir(output_parent_path + name + '/') if f.is_dir()]
+    pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
+    print('p of inter', pressures_of_interest)
+
+    # parse melts file
+    melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + name + '.melts').readlines()
+    for line in melts_file_contents:
+        if 'Initial Composition:' in line:
+            parts = line.split()
+            wt_oxides[parts[2]] = float(parts[3])
+
+    dat = MeltsFugacityData(name=name, star=star, X_ferric=X_ferric, wt_oxides=wt_oxides, output_parent_path=output_parent_path,
+                            alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final)
+
+    # load results csv
+    dat.df_all = pd.read_csv(dat.output_path + name + '_results.csv')
+    if verbose:
+        print('loaded df\n', dat.df_all.head())
+
+    return dat
+
 
 def fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=0.88, planet_kwargs={},
                      output_parent_path=output_parent_default, **kwargs):
@@ -366,3 +413,21 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
                             **kwargs)
     okay = dat.fo2_calc(**kwargs)
     return okay
+
+
+def common_Tmin(output_parent_path, **kwargs):
+    names = [f.name for f in os.scandir(output_parent_path + '/') if f.is_dir()]
+    df = pd.DataFrame(columns=['name', 'T_last', 'mass_melt_min'], index=range(len(names)))
+    for row, sub in enumerate(names):
+        dat = init_from_results(sub, output_parent_path=output_parent_path, **kwargs)
+        dat.find_common_T_final_from_results()
+        df.loc[row, 'name'] = dat.name
+        df.loc[row, 'T_min'] = dat.T_min
+        df.loc[row, 'mass_melt_min'] = dat.mass_melt_min
+
+    print(df)
+
+
+
+
+
