@@ -326,17 +326,20 @@ class MeltsFugacityData:
         fname = 'Phase_mass_tbl.txt'
         T_min = self.T_final
         mass_melt_min = 0
+        p_count = 0
         for ii, path in enumerate(self.output_p_paths):
             # load output csv from pMELTS
             output_file = path + fname
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
                              dtype=np.float64).tail(1)
+            p_count += 1
             T_last = df['Temperature']
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
                 mass_melt_min = df['liquid_0']  # also retrieve final melt mass fraction
         self.T_min = T_min
         self.mass_melt_min = mass_melt_min
+        self.n_pressures = p_count
 
 
 
@@ -352,7 +355,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
     print('p of inter', pressures_of_interest)
 
     # parse melts file
-    melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + name + '.melts').readlines()
+    melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
     for line in melts_file_contents:
         if 'Initial Composition:' in line:
             parts = line.split()
@@ -417,13 +420,14 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
 
 def common_Tmin(output_parent_path, **kwargs):
     names = [f.name for f in os.scandir(output_parent_path + '/') if f.is_dir()]
-    df = pd.DataFrame(columns=['name', 'T_last', 'mass_melt_min'], index=range(len(names)))
+    df = pd.DataFrame(columns=['name', 'T_last', 'mass_melt_min', 'n_pressures'], index=range(len(names)))
     for row, sub in enumerate(names):
         dat = init_from_results(sub, output_parent_path=output_parent_path, **kwargs)
         dat.find_common_T_final_from_results()
         df.loc[row, 'name'] = dat.name
         df.loc[row, 'T_min'] = dat.T_min
         df.loc[row, 'mass_melt_min'] = dat.mass_melt_min
+        df.loc[row, 'n_pressures'] = dat.n_pressures
 
     print(df)
 
