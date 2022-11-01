@@ -335,7 +335,7 @@ class MeltsFugacityData:
             print('\n\n\n\n\ndf\n', df)
             p_count += 1
             T_last = df['Temperature']
-            print('T_last', T_last, 'at', path)
+            print('T_last', T_last, '(type =', type(T_last), ') at', path)
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
                 mass_melt_min = df['liquid_0']  # also retrieve final melt mass fraction
