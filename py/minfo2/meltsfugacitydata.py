@@ -19,7 +19,7 @@ class MeltsFugacityData:
     def __init__(self, name='test', star=None,  # solution_phases=solution_phases_default,
                  output_parent_path=output_parent_default, wt_oxides=pf.wt_oxides_DMM, X_ferric=0.03,
                  alphamelts_path=alphamelts_path_default,
-                 T_final=None, pressures_of_interest=None,
+                 T_final=None, pressures_of_interest=None, verbose=True,
                  **kwargs):
 
         """
@@ -64,10 +64,11 @@ class MeltsFugacityData:
         self.pressures_of_interest = pressures_of_interest
         self.T_final = T_final
 
-        print('\ninitialising MeltsFugacityData data with:')
-        print('        T =', self.T_final, 'K')
-        print('        p =', self.pressures_of_interest, 'bar')
-        print('\n')
+        if verbose:
+            print('\ninitialising MeltsFugacityData data with:')
+            print('        T =', self.T_final, 'K')
+            print('        p =', self.pressures_of_interest, 'bar')
+            print('\n')
 
     def get_mgsi(self, **kwargs):
         # if self.nH_star:
@@ -337,7 +338,7 @@ class MeltsFugacityData:
             # print('T_last', T_last, '(type =', type(T_last), ') at', path)
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
-                mass_melt_min = df['liquid_0']  # also retrieve final melt mass fraction
+                mass_melt_min = df['liquid_0'].item()  # also retrieve final melt mass fraction
         self.T_min = T_min
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
@@ -369,7 +370,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 wt_oxides[parts[2]] = float(parts[3])
 
         dat = MeltsFugacityData(name=name, star=star, X_ferric=X_ferric, wt_oxides=wt_oxides, output_parent_path=output_parent_path,
-                                alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final)
+                                alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final, verbose=verbose)
 
         # load results csv
         dat.df_all = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
@@ -428,11 +429,11 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
     return okay
 
 
-def common_Tmin(output_parent_path, **kwargs):
+def common_Tmin(output_parent_path, store=True, **kwargs):
     names = [f.name for f in os.scandir(output_parent_path + '/') if f.is_dir()]
     df = pd.DataFrame(columns=['name', 'T_last', 'mass_melt_min', 'n_pressures'], index=range(len(names)))
     for row, sub in enumerate(names):
-        dat = init_from_results(sub, output_parent_path=output_parent_path, **kwargs)
+        dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
         if dat:  # existing runs
             dat.find_common_T_final_from_results()
             df.at[row, 'name'] = dat.name
@@ -441,6 +442,8 @@ def common_Tmin(output_parent_path, **kwargs):
             df.at[row, 'n_pressures'] = dat.n_pressures
 
     print(df)
+    if store:
+        df.to_csv(output_parent_path + 'completion_analysis.csv', sep="\t")
 
 
 
