@@ -333,11 +333,11 @@ class MeltsFugacityData:
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
                              dtype=np.float64).tail(1)
             p_count += 1
-            T_last = df.at['Temperature']
+            T_last = df['Temperature']
             print('T_last', T_last)
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
-                mass_melt_min = df.at['liquid_0']  # also retrieve final melt mass fraction
+                mass_melt_min = df['liquid_0']  # also retrieve final melt mass fraction
         self.T_min = T_min
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
@@ -365,7 +365,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                             alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final)
 
     # load results csv
-    dat.df_all = pd.read_csv(dat.output_path + name + '_results.csv')
+    dat.df_all = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
     if verbose:
         print('loaded df\n', dat.df_all.head())
 
