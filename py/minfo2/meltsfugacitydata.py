@@ -334,7 +334,7 @@ class MeltsFugacityData:
                              dtype=np.float64).tail(1)
             print('\n\n\n\n\ndf\n', df)
             p_count += 1
-            T_last = df['Temperature']
+            T_last = df['Temperature'][-1]
             print('T_last', T_last, '(type =', type(T_last), ') at', path)
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
