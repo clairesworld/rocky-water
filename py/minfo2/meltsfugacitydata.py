@@ -332,8 +332,9 @@ class MeltsFugacityData:
             output_file = path + fname
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
                              dtype=np.float64).tail(1)
+            print('\n\n\n\n\ndf\n', df)
             p_count += 1
-            T_last = df['Temperature'].values()
+            T_last = df['Temperature']
             print('T_last', T_last, 'at', path)
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
