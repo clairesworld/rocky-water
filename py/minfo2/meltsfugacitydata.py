@@ -357,7 +357,12 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
 
         # parse melts file
-        melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
+        try:
+            melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
+        except FileNotFoundError as e:
+            print(e, 'skipping...')
+            return None
+
         for line in melts_file_contents:
             if 'Initial Composition:' in line:
                 parts = line.split()
