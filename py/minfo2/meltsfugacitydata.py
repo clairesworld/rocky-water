@@ -333,11 +333,11 @@ class MeltsFugacityData:
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
                              dtype=np.float64).tail(1)
             p_count += 1
-            T_last = df['Temperature']
+            T_last = df.at['Temperature']
             print('T_last', T_last)
             if T_last >= T_min:
                 T_min = T_last  # want highest value of min T
-                mass_melt_min = df['liquid_0']  # also retrieve final melt mass fraction
+                mass_melt_min = df.at['liquid_0']  # also retrieve final melt mass fraction
         self.T_min = T_min
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
@@ -353,7 +353,6 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
 
     subfolders = [f.name for f in os.scandir(output_parent_path + name + '/') if f.is_dir()]
     pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
-    print('p of inter', pressures_of_interest)
 
     # parse melts file
     melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
@@ -425,10 +424,10 @@ def common_Tmin(output_parent_path, **kwargs):
     for row, sub in enumerate(names):
         dat = init_from_results(sub, output_parent_path=output_parent_path, **kwargs)
         dat.find_common_T_final_from_results()
-        df.loc[row, 'name'] = dat.name
-        df.loc[row, 'T_min'] = dat.T_min
-        df.loc[row, 'mass_melt_min'] = dat.mass_melt_min
-        df.loc[row, 'n_pressures'] = dat.n_pressures
+        df.at[row, 'name'] = dat.name
+        df.at[row, 'T_min'] = dat.T_min
+        df.at[row, 'mass_melt_min'] = dat.mass_melt_min
+        df.at[row, 'n_pressures'] = dat.n_pressures
 
     print(df)
 
