@@ -289,7 +289,7 @@ class MeltsFugacityData:
                 # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
 
             if verbose:
-            print('             ...done loading fO2!')
+                print('             ...done loading fO2!')
 
     def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True,
                  verbose=False, **kwargs):
