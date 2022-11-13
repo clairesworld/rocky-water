@@ -246,7 +246,6 @@ class MeltsFugacityData:
 
             # find idx of T of interest
             idx = df.loc[df['Temperature'] == T_of_interest].index[0]
-            print('idx', idx, 'T', df.Temperature.loc[idx])
 
             # append phases to self df
             m_tot = df['mass'].loc[idx]
@@ -281,6 +280,7 @@ class MeltsFugacityData:
 
             # append fo2
             self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
+            print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
 
         print('...done loading fO2!')
 
