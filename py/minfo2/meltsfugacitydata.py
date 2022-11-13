@@ -195,7 +195,7 @@ class MeltsFugacityData:
             print('Run', self.name, 'at p =', p_of_interest,
                   'bar already exists! To execute, delete files or set overwrite=True\n---------------------------------------------')
 
-    def read_melts_TP(self, T_of_interest=1373.15, reload_TP=False):
+    def read_melts_TP(self, T_of_interest=1373.15, reload_TP=False, **kwargs):
 
         # check if already loaded
         if (not self.data['P(bar)'].isnull().values.any()) or (not self.data['T(K)'].isnull().values.any()):
