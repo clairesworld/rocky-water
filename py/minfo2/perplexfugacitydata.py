@@ -55,6 +55,8 @@ class PerplexFugacityData(px.PerplexData):
         self.delta_qfm_1GPa = None
         self.delta_qfm_4GPa = None
 
+        self.data = pd.DataFrame(columns=['P(bar)', 'T(K)', 'logfo2'])
+
         # remove TiO2 from bulk composition - no phase that incorporates it
         if 'TiO2' in self.oxide_list:
             self.oxide_list.remove('TiO2')
@@ -262,7 +264,7 @@ class PerplexFugacityData(px.PerplexData):
         P = df_w['P(bar)'].to_numpy()
 
         # prepare all data
-        df_save = df_w.copy()
+        self.data = df_w.copy()
 
         if check_comp:
             df_c = self.read_werami(fend='_comp.tab')
@@ -270,7 +272,7 @@ class PerplexFugacityData(px.PerplexData):
             # concat with full results dataframe
             px_phases = [col for col in df_c.columns if col not in ['P(bar)', 'T(K)']]
             df_c.rename(columns={phase: 'X_' + phase for phase in px_phases}, inplace=True)
-            df_save = pd.concat([df_w, df_c], axis=1)
+            self.data = pd.concat([self.data, df_c], axis=1)
 
         if mu0_file is None and run:
             # run frendly to get mu_0 at T of interest, P = 1 bar
@@ -285,7 +287,7 @@ class PerplexFugacityData(px.PerplexData):
 
         # calculate log10(fo2) from standard state potential
         logfo2 = mu_to_logfo2(mu, mu_0, T)  # mu is P-dependent here, given a range of P
-        df_save['logfo2'] = logfo2
+        self.data['logfo2'] = logfo2
 
         if compare_buffer == 'qfm':
             # run frendly to get fo2 of qfm buffer at T, p
@@ -305,12 +307,12 @@ class PerplexFugacityData(px.PerplexData):
             logfo2_buffer = read_qfm_os(T, P, verbose=False, perplex_path=self.perplex_path)
             # print('logfo2_qfm', logfo2_buffer)
             # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-            df_save['logfo2_qfm'] = logfo2_buffer
-            df_save['delta_qfm'] = logfo2 - logfo2_buffer
+            self.data['logfo2_qfm'] = logfo2_buffer
+            self.data['delta_qfm'] = logfo2 - logfo2_buffer
 
         # store mega df
-        df_save = df_save.loc[:, ~df_save.columns.duplicated()].copy()
         if save:
+            df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
 
         # store werami/frendly i/o files - note must be after reading-in is finished
@@ -385,12 +387,14 @@ class PerplexFugacityData(px.PerplexData):
         return 'points_files/' + fname
 
     def read_fo2_results(self):
-        df = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
-        self.logfo2 = df['logfo2'].to_numpy()
-        self.delta_qfm = df['delta_qfm'].to_numpy()
+        if np.isnan(self.data['P(bar)'].to_numpy().all()):
+            raise Exception('ERROR: PerplexFugacityData not initialised properly - not loaded dataframe')
 
-        pressure = df['P(bar)'].to_numpy() * 1e-4
-        temperature = df['T(K)'].to_numpy()
+        self.logfo2 = self.data['logfo2'].to_numpy()
+        self.delta_qfm = self.data['delta_qfm'].to_numpy()
+
+        pressure = self.data['P(bar)'].to_numpy() * 1e-4
+        temperature = self.data['T(K)'].to_numpy()
         if self.pressure is None:
             self.pressure = pressure
         elif (self.pressure != pressure).any():
@@ -415,7 +419,7 @@ class PerplexFugacityData(px.PerplexData):
         self.delta_qfm_4GPa = self.delta_qfm[idx]
 
 
-def init_from_build(name, X_ferric=None, **kwargs):
+def init_from_results(name, X_ferric=None, **kwargs):
     """ currently not saving X_ferric in directory name so must enter known value manually """
     # TODO parse star from name using possible prefixes
 
@@ -427,7 +431,13 @@ def init_from_build(name, X_ferric=None, **kwargs):
     star = spl[2]
     kwargs.update({'name': name, 'X_ferric': X_ferric, 'star': star, 'core_efficiency': core_efficiency})
     kwargs.update(**read_dict_from_build(**kwargs))  # get other important input stuff from build file
-    return PerplexFugacityData(**kwargs)
+
+    dat = PerplexFugacityData(**kwargs)
+
+    # load saved results
+    dat.data = pd.read_csv(dat.output_path + dat.name + '_results.csv', sep='\t', index_col=0)
+
+    return dat
 
 
 def read_dict_from_build(name=None, output_parent_path=output_parent_default, verbose=False, **kwargs):

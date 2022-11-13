@@ -425,7 +425,7 @@ def scatterhist_mgsi_allmasses_kepler(masses=[0.1, 0.3, 0.5, 1, 2, 3, 4, 5], cma
                             ], frameon=False, fontsize=legsize)
 
     fig.supylabel(ylabel, fontsize=labelsize, y=0.46, x=0.005)
-    fig.savefig(plotpx.fig_path + fname + fformat, bbox_inches='tight', dpi=200)
+    fig.savefig(plotpx.fig_path + fname + fformat, bbox_inches='tight', dpi=300)
 
 
 masses = [0.1, 0.5, 1, 2, 3]
@@ -437,7 +437,7 @@ masses = [0.1, 0.5, 1, 2, 3]
 
 scatterhist_mgsi_allmasses_kepler(masses=masses, cmap='YlOrBr_r', earth=earth, sun=sun, alpha=0.4, vmin=0.1, vmax=4,
                                   xlim=(0.25, 2), ms=30, thin=3,
-                                  output_path=px.perplex_path_default + 'output/apollo/', fformat='.pdf')
+                                  output_path=px.perplex_path_default + 'output/apollo/', fformat='.png')
 
 # some of these 0.1 M_E planets with low Mg/Si have no ol/wad, some ring at bottom but lots of qtz/coes/stv
 # so have a kind of gradual incline of increased c_h2o from 10-20 GPa rather than sharp mtz at 1 GPa, same as 1ME planets in figure 1 just cut at 20 GPa.

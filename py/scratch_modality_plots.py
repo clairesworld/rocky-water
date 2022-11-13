@@ -39,13 +39,13 @@ def plot_water_composition_profiles(name=None, fig_name=None, title='', star=Non
                           get_saturation=True, **kwargs)
     all_phases = dat.phases_px
 
-    x = dat.df_all['P(bar)'].to_numpy() * 1e-4  # GPa
-    w = dat.df_all['c_h2o'].to_numpy() * 1e6  # ppm
-    df_frac = dat.df_all[[col for col in dat.df_all if col.startswith('frac_h2o_')]]
-    df_X = dat.df_all[[col for col in dat.df_all if col.startswith('X_')]]
+    x = dat.data['P(bar)'].to_numpy() * 1e-4  # GPa
+    w = dat.data['c_h2o'].to_numpy() * 1e6  # ppm
+    df_frac = dat.data[[col for col in dat.data if col.startswith('frac_h2o_')]]
+    df_X = dat.data[[col for col in dat.data if col.startswith('X_')]]
 
     if reorder:  # so consistent between runs
-        phase_names_orig = [col[2:] for col in dat.df_all if col.startswith('X_')]
+        phase_names_orig = [col[2:] for col in dat.data if col.startswith('X_')]
 
         cols_frac_all = []
         for ph in all_phases:
@@ -68,7 +68,7 @@ def plot_water_composition_profiles(name=None, fig_name=None, title='', star=Non
         phase_names = all_phases
 
     else:
-        phase_names = [col[2:] for col in dat.df_all if col.startswith('X_')]
+        phase_names = [col[2:] for col in dat.data if col.startswith('X_')]
         n_phases = len(phase_names)
         colours = [cmap_vals(j) for j in np.arange(1, n_phases + 1) / (n_phases + 1)]
 
@@ -94,7 +94,7 @@ def plot_water_composition_profiles(name=None, fig_name=None, title='', star=Non
         axes[0].set_ylabel('Storage capacity\n(ppm)', fontsize=labelsize, labelpad=ypad)
         axes[0].set_ylim(1e0, 1e5)
         axes[0].set_yticks([1e1, 1e3, 1e5])
-        m_w_tot = sat.total_water_frac(dat.df_all) * dat.M_p / sat.TO
+        m_w_tot = sat.total_water_frac(dat.data) * dat.M_p / sat.TO
         axes[0] = cornertext(axes[0], 'total = {0:3.1f} earth oceans'.format(m_w_tot), size=labelsize, c=linec)
 
         # plot modal water

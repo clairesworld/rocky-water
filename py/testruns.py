@@ -124,9 +124,9 @@ oxides = ['MgO', 'SiO2', 'CaO', 'Al2O3', 'FeO']
 #
 # from plot_mgsi_modality import demo_composition_gridspec
 #
-# sample = [rw.read_name(output_path=px.output_parent_default + 'test_bulk_Fe_coreeff/',
+# sample = [rw.read_name(output_path=px.output_parent_px + 'test_bulk_Fe_coreeff/',
 #                        name='solar_Fe' + m) for m in ['_minus', '', '_plus']]
-# # sample = [rw.read_name(output_path=px.output_parent_default + 'test_CMF/',
+# # sample = [rw.read_name(output_path=px.output_parent_px + 'test_CMF/',
 # #                        name=m) for m in ['20', '30', '40']]
 # for dat in sample:
 #     print('\n', dat.name)
@@ -200,12 +200,12 @@ oxides = ['MgO', 'SiO2', 'CaO', 'Al2O3', 'FeO']
 #                     output_parent_path=px.perplex_path_default + 'output/hypatia' + str(m) + 'M/',
 #                     plot_kwargs={'comp_stacked': True, 'p_max': 150}
 #                     )
-#     print(m, 'mass_um', dat.mass_um, 'mtl res', len(dat.df_all))
+#     print(m, 'mass_um', dat.mass_um, 'mtl res', len(dat.data))
 #                     vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[], get_saturation=True,
 #                     output_parent_path=px.perplex_path_default + 'output/hypatia' + str(m) + 'M/',
 #                     plot_kwargs={'comp_stacked': True, 'p_max': 150}
 #                     )
-#     print(m, 'mass_um', dat.mass_um, 'mtl res', len(dat.df_all))
+#     print(m, 'mass_um', dat.mass_um, 'mtl res', len(dat.data))
 
 # """ Dorn+ 2018 Ca-Al rich planet """
 # wt_oxides_CaAl = {'SiO2': 27, 'MgO': 14, 'CaO': 16.0, 'Al2O3': 43.0,  'FeO': 0.01, 'Na2O': 0.01}

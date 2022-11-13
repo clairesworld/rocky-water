@@ -234,10 +234,10 @@ plt.show()
 
 """ examine extrema """
 # for name in mins:
-#     dat = rw.read_name(output_path=px.output_parent_default + 'hypatia0,1M/', name=name, M_p=0.1, core_efficiency=0.8, Tp=1600)
-#     dat.mass_h2o_um = sat.total_water_mass(dat.df_all, i_min=0, i_max=dat.find_lower_mantle() - 1)
+#     dat = rw.read_name(output_path=px.output_parent_px + 'hypatia0,1M/', name=name, M_p=0.1, core_efficiency=0.8, Tp=1600)
+#     dat.mass_h2o_um = sat.total_water_mass(dat.data, i_min=0, i_max=dat.find_lower_mantle() - 1)
 #     i_um_base = dat.find_lower_mantle() - 1
-#     print('i_um_base', i_um_base, 'len', len(dat.df_all))
+#     print('i_um_base', i_um_base, 'len', len(dat.data))
 #
 #     plotpx.composition_subfig(dat, 'c_h2o', var_scale=1e6, var_log=True, var_label='Water capacity\n(ppm)',
 #                               vertical_pressure=False, title=dat.star, show_UM=True, p_max=None,

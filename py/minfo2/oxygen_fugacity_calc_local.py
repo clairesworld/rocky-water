@@ -37,7 +37,7 @@ perplex_path = '/home/claire/Works/perple_x/'
 #                     X_ferric=X_ferric, isotherm=T_iso, core_efficiency=core_eff, star=star,
 #                     run=True, compare_buffer='qfm',
 #                     suppress_output=False, check_comp=True, verbose=True,
-#                     mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
+#                     mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_px,
 #                     )
 
 
@@ -46,7 +46,7 @@ perplex_path = '/home/claire/Works/perple_x/'
 #                 X_ferric=0.031, isotherm=T_iso,
 #                 run=True, compare_buffer='qfm',
 #                 suppress_output=False, check_comp=True, verbose=True,
-#                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
+#                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_px,
 #                 )
 
 

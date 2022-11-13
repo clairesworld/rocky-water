@@ -45,7 +45,7 @@ class PerplexPlanet(px.PerplexData):
         self.perplex_path = perplex_path
         self.output_path = output_parent_path + self.name + '/'
 
-        # ensure output_parent_default is a valid directory, create directory if it doesn't exist yet
+        # ensure output_parent_px is a valid directory, create directory if it doesn't exist yet
         # if not os.path.isdir(self.output_path):
         #     raise Exception(self.output_path, 'is not a valid directory with input parameter output_parent_path',
         #                     output_parent_path)

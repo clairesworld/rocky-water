@@ -37,7 +37,7 @@ def plot_sat_difference(Mp=1, pmin=1000, pmax=140e4, fig=None, axes=None, c='k',
         dir1 = px.perplex_path_default + 'output/' + 'hypatia' + str(Mp) + 'M_1600K_80Fe/'
         dir2 = px.perplex_path_default + 'output/' + 'hypatia' + str(Mp) + 'M_1900K_80Fe/'
     datsdict = plotpx.dict_across_pops([dir1, dir2],  # subsample=2,
-                                       x_name="df_all['mass_h2o(kg)']", y_name="df_all['P(bar)']")
+                                       x_name="data['mass_h2o(kg)']", y_name="data['P(bar)']")
 
     # get distribution across stars
     # interpolate pressure
@@ -128,7 +128,7 @@ def plot_sat_difference(Mp=1, pmin=1000, pmax=140e4, fig=None, axes=None, c='k',
         hline_kwargs = {'lw': 0.1, 'alpha': 0.3, 'c': 'xkcd:clay', 'zorder': 0}
         for dat in dats:
             # only show for ol-bearing
-            if 'X_ol' in dat.df_all.columns:
+            if 'X_ol' in dat.data.columns:
                 y_mtz = dat.p_mtz * 1e-9  # GPa
                 axes[1].axhline(y_mtz, **hline_kwargs)
                 y_lm = dat.p_lm * 1e-9  # GPa

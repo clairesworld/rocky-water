@@ -7,7 +7,7 @@ import os
 import simplejson
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = 'b1ffdaefee0a338d566d336e5bdcf32a'
+key = 'da273b8fff556e19106980bef2c653e7'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -270,7 +270,7 @@ def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', e
         from perplexdata import output_parent_default
         existing_output_parent = output_parent_default
     sn = star_name.replace(' ', '')
-    # print('searching for', output_parent_default + existing_dir + '*' + sn + '*')
+    # print('searching for', output_parent_px + existing_dir + '*' + sn + '*')
     try:
         path = glob.glob(existing_output_parent + existing_dir + '*' + sn + '*')
         return path[0]  # should only find one item; glob.glob returns list

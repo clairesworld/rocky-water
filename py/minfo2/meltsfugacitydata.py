@@ -55,7 +55,7 @@ class MeltsFugacityData:
         self.get_mg_number()
 
         # initialise dataframe for storing important things
-        self.df_all = pd.DataFrame(columns=['P(bar)', 'T(K)', 'logfo2'], index=range(len(pressures_of_interest)))
+        self.data = pd.DataFrame(columns=['P(bar)', 'T(K)', 'logfo2'], index=range(len(pressures_of_interest)))
         self.alphamelts_path = alphamelts_path
 
         # set main output path for this composition and subpaths for pressure runs
@@ -117,6 +117,7 @@ class MeltsFugacityData:
         s = s + 'Initial Pressure: ' + str(p_of_interest) + '\n'
         return s
 
+
     def run_alphamelts_all_p(self, **kwargs):
         for newpath in [self.output_path] + self.output_p_paths:
             if not os.path.exists(newpath):
@@ -128,10 +129,10 @@ class MeltsFugacityData:
                                      batch_text_fn=self.batchfile_text_fo2calc,
                                      melts_text_fn=self.meltsfile_text_fo2calc, **kwargs)
 
-    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=True, clean=True,
+    def run_alphamelts_at_p(self, p_of_interest=None, output_p_path=None, suppress_output=False, clean=True,
                             verbose=True,
                             batch_text_fn=None, melts_text_fn=None,
-                            env_file=None,
+                            env_file=None, dry_setup=False,
                             melts_kwargs=None, overwrite=False, verify_on_path=False, **kwargs):
 
         if output_p_path is None:
@@ -144,15 +145,20 @@ class MeltsFugacityData:
         # check if run already exists
         if (not os.path.isfile(output_p_path + 'System_main_tbl.txt')) or overwrite:
 
-            os.chdir(self.alphamelts_path)
+            # os.chdir(self.alphamelts_path)
+            os.chdir(output_p_path)
 
             if suppress_output:
                 stderr, stdout = subprocess.DEVNULL, subprocess.DEVNULL
             else:
                 stderr, stdout = None, None
 
-            melts_file = output_p_path + self.name + '.melts'
-            batch_file = output_p_path + self.name + '.in'
+            # melts_file = output_p_path + self.name + '.melts'
+            # batch_file = output_p_path + self.name + '.in'
+            # melts_file = self.name + '.melts'
+            # batch_file = self.name + '.in'
+            melts_file = 'pl.melts'
+            batch_file = 'batch.in'
 
             # create batch and melts files
             with open(batch_file, 'w') as file:
@@ -160,27 +166,28 @@ class MeltsFugacityData:
             with open(melts_file, 'w') as file:
                 file.write(melts_text_fn(p_of_interest, **melts_kwargs))
 
-            # make sure installation is on path
-            if verify_on_path:
-                subprocess.call(['sh', './verify_path.sh'])  # should be in alphamelts directory
-
             # run alphamelts
-            cmd = 'run_alphamelts.command -p "{}" -f "{}" -m "{}" -b "{}"'.format(output_p_path, env_file,
-                                                                                  melts_file, batch_file)
-            output = subprocess.run(cmd, shell=True, stdout=stdout, stderr=stderr)
-            if verbose:
-                print(output)
+            if not dry_setup:
+                # make sure installation is on path
+                if verify_on_path:
+                    subprocess.call(['sh', './verify_path.sh'])  # should be in alphamelts directory
 
-            if clean:
-                # get rid of unneeded files
-                for fend in ['alphaMELTS_tbl.txt', 'Bulk_comp_tbl.txt', 'Liquid_comp_tbl.txt', 'Solid_comp_tbl.txt',
-                             'Trace_main_tbl.txt']:
-                    if os.path.isfile(output_p_path + fend):
-                        os.remove(output_p_path + fend)
-                    else:
-                        print('cannot find file: ', output_p_path + fend)
-                        raise FileNotFoundError(
-                            'ERROR: alphamelts did not complete, try running again with suppress_output=False')
+                cmd = 'run_alphamelts.command -p "{}" -f "{}" -m "{}" -b "{}"'.format(output_p_path, env_file,
+                                                                                      melts_file, batch_file)
+                output = subprocess.run(cmd, shell=True, stdout=stdout, stderr=stderr)
+                if verbose:
+                    print(output)
+
+                if clean:
+                    # get rid of unneeded files
+                    for fend in ['alphaMELTS_tbl.txt', 'Bulk_comp_tbl.txt', 'Liquid_comp_tbl.txt', 'Solid_comp_tbl.txt',
+                                 'Trace_main_tbl.txt']:
+                        if os.path.isfile(output_p_path + fend):
+                            os.remove(output_p_path + fend)
+                        else:
+                            print('cannot find file: ', output_p_path + fend)
+                            raise FileNotFoundError(
+                                'ERROR: alphamelts did not complete, try running again with suppress_output=False')
 
             # return to original dir
             os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -191,7 +198,7 @@ class MeltsFugacityData:
     def read_melts_TP(self, check_isothermal=True, reload_TP=False):
 
         # check if already loaded
-        if (not self.df_all['P(bar)'].isnull().values.any()) or (not self.df_all['T(K)'].isnull().values.any()):
+        if (not self.data['P(bar)'].isnull().values.any()) or (not self.data['T(K)'].isnull().values.any()):
             if not reload_TP:
                 print('already loaded T,P from alphaMELTS! to overwrite, use reload_TP=True')
                 return None
@@ -204,17 +211,17 @@ class MeltsFugacityData:
                              dtype=np.float64).tail(1)
 
             # append P and T
-            if np.isnan(self.df_all.loc[row, 'P(bar)']):
-                self.df_all.loc[row, 'P(bar)'] = df['Pressure'].iloc[-1]
-            elif self.df_all.loc[row, 'P(bar)'] != df['Pressure'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
-                    df['Pressure'].iloc[-1], output_file, self.df_all['P(bar)'].iloc[row])
+            if np.isnan(self.data.loc[row, 'P(bar)']):
+                self.data.loc[row, 'P(bar)'] = df['Pressure'].iloc[-1]
+            elif self.data.loc[row, 'P(bar)'] != df['Pressure'].iloc[-1]:
+                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
+                    df['Pressure'].iloc[-1], output_file, self.data['P(bar)'].iloc[row])
                 raise RuntimeError(error_str)
-            if np.isnan(self.df_all['T(K)'].iloc[row]):
-                self.df_all.loc[row, 'T(K)'] = df['Temperature'].iloc[-1]  # K
-            elif self.df_all.loc[row, 'T(K)'] != df['Temperature'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
-                    df['Temperature'].iloc[-1], output_file, self.df_all['T(K)'].iloc[row])
+            if np.isnan(self.data['T(K)'].iloc[row]):
+                self.data.loc[row, 'T(K)'] = df['Temperature'].iloc[-1]  # K
+            elif self.data.loc[row, 'T(K)'] != df['Temperature'].iloc[-1]:
+                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
+                    df['Temperature'].iloc[-1], output_file, self.data['T(K)'].iloc[row])
                 raise RuntimeError(error_str)
 
         if check_isothermal:
@@ -244,16 +251,16 @@ class MeltsFugacityData:
             for ph in [col for col in df.columns if col.endswith('_0')]:
                 if ph != 'liquid_0':
                     try:
-                        self.df_all.loc[row, ph] = df[ph].iloc[
+                        self.data.loc[row, ph] = df[ph].iloc[
                                                        -1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
                     except KeyError:
-                        self.df_all[ph] = np.nan  # add column
-                        self.df_all.loc[row, ph] = df[
+                        self.data[ph] = np.nan  # add column
+                        self.data.loc[row, ph] = df[
                                                        ph].iloc[
                                                        -1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
 
         print('done loading phases!')
-        print(self.df_all.head())
+        print(self.data.head())
 
     def read_melts_fo2(self, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
@@ -269,28 +276,29 @@ class MeltsFugacityData:
             # print('loaded\n', df.head())
 
             # append fo2
-            self.df_all['logfo2'].iloc[row] = df['logfO2(absolute)'].iloc[-1]
+            self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].iloc[-1]
 
             # append P and T
-            if np.isnan(self.df_all['P(bar)'].iloc[row]):
-                self.df_all['P(bar)'].iloc[row] = df['Pressure'].iloc[-1]
-            elif self.df_all['P(bar)'].iloc[row] != df['Pressure'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
-                    df['Pressure'].iloc[-1], output_file, self.df_all['P(bar)'].iloc[row])
+            if np.isnan(self.data['P(bar)'].iloc[row]):
+                self.data['P(bar)'].iloc[row] = df['Pressure'].iloc[-1]
+            elif self.data['P(bar)'].iloc[row] != df['Pressure'].iloc[-1]:
+                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
+                    df['Pressure'].iloc[-1], output_file, self.data['P(bar)'].iloc[row])
                 raise RuntimeError(error_str)
-            if np.isnan(self.df_all['T(K)'].iloc[row]):
-                self.df_all['T(K)'].iloc[row] = df['Temperature'].iloc[-1]  # K
-            elif self.df_all['T(K)'].iloc[row] != df['Temperature'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.df_all'.format(
-                    df['Temperature'].iloc[-1], output_file, self.df_all['T(K)'].iloc[row])
+            if np.isnan(self.data['T(K)'].iloc[row]):
+                self.data['T(K)'].iloc[row] = df['Temperature'].iloc[-1]  # K
+            elif self.data['T(K)'].iloc[row] != df['Temperature'].iloc[-1]:
+                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
+                    df['Temperature'].iloc[-1], output_file, self.data['T(K)'].iloc[row])
                 raise RuntimeError(error_str)
         print('...done loading fO2!')
 
-    def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, **kwargs):
+    def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True, **kwargs):
 
         try:
             # run alphamelts
-            self.run_alphamelts_all_p(**kwargs)
+            if run_alphamelts:
+                self.run_alphamelts_all_p(**kwargs)
 
             # retrieve fo2
             self.read_melts_fo2()
@@ -300,12 +308,12 @@ class MeltsFugacityData:
 
             if compare_buffer == 'qfm':
                 try:
-                    logfo2_buffer = pf.read_qfm_os(self.df_all['T(K)'].to_numpy(), self.df_all['P(bar)'].to_numpy(),
+                    logfo2_buffer = pf.read_qfm_os(self.data['T(K)'].to_numpy(), self.data['P(bar)'].to_numpy(),
                                                    verbose=False, perplex_path=perplex_path)
                     # print('logfo2_qfm', logfo2_buffer)
                     # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-                    self.df_all['logfo2_qfm'] = logfo2_buffer
-                    self.df_all['delta_qfm'] = self.df_all.logfo2 - logfo2_buffer
+                    self.data['logfo2_qfm'] = logfo2_buffer
+                    self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
                 except NotImplementedError:
                     # probably didn't get to 1100 C
                     pass
@@ -316,7 +324,7 @@ class MeltsFugacityData:
             okay = False
 
         # store mega df
-        df_save = self.df_all.loc[:, ~self.df_all.columns.duplicated()].copy()
+        df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
         if save:
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
             print('saved to', self.output_path + self.name + '_results.csv')
@@ -331,8 +339,18 @@ class MeltsFugacityData:
         for ii, path in enumerate(self.output_p_paths):
             # load output csv from pMELTS
             output_file = path + fname
-            df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                             dtype=np.float64).tail(1)
+
+            try:
+                df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                                 dtype=np.float64).tail(1)
+            except FileNotFoundError:
+                # this run didn't complete
+                print(self.name, 'did not complete, no alphamelts results found')
+                self.T_min = np.nan
+                self.mass_melt_min = np.nan
+                self.n_pressures = 0
+                return None
+
             p_count += 1
             T_last = df['Temperature'].item()
             # print('T_last', T_last, '(type =', type(T_last), ') at', path)
@@ -357,9 +375,12 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
     if len(subfolders) > 0:
         pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
 
+        # sort ascending (alphabetical order might be different in os.scandir
+        pressures_of_interest.sort()
+
         # parse melts file
         try:
-            melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
+            melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/pl.melts').readlines()
         except FileNotFoundError as e:
             print(e, 'skipping...')
             return None
@@ -373,9 +394,12 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                                 alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final, verbose=verbose)
 
         # load results csv
-        dat.df_all = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
-        if verbose:
-            print('loaded df\n', dat.df_all.head())
+        try:
+            dat.data = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
+            if verbose:
+                print('loaded df\n', dat.data.head())
+        except FileNotFoundError:
+            print('results.csv file not found! skipping')
 
         return dat
     else:
@@ -431,7 +455,8 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
 
 def common_Tmin(output_parent_path, store=True, **kwargs):
     names = [f.name for f in os.scandir(output_parent_path + '/') if f.is_dir()]
-    df = pd.DataFrame(columns=['name', 'T_last', 'mass_melt_min', 'n_pressures'], index=range(len(names)))
+    df = pd.DataFrame(columns=['name', 'T_min'
+                                       , 'mass_melt_min', 'n_pressures'], index=range(len(names)))
     for row, sub in enumerate(names):
         dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
         if dat:  # existing runs
@@ -444,6 +469,23 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
     print(df)
     if store:
         df.to_csv(output_parent_path + 'completion_analysis.csv', sep="\t")
+
+
+def fo2_from_local(output_parent_path, **kwargs):
+    """for existing melts runs (e.g. done remotely), do the same fo2 analysis"""
+
+    # get all runs in directory
+    subfolders = [f.name for f in os.scandir(output_parent_path) if f.is_dir()]
+    bad = []
+    for name in subfolders:
+        dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
+        okay = dat.fo2_calc(save=True, run_alphamelts=False, **kwargs)
+        if not okay:
+            bad.append(name)
+    return bad
+
+
+
 
 
 

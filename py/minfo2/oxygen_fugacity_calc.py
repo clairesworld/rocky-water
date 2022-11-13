@@ -44,7 +44,7 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=1, T_min=T_min, T_max=T_max, isotherm
 #                     X_ferric=X_ferric, isotherm=T_iso, core_efficiency=core_eff, star=star,
 #                     run=True, compare_buffer='qfm',
 #                     suppress_output=False, check_comp=True, verbose=True,
-#                     mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
+#                     mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_px,
 #                     )
 
 
@@ -53,7 +53,7 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=1, T_min=T_min, T_max=T_max, isotherm
 #                 X_ferric=0.031, isotherm=T_iso,
 #                 run=True, compare_buffer='qfm',
 #                 suppress_output=False, check_comp=True, verbose=True,
-#                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_default,
+#                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_px,
 #                 )
 
 

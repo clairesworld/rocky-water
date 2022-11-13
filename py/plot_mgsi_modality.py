@@ -188,8 +188,8 @@ def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=Non
 
         print('\n', dat.name, 'um water mass', dat.mass_h2o_um / p.TO, 'total water mass', dat.mass_h2o_total / p.TO,
               'TO', '\n')
-        # print('c_ppv', dat.df_all['sat_corr_ppv'].iloc[-1] * 1e6, 'ppm', 'D_ppv_pv',
-        #       dat.df_all['sat_corr_ppv'].iloc[-1] / dat.df_all['sat_corr_pv'].iloc[-1])
+        # print('c_ppv', dat.data['sat_corr_ppv'].iloc[-1] * 1e6, 'ppm', 'D_ppv_pv',
+        #       dat.data['sat_corr_ppv'].iloc[-1] / dat.data['sat_corr_pv'].iloc[-1])
 
     if save:
         plt.tight_layout()
@@ -209,10 +209,10 @@ def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=Non
 #                           )
 
 """ temperature """
-# sample = [rw.read_name(output_path=px.output_parent_default,
+# sample = [rw.read_name(output_path=px.output_parent_px,
 #                        name='Earth_' + t + 'K') for t in ['1900', '1600']]
 # star = 'HIP29295'
-# sample = [rw.read_name(output_path=px.output_parent_default + 'hypatia1M_' + t + 'K_80Fe/',
+# sample = [rw.read_name(output_path=px.output_parent_px + 'hypatia1M_' + t + 'K_80Fe/',
 #                        name='1M_80Ceff_' + star + '_' + t + 'K') for t in ['1900', '1600']]
 # demo_composition_gridspec(dats=sample,
 #                           comp_var='T', labelsize=12, legsize=10, log_profile=True, #cmap=None,
@@ -222,11 +222,11 @@ def demo_composition_gridspec(stars=None, mgsi=None, dats=None, colours_comp=Non
 
 
 """ Mg/Fe ? """
-# # sample = [rw.read_name(output_path=px.output_parent_default + 'MgFe_from_earth/',
+# # sample = [rw.read_name(output_path=px.output_parent_px + 'MgFe_from_earth/',
 # #                        name='1M_32CMF_' + m + 'Mg_1600K') for m in ['47', '31', '29']]  # vary mantle FeO, constant CMF
-# sample = [rw.read_name(output_path=px.output_parent_default + 'MgFe_from_sun/',
+# sample = [rw.read_name(output_path=px.output_parent_px + 'MgFe_from_sun/',
 #                        name='1M_' + x + 'Ceff_sun_1600K') for x in ['99', '88', '70']]  # vary core_eff, constant bulk Fe
-# sample = [rw.read_name(output_path=px.output_parent_default + 'bulk_Fe_test/',
+# sample = [rw.read_name(output_path=px.output_parent_px + 'bulk_Fe_test/',
 #                        name='Fe_' + s) for s in ['min', 'max']]  # vary only total bulk Fe
 # for dat in sample:
 #     print(dat.core_eff_from_cmf())

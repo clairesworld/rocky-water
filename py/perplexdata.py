@@ -42,7 +42,7 @@ class PerplexData:
         self.perplex_path = perplex_path
         self.output_path = output_parent_path + self.name + '/'
 
-        # ensure output_parent_default is a valid directory, create directory if it doesn't exist yet
+        # ensure output_parent_px is a valid directory, create directory if it doesn't exist yet
         # if not os.path.isdir(self.output_path):
         #     raise Exception(self.output_path, 'is not a valid directory with input parameter output_parent_path',
         #                     output_parent_path)
@@ -341,7 +341,7 @@ class PerplexData:
     def get_um_mass(self):
         from saturation import total_water_mass
         i_um_base = self.find_lower_mantle() - 1  # base of upper mantle
-        # print('pressure at um base', self.df_all['P(bar)'][i_um_base], 'bar')
+        # print('pressure at um base', self.data['P(bar)'][i_um_base], 'bar')
         self.mass_um = np.sum(self.df_all['mass(kg)'][:i_um_base + 1])
 
         self.mass_h2o_um = total_water_mass(self.df_all, i_min=0, i_max=i_um_base)

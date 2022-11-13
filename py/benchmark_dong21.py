@@ -51,8 +51,8 @@ def figure_4(Tp, labelsize=12, cmap='tab20', plot_composition=True, save=True,
     dat = px.build_planet(name='Tp' + str(Tp), Tsurf=Tp, M_p=M_p, test_CMF=test_CMF, test_oxides=test_oxides,
                           oxides=oxides, solution_phases=solution_phases, plot=False, store_all=True,
                           get_saturation=True, overwrite=True, **kwargs)
-    x = dat.df_all['P(bar)'].to_numpy()*1e-4  # GPa
-    w = dat.df_all['c_h2o'].to_numpy()*1e6  # ppm
+    x = dat.data['P(bar)'].to_numpy() * 1e-4  # GPa
+    w = dat.data['c_h2o'].to_numpy() * 1e6  # ppm
     n_phases = len(dat.phases_px)
 
     axes[0].plot(x, w, c='xkcd:navy')
@@ -61,11 +61,11 @@ def figure_4(Tp, labelsize=12, cmap='tab20', plot_composition=True, save=True,
     axes[0].set_ylim(1e0, 1e5)
     axes[0].set_yticks([1e1, 1e3, 1e5])
 
-    water_col = [col for col in dat.df_all if col.startswith('w_')]
-    water_fractions = dat.df_all[water_col].to_numpy()
-    mode_arr = water_fractions / np.expand_dims(dat.df_all['c_h2o'].to_numpy(), axis=1)
+    water_col = [col for col in dat.data if col.startswith('w_')]
+    water_fractions = dat.data[water_col].to_numpy()
+    mode_arr = water_fractions / np.expand_dims(dat.data['c_h2o'].to_numpy(), axis=1)
 
-    axes[1].stackplot(x, mode_arr.T*100, labels=[col[2:] for col in dat.df_all if col.startswith('X_')],
+    axes[1].stackplot(x, mode_arr.T * 100, labels=[col[2:] for col in dat.data if col.startswith('X_')],
                       colors=[col(j) for j in np.arange(1, n_phases + 1)/(n_phases + 1)])
     axes[1].set_ylabel('Water modality\nin NAMs', fontsize=labelsize)
     axes[1].set_xlabel('Pressure (GPa)', fontsize=labelsize)

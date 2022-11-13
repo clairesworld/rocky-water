@@ -139,7 +139,7 @@ def update_saturation(dat):  # weird choice that this isn't in class file but ok
     # also isolate olivine-bearing mantle
     dat.get_obm_water()
 
-    dat.df_all = df_all
+    dat.data = df_all
     return dat
 
 
@@ -210,16 +210,16 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         df_all['cp'] = dat.cp[dat.i_cmb + 1:][::-1]
         dat.df_all = df_all
 
-        # print('total mass Ol:', np.sum(df_all['X_ol'] * df_all['mass(kg)']))
-        # print('total mass Ring:', np.sum(df_all['X_ring'] * df_all['mass(kg)']))
-        # print('total mass Wad:', np.sum(df_all['X_wad'] * df_all['mass(kg)']))
+        # print('total mass Ol:', np.sum(data['X_ol'] * data['mass(kg)']))
+        # print('total mass Ring:', np.sum(data['X_ring'] * data['mass(kg)']))
+        # print('total mass Wad:', np.sum(data['X_wad'] * data['mass(kg)']))
 
         # calculate saturation water content profile per mineral phase
         if get_saturation:
             dat = update_saturation(dat)
 
         # calculate some other simple things - only here because you thought of this later but should be done inside class
-        if not hasattr(dat, 'mass_um') or dat.mass_um is None:  # needs to be here because df_all not created in class
+        if not hasattr(dat, 'mass_um') or dat.mass_um is None:  # needs to be here because data not created in class
             dat.get_um_mass()
         if not hasattr(dat, 'mgsi') or dat.mgsi is None:
             dat.get_mgsi()
@@ -272,6 +272,7 @@ def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
 
 def get_run_dirs(output_path, prevent_blank_dir=True, verbose=False):
     try:
+        print('reading', output_path)
         subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     except FileNotFoundError:
         # directory doesn't exist
@@ -334,10 +335,12 @@ def update_dir(output_path, func, store=False, **func_args):
 
 
 def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
-                         stopafter=None, **kwargs):
+                         stopafter=None, skip_stars=[], **kwargs):
     """ restart is string name of last star that worked"""
 
-    sample_names = hyp.random_star(n_sample, **kwargs)
+    sample_names = hyp.random_star(n_sample, **kwargs)  # returns list of strings being star ids
+    for st in skip_stars:
+        sample_names.remove(st)
     planets = []
 
     if restart is not None and n_sample == -1:

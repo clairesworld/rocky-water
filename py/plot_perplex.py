@@ -145,12 +145,12 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
         elif modality_type == 'water':
             col = 'frac_h2o_' + phase.lower()  # fraction of layer's water in this phase
         try:
-            # dat.df_all[col].replace(0, np.nan, inplace=True)
-            y = dat.df_all[col].to_numpy(dtype=float) * scale
+            # dat.data[col].replace(0, np.nan, inplace=True)
+            y = dat.data[col].to_numpy(dtype=float) * scale
         except KeyError:
-            print(col, 'not found in df_all')
+            print(col, 'not found in data')
             if plot_phases_order is not None:  # this should always be true...
-                y = np.zeros(len(dat.df_all), dtype=float)  # assign null value so phase order is retained
+                y = np.zeros(len(dat.data), dtype=float)  # assign null value so phase order is retained
             else:
                 raise Exception('phase name mismatch:', phase)
         if comp_stacked:
@@ -202,19 +202,19 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
 
 def set_independent_var(dat, var_name):
     if var_name in ('p', 'pressure', 'P'):
-        y = dat.df_all['P(bar)'].to_numpy(dtype=float)
+        y = dat.data['P(bar)'].to_numpy(dtype=float)
         label = 'Pressure (GPa)'
         scale = 1e-4  # bar to GPa
     elif var_name in ('T', 'temperature'):
-        y = dat.df_all['T(K)'].to_numpy(dtype=float)
+        y = dat.data['T(K)'].to_numpy(dtype=float)
         label = 'T (K)'
         scale = 1
     elif var_name in ('r', 'radius'):
-        y = dat.df_all['r'].to_numpy(dtype=float)
+        y = dat.data['r'].to_numpy(dtype=float)
         label = 'Radius (km)'
         scale = 1e-3
     elif var_name in ('z', 'depth'):
-        y = dat.R_p - dat.df_all['r'].to_numpy(dtype=float)
+        y = dat.R_p - dat.data['r'].to_numpy(dtype=float)
         label = 'Depth (km)'
         scale = 1e-3
     return y * scale, label
@@ -232,9 +232,9 @@ def profile(dat, parameter, independent_ax='pressure', reverse_y=True, ax_label=
 
     # get data and axis labels
     try:
-        x = dat.df_all[parameter].to_numpy() * scale
+        x = dat.data[parameter].to_numpy() * scale
     except KeyError as e:
-        print(dat.df_all.head())
+        print(dat.data.head())
         raise e
     if fname is None:
         fname = dat.name + '_' + parameter
@@ -984,7 +984,7 @@ def find_rich_planets(dir_name, phase, n=1, output_base='output/', get_min=False
     names = []
     for dat in dats:
         try:
-            phase_props.append(np.sum(eval('dat.df_all.X_' + phase).to_numpy()) / len(dat.df_all))  # wt frac of mantle
+            phase_props.append(np.sum(eval('dat.data.X_' + phase).to_numpy()) / len(dat.data))  # wt frac of mantle
             names.append(dat.name)
         except AttributeError:  # phase not found
             pass

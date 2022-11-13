@@ -45,10 +45,10 @@ def plot_temperature_dependence(star=None,
                           oxides=oxides, solution_phases=solution_phases, plot=plot_all, store_all=True, profile='adiabat',
                           **kwargs)
 
-        i_wad = np.argmax(dat.df_all['X_wad'].to_numpy() > 0)
-        i_pv = np.argmax(dat.df_all['X_pv'].to_numpy() > 0)
-        m_h2o = dat.df_all['mass_h2o(kg)']
-        m_tot = dat.df_all['mass(kg)']
+        i_wad = np.argmax(dat.data['X_wad'].to_numpy() > 0)
+        i_pv = np.argmax(dat.data['X_pv'].to_numpy() > 0)
+        m_h2o = dat.data['mass_h2o(kg)']
+        m_tot = dat.data['mass(kg)']
         w_max = np.sum(m_h2o)
 
         if wt_percent:

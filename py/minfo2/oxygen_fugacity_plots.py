@@ -16,7 +16,7 @@ import matplotlib as mpl
 import matplotlib.cm as cm
 
 figpath = '/home/claire/Works/min-fo2/figs_scratch/'
-output_parent_default = '/home/claire/Works/min-fo2/perplex_output/'
+output_parent_px = '/home/claire/Works/min-fo2/perplex_output/'
 plot_kwargs = {'labelsize': 16}
 melt_phases = ['ctjL', 'dijL', 'enL'] + ['liquid']  # perplex + melts
 c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 'tab:orange', 'Gt': 'tab:purple',
@@ -26,6 +26,14 @@ c_phase_dict_stolper = {'olivine': 'tab:green', 'orthopyroxene': 'k', 'clinopyro
                         'spinel': 'tab:orange', 'garnet': 'tab:purple',
                         'quartz': 'tab:red', 'coesite': 'tab:pink'}
 
+
+def filter_silica_sat(df):
+    """ filter out cases saturated in quartz - these get to constant fo2 """
+    if 'X_q' in df.columns:
+        # print('found q')
+        df.iloc[:, 2:] = np.nan  # everything except p, T
+        # print(df.head())
+    return df
 
 def remove_no_solution(df):
     """ remove rows with no stable perple_x solution """
@@ -88,9 +96,9 @@ def apply_filters(df, name, p_min=None, p_max=None, output_parent_path=None):
     return df
 
 
-def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=None, xlabel=None, ylabel=None,
+def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None,
                  show_buffer=True, linec='k', lw=1, alpha=1, labelsize=16, save=True, fname=None, make_legend=True,
-                 p_min=None, p_max=None, ymin=None, ymax=None, verbose=False, **kwargs):
+                 p_min=None, p_max=None, ymin=None, ymax=None, verbose=False, exclude_silica=True, **kwargs):
     """ plot isothermal cross section, p range in GPa """
 
     if fname is None:
@@ -99,15 +107,18 @@ def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=No
         fig, ax = plt.subplots(1, 1)
 
     # read in results
-    df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
+    df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
     if verbose:
-        print('\nloaded:\n', df.head(), 'from', output_parent_path + name + '/' + name + '_results.csv')
+        print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
     df = apply_filters(df, name, p_min, p_max)
+    if exclude_silica:
+        df = filter_silica_sat(df)
+
     try:
         pressure = df['P(bar)'] * 1e-4
         T = df['T(K)'].unique()[0]  # for 2D
     except Exception as e:
-        print('\nloaded:\n', df.head(), 'from', output_parent_path + name + '/' + name + '_results.csv')
+        print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
         raise e
 
     # plot fo2 columns
@@ -135,7 +146,7 @@ def fo2_xsection(name, output_parent_path=output_parent_default, fig=None, ax=No
     return fig, ax
 
 
-def phases_xsection(name, output_parent_path=output_parent_default, fig=None, ax=None, xlabel=None, ylabel=None,
+def phases_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None,
                     linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None, y_annot=45,
                     show_in_out=True, axes_all=None, make_legend=True, p_min=None, p_max=None,
                     model='perplex', **kwargs):
@@ -198,7 +209,7 @@ def phases_xsection(name, output_parent_path=output_parent_default, fig=None, ax
     return fig, ax
 
 
-def multicomp_xsection(output_parent_path=output_parent_default, fig=None, ax=None, save=True, hist_y=False,
+def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, save=True, hist_y=False,
                        ax_histy=None,
                        fname=None, cmap='summer', cmap_var=None, vmin=None, vmax=None, verbose=False, has_cbar=False,
                        cbar_label=None, exclude_names=[], bins=15, **kwargs):
@@ -239,7 +250,7 @@ def multicomp_xsection(output_parent_path=output_parent_default, fig=None, ax=No
                 if name not in exclude_names:
                     # get colouring
                     if cmap_var is not None:
-                        dat = pf.init_from_build(name, output_parent_path=output_parent_path)
+                        dat = pf.init_from_results(name, output_parent_path=output_parent_path)
                         try:
                             z = eval('dat.' + cmap_var)
                         except AttributeError as e:
@@ -304,10 +315,10 @@ def stolper_subplot(name=None, fname=None, save=True, fig=None, axes=None, **kwa
         fig.savefig(figpath + fname + '.png')
 
 
-def element_xplot(p_of_interest=3, components=[], output_parent_path=output_parent_default, fig=None, axes=None,
+def element_xplot(p_of_interest=1, components=[], output_parent_path=output_parent_px, fig=None, axes=None,
                   xlabel=None, ylabel=None, ylim=(-11.5, -7),
                   linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
-                  make_legend=True, verbose=False, exclude_names=[], **kwargs):
+                  make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, **kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
     components can be bulk oxides or mineral phase proportion """
 
@@ -342,6 +353,8 @@ def element_xplot(p_of_interest=3, components=[], output_parent_path=output_pare
                 if name not in exclude_names:
                     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
                     df = apply_filters(df, name)
+                    if exclude_silica:
+                        df = filter_silica_sat(df)
                     idx = df['P(bar)'].sub(p_of_interest * 1e4).abs().idxmin()
                     row = df.iloc[idx]
                     d = pf.read_dict_from_build(name=name, output_parent_path=output_parent_path)
@@ -355,8 +368,9 @@ def element_xplot(p_of_interest=3, components=[], output_parent_path=output_pare
                         elif 'X_' + component in row.index:
                             x = row['X_' + component]
                         else:
-                            print(name, ':', component, 'not found in', d['wt_oxides'].keys(), 'or', row.index)
-                            continue
+                            if verbose:
+                                print(name, ':', component, 'not found in', d['wt_oxides'].keys(), 'or', row.index)
+                            x = np.nan
                         y = row['logfo2']
                         ax.scatter(x, y, c=linec, s=5)
                         if once:
@@ -386,7 +400,7 @@ def element_xplot(p_of_interest=3, components=[], output_parent_path=output_pare
 
 
 def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, figpath=figpath, save=True,
-                     exclude_names=[],
+                     exclude_names=[], exclude_silica=True,
                      ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12, bins=20,
                      hist_kwargs={}, legtitle=None, **kwargs):
     """ z_var is the colour/linestyle coding, must be consistent across all runs in dir[n] """
@@ -420,7 +434,9 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                 if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                     name = os.path.basename(sub)
                     if name not in exclude_names:
-                        dat = pf.init_from_build(name, output_parent_path=opp, X_ferric=X_ferric)
+                        dat = pf.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp)
+                        if exclude_silica:
+                            dat.data = filter_silica_sat(dat.data)
                         dat.read_fo2_results()
                         x.append(eval('dat.' + x_var) * x_scale)
             print(opp, 'n_runs =', len(x))
@@ -435,7 +451,10 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
             else:
                 linestyle = ls
 
-            sd = np.std(x)
+            if exclude_silica:
+                sd = np.nanstd(x)  # because otherwise some fo2 results set to nan
+            else:
+                sd = np.std(x)
             ax.hist(x, color=c, ls=linestyle, histtype='step', label=str(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
                     bins=bins, density=True, **hist_kwargs)
 
@@ -448,28 +467,6 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
         fig.savefig(figpath + fname + '.png')
     return fig, ax
 
-
-X_ferric = 3
-core_eff = 88
-# exclude_names = [
-#     # '1M_88Ceff_HIP58237_999K'
-#     # '1M_88Ceff_2MASS16494226-1932340_999K'
-# ]
-# output_parent_path = output_parent_default + 'hypatia_' + str(core_eff) + 'coreeff_' + str(X_ferric) + 'ferric/'
-
-# # # cmap_var, vmin, vmax = 'mg_number', 86, 94
-# cmap_var, vmin, vmax, cbar_label = 'mgsi', 0.7, 1.3, 'Mg/Si'
-# multicomp_xsection(output_parent_path=output_parent_path, cmap='spring', cmap_var=cmap_var, vmin=vmin, vmax=vmax,
-#                    has_cbar=True, cbar_label=cbar_label,
-#                    save=True, alpha=0.9, lw=0.5, p_min=1.1, ymin=-13, ymax=-6,
-#                    hist_y=True, exclude_names=exclude_names,
-#                    fname='fo2_variation_' + str(core_eff) + 'coreeff_' + str(X_ferric) + 'ferric', **plot_kwargs)
-
-# element_xplot(p_of_interest=3, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'], output_parent_path=output_parent_path,
-#     linec='k',  labelsize=16, save=True, fname='crossplot_oxides',)
-#
-# element_xplot(p_of_interest=3, components=['Ol', 'Opx', 'Cpx', 'Gt'], output_parent_path=output_parent_path,
-#     linec='k',  labelsize=16, save=True, fname='crossplot_phases',)
 
 
 """ checking weird cases? """
