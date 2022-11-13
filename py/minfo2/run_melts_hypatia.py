@@ -15,7 +15,7 @@ cd ~/Works/rocky-water/
 
 # set paths
 alphamelts_path_apollo = '/raid1/cmg76/alphamelts/'
-opp_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/'
+opp_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 alphamelts_path_starlite = '/home/claire/Works/alphamelts/'
 opp_starlite = '/home/claire/Works/min-fo2/alphamelts_output/hypatia_local2/'
 opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
