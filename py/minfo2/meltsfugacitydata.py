@@ -246,6 +246,7 @@ class MeltsFugacityData:
 
             # find idx of T of interest
             idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+            print('idx', idx, 'T', df.Temperature.loc[idx])
 
             # append phases to self df
             m_tot = df['mass'].loc[idx]
@@ -283,7 +284,8 @@ class MeltsFugacityData:
 
         print('...done loading fO2!')
 
-    def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True, **kwargs):
+    def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True,
+                 **kwargs):
 
         try:
             # run alphamelts
@@ -315,7 +317,7 @@ class MeltsFugacityData:
 
         # store mega df
         df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
-        print(df_save.head())
+        print('df saved\n', df_save.head())
         if save:
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
             print('saved to', self.output_path + self.name + '_results.csv')
