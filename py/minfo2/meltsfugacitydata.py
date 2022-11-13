@@ -213,8 +213,9 @@ class MeltsFugacityData:
             # find idx of T of interest
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
-            except IndexError:
-
+            except IndexError as e:
+                print(df.head())
+                raise e
 
             # append P and T
             if np.isnan(self.data.loc[row, 'P(bar)']):
