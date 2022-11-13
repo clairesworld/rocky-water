@@ -235,7 +235,7 @@ class MeltsFugacityData:
         elif which == 'volume':
             fname = 'Phase_vol_tbl.txt'
 
-        self.read_melts_TP(**kwargs)
+        self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
 
         for row, path in enumerate(self.output_p_paths):
             # load output csv from pMELTS
@@ -265,7 +265,7 @@ class MeltsFugacityData:
     def read_melts_fo2(self, T_of_interest=1373.15, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
 
-        self.read_melts_TP(**kwargs)
+        self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
 
         fname = 'System_main_tbl.txt'
         for row, path in enumerate(self.output_p_paths):
