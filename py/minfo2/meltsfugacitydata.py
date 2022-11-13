@@ -479,8 +479,9 @@ def fo2_from_local(output_parent_path, **kwargs):
     bad = []
     for name in subfolders:
         dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
-        okay = dat.fo2_calc(save=True, run_alphamelts=False, **kwargs)
-        if not okay:
+        if dat is not None:
+            okay = dat.fo2_calc(save=True, run_alphamelts=False, **kwargs)
+        if (dat is None) or (not okay):
             bad.append(name)
     return bad
 
