@@ -370,9 +370,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
     subfolders = [f.name for f in os.scandir(output_parent_path + name + '/') if f.is_dir()]
 
     # check if solution
-    print(subfolders)
-    print(output_parent_path + name + subfolders[0] + '/System_main_tbl.txt')
-    if (len(subfolders) > 0) and (os.path.isfile(output_parent_path + name + subfolders[0] + '/System_main_tbl.txt')):
+    if (len(subfolders) > 0) and (os.path.isfile(output_parent_path + name + '/' + subfolders[0] + '/System_main_tbl.txt')):
 
         # load pressures
         pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
