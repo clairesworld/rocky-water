@@ -211,7 +211,10 @@ class MeltsFugacityData:
                              dtype=np.float64)
 
             # find idx of T of interest
-            idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+            try:
+                idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+            except IndexError:
+
 
             # append P and T
             if np.isnan(self.data.loc[row, 'P(bar)']):
@@ -365,7 +368,10 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
 
     subfolders = [f.name for f in os.scandir(output_parent_path + name + '/') if f.is_dir()]
 
-    if len(subfolders) > 0:
+    # check if solution
+    if (len(subfolders) > 0) and (os.path.isfile(output_parent_path + name + subfolders[0] + '/System_main_tbl.txt')):
+
+        # load pressures
         pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
 
         # sort ascending (alphabetical order might be different in os.scandir
