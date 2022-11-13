@@ -214,8 +214,8 @@ class MeltsFugacityData:
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
             except IndexError as e:
-                print(df.head())
-                raise e
+                print('T_of_interest not found')
+                return False
 
             # append P and T
             if np.isnan(self.data.loc[row, 'P(bar)']):
@@ -230,6 +230,7 @@ class MeltsFugacityData:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
                     df['Temperature'].loc[idx], output_file, self.data['T(K)'].iloc[row])
                 raise RuntimeError(error_str)
+        return True
 
     def read_melts_phases(self, T_of_interest=1373.15, which='mass', **kwargs):
         """ make csv of phase proportions in same format as perple_x - isothermal x-section for several pressures """
@@ -239,54 +240,54 @@ class MeltsFugacityData:
         elif which == 'volume':
             fname = 'Phase_vol_tbl.txt'
 
-        self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        if okay:
+            for row, path in enumerate(self.output_p_paths):
+                # load output csv from pMELTS
+                output_file = path + fname
+                df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                                 dtype=np.float64)
+                # print('loaded\n', df.head())
 
-        for row, path in enumerate(self.output_p_paths):
-            # load output csv from pMELTS
-            output_file = path + fname
-            df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                             dtype=np.float64)
-            # print('loaded\n', df.head())
+                # find idx of T of interest
+                idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
-            # find idx of T of interest
-            idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                # append phases to self df
+                m_tot = df['mass'].loc[idx]
+                for ph in [col for col in df.columns if col.endswith('_0')]:
+                    if ph != 'liquid_0':
+                        try:
+                            self.data.loc[row, ph] = df[ph].loc[
+                                                           idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
+                        except KeyError:
+                            self.data[ph] = np.nan  # add column
+                            self.data.loc[row, ph] = df[ph].loc[
+                                                           idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
 
-            # append phases to self df
-            m_tot = df['mass'].loc[idx]
-            for ph in [col for col in df.columns if col.endswith('_0')]:
-                if ph != 'liquid_0':
-                    try:
-                        self.data.loc[row, ph] = df[ph].loc[
-                                                       idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
-                    except KeyError:
-                        self.data[ph] = np.nan  # add column
-                        self.data.loc[row, ph] = df[ph].loc[
-                                                       idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
-
-        print('...done loading phases!')
-        # print(self.data.head())
+            print('...done loading phases!')
+            # print(self.data.head())
 
     def read_melts_fo2(self, T_of_interest=1373.15, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
 
-        self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        if okay:
+            fname = 'System_main_tbl.txt'
+            for row, path in enumerate(self.output_p_paths):
+                # load output csv from pMELTS
+                output_file = path + fname
+                df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                                 dtype=np.float64)
+                # print('loaded\n', df.head())
 
-        fname = 'System_main_tbl.txt'
-        for row, path in enumerate(self.output_p_paths):
-            # load output csv from pMELTS
-            output_file = path + fname
-            df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                             dtype=np.float64)
-            # print('loaded\n', df.head())
+                # find idx of T of interest
+                idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
-            # find idx of T of interest
-            idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                # append fo2
+                self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
+                # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
 
-            # append fo2
-            self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
-            print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
-
-        print('...done loading fO2!')
+            print('...done loading fO2!')
 
     def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True,
                  **kwargs):
