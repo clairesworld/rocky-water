@@ -360,7 +360,8 @@ class MeltsFugacityData:
 
 
 
-def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default, T_final=1373, verbose=True, **kwargs):
+def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
+                      T_final=1373, load_results_csv=False, verbose=True, **kwargs):
 
     parts = name.split('_')
     star = parts[2]
@@ -394,12 +395,13 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                                 alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final, verbose=verbose)
 
         # load results csv
-        try:
-            dat.data = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
-            if verbose:
-                print('loaded df\n', dat.data.head())
-        except FileNotFoundError:
-            print('...results.csv file not found! skipping')
+        if load_results_csv:
+            try:
+                dat.data = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
+                if verbose:
+                    print('loaded df\n', dat.data.head())
+            except FileNotFoundError:
+                print('...results.csv file not found! skipping')
 
         return dat
     else:
