@@ -232,7 +232,7 @@ class MeltsFugacityData:
                 raise RuntimeError(error_str)
         return True
 
-    def read_melts_phases(self, T_of_interest=1373.15, which='mass', **kwargs):
+    def read_melts_phases(self, T_of_interest=1373.15, which='mass', verbose=False, **kwargs):
         """ make csv of phase proportions in same format as perple_x - isothermal x-section for several pressures """
 
         if which == 'mass':
@@ -264,10 +264,11 @@ class MeltsFugacityData:
                             self.data.loc[row, ph] = df[ph].loc[
                                                            idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
 
-            print('...done loading phases!')
+            if verbose:
+                print('             ...done loading phases!')
             # print(self.data.head())
 
-    def read_melts_fo2(self, T_of_interest=1373.15, **kwargs):
+    def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
 
         okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
@@ -287,10 +288,11 @@ class MeltsFugacityData:
                 self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
                 # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
 
-            print('...done loading fO2!')
+            if verbose:
+            print('             ...done loading fO2!')
 
     def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True,
-                 **kwargs):
+                 verbose=False, **kwargs):
 
         try:
             # run alphamelts
@@ -322,10 +324,11 @@ class MeltsFugacityData:
 
         # store mega df
         df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
-        print('df saved\n', df_save.head())
+        # print('df saved\n', df_save.head())
         if save:
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
-            print('saved to', self.output_path + self.name + '_results.csv')
+            if verbose:
+                print('saved to', self.output_path + self.name + '_results.csv')
         return okay
 
     def find_common_T_final_from_results(self):
