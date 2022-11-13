@@ -3,12 +3,13 @@ import pandas as pd
 import os
 import pathlib
 import subprocess
-import py.perplexdata as px
-import py.bulk_composition as bulk
+# import py.perplexdata as px
+# import py.bulk_composition as bulk
 import py.main as rw
 from scipy import interpolate
 import py.parameters as p
 import perplexfugacitydata as pf
+import meltsfugacitydata as mf
 import matplotlib.pyplot as plt
 from py.useful_and_bespoke import colorize, colourbar, iterable_not_string
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -17,6 +18,7 @@ import matplotlib.cm as cm
 
 figpath = '/home/claire/Works/min-fo2/figs_scratch/'
 output_parent_px = '/home/claire/Works/min-fo2/perplex_output/'
+output_parent_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 plot_kwargs = {'labelsize': 16}
 melt_phases = ['ctjL', 'dijL', 'enL'] + ['liquid']  # perplex + melts
 c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 'tab:orange', 'Gt': 'tab:purple',
@@ -123,7 +125,7 @@ def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, x
 
     # plot fo2 columns
     fo2 = df['logfo2']
-    delta_qfm = df['delta_qfm']
+    # delta_qfm = df['delta_qfm']
     ax.plot(pressure, fo2, c=linec, lw=lw, alpha=alpha, label='log($f$O$_2$)')
     if show_buffer:
         fo2_qfm = df['logfo2_qfm']
@@ -210,11 +212,11 @@ def phases_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None
 
 
 def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, save=True, hist_y=False,
-                       ax_histy=None,
+                       ax_histy=None, model='perplex',
                        fname=None, cmap='summer', cmap_var=None, vmin=None, vmax=None, verbose=False, has_cbar=False,
                        cbar_label=None, exclude_names=[], bins=15, **kwargs):
     if fname is None:
-        fname = 'fo2_variation'
+        fname = model + '_fo2_variation'
 
     # setup fig
     if fig is None:
@@ -250,7 +252,11 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
                 if name not in exclude_names:
                     # get colouring
                     if cmap_var is not None:
-                        dat = pf.init_from_results(name, output_parent_path=output_parent_path)
+                        if model == 'perplex':
+                            dat = pf.init_from_results(name, output_parent_path=output_parent_path)
+                        elif model == 'melts':
+                            dat = mf.init_from_results(name, output_parent_path=output_parent_path, verbose=False,
+                                                       **kwargs)
                         try:
                             z = eval('dat.' + cmap_var)
                         except AttributeError as e:

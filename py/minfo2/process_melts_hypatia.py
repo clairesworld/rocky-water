@@ -30,9 +30,11 @@ location = 'apollo'  # 'starlite'
 if location == 'apollo':
     source = opp_apollo
     alphamelts_path = alphamelts_path_apollo
+    perplex_path = '/raid1/cmg76/perple_x/'
 elif location == 'starlite':
     source = opp_starlite
     alphamelts_path = alphamelts_path_starlite
+    perplex_path = '/home/claire/Works/perple_x/'
 for ce in core_eff:
     for Xf in X_ferric:
         output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
@@ -40,8 +42,9 @@ for ce in core_eff:
 
         # calculate mantle fo2 only
         mf.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
+                          compare_buffer='qfm', perplex_path=perplex_path,
                           T_of_interest=T_of_interest, # reload_TP=True,
-                          verbose=True,)
+                          verbose=False)
         # mf.common_Tmin(output_parent_path)
 
 
