@@ -195,7 +195,7 @@ class MeltsFugacityData:
             print('Run', self.name, 'at p =', p_of_interest,
                   'bar already exists! To execute, delete files or set overwrite=True\n---------------------------------------------')
 
-    def read_melts_TP(self, check_isothermal=True, reload_TP=False):
+    def read_melts_TP(self, T_of_interest=1373.15, reload_TP=False):
 
         # check if already loaded
         if (not self.data['P(bar)'].isnull().values.any()) or (not self.data['T(K)'].isnull().values.any()):
@@ -208,28 +208,26 @@ class MeltsFugacityData:
             # load output csv from pMELTS
             output_file = path + fname
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                             dtype=np.float64).tail(1)
+                             dtype=np.float64)
+
+            # find idx of T of interest
+            idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
             # append P and T
             if np.isnan(self.data.loc[row, 'P(bar)']):
-                self.data.loc[row, 'P(bar)'] = df['Pressure'].iloc[-1]
-            elif self.data.loc[row, 'P(bar)'] != df['Pressure'].iloc[-1]:
+                self.data.loc[row, 'P(bar)'] = df['Pressure'].loc[idx]
+            elif self.data.loc[row, 'P(bar)'] != df['Pressure'].loc[idx]:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df['Pressure'].iloc[-1], output_file, self.data['P(bar)'].iloc[row])
+                    df['Pressure'].loc[idx], output_file, self.data['P(bar)'].iloc[row])
                 raise RuntimeError(error_str)
             if np.isnan(self.data['T(K)'].iloc[row]):
-                self.data.loc[row, 'T(K)'] = df['Temperature'].iloc[-1]  # K
-            elif self.data.loc[row, 'T(K)'] != df['Temperature'].iloc[-1]:
+                self.data.loc[row, 'T(K)'] = df['Temperature'].iloc[idx]  # K
+            elif self.data.loc[row, 'T(K)'] != df['Temperature'].iloc[idx]:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df['Temperature'].iloc[-1], output_file, self.data['T(K)'].iloc[row])
+                    df['Temperature'].loc[idx], output_file, self.data['T(K)'].iloc[row])
                 raise RuntimeError(error_str)
 
-        if check_isothermal:
-            # check if all runs did indeed complete to desired T_final
-            print('TODO: check isothermal')
-            pass
-
-    def read_melts_phases(self, which='mass', **kwargs):
+    def read_melts_phases(self, T_of_interest=1373.15, which='mass', **kwargs):
         """ make csv of phase proportions in same format as perple_x - isothermal x-section for several pressures """
 
         if which == 'mass':
@@ -243,26 +241,28 @@ class MeltsFugacityData:
             # load output csv from pMELTS
             output_file = path + fname
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                             dtype=np.float64).tail(1)
+                             dtype=np.float64)
             # print('loaded\n', df.head())
 
+            # find idx of T of interest
+            idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+
             # append phases to self df
-            m_tot = df['mass'].iloc[-1]
+            m_tot = df['mass'].loc[idx]
             for ph in [col for col in df.columns if col.endswith('_0')]:
                 if ph != 'liquid_0':
                     try:
-                        self.data.loc[row, ph] = df[ph].iloc[
-                                                       -1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
+                        self.data.loc[row, ph] = df[ph].loc[
+                                                       idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
                     except KeyError:
                         self.data[ph] = np.nan  # add column
-                        self.data.loc[row, ph] = df[
-                                                       ph].iloc[
-                                                       -1] / m_tot * 100  # renormalise to 100 g total mass, only need last row
+                        self.data.loc[row, ph] = df[ph].loc[
+                                                       idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
 
-        print('done loading phases!')
-        print(self.data.head())
+        print('...done loading phases!')
+        # print(self.data.head())
 
-    def read_melts_fo2(self, **kwargs):
+    def read_melts_fo2(self, T_of_interest=1373.15, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
 
         self.read_melts_TP(**kwargs)
@@ -272,25 +272,15 @@ class MeltsFugacityData:
             # load output csv from pMELTS
             output_file = path + fname
             df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                             dtype=np.float64).tail(1)
+                             dtype=np.float64)
             # print('loaded\n', df.head())
 
-            # append fo2
-            self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].iloc[-1]
+            # find idx of T of interest
+            idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
-            # append P and T
-            if np.isnan(self.data['P(bar)'].iloc[row]):
-                self.data['P(bar)'].iloc[row] = df['Pressure'].iloc[-1]
-            elif self.data['P(bar)'].iloc[row] != df['Pressure'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df['Pressure'].iloc[-1], output_file, self.data['P(bar)'].iloc[row])
-                raise RuntimeError(error_str)
-            if np.isnan(self.data['T(K)'].iloc[row]):
-                self.data['T(K)'].iloc[row] = df['Temperature'].iloc[-1]  # K
-            elif self.data['T(K)'].iloc[row] != df['Temperature'].iloc[-1]:
-                error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df['Temperature'].iloc[-1], output_file, self.data['T(K)'].iloc[row])
-                raise RuntimeError(error_str)
+            # append fo2
+            self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
+
         print('...done loading fO2!')
 
     def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True, **kwargs):
@@ -301,10 +291,10 @@ class MeltsFugacityData:
                 self.run_alphamelts_all_p(**kwargs)
 
             # retrieve fo2
-            self.read_melts_fo2()
+            self.read_melts_fo2(**kwargs)
 
             # retrieve phases
-            self.read_melts_phases(which='mass')
+            self.read_melts_phases(which='mass', **kwargs)
 
             if compare_buffer == 'qfm':
                 try:
@@ -325,6 +315,7 @@ class MeltsFugacityData:
 
         # store mega df
         df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
+        print(df_save.head())
         if save:
             df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
             print('saved to', self.output_path + self.name + '_results.csv')
@@ -399,7 +390,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
             if verbose:
                 print('loaded df\n', dat.data.head())
         except FileNotFoundError:
-            print('results.csv file not found! skipping')
+            print('...results.csv file not found! skipping')
 
         return dat
     else:

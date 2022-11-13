@@ -43,27 +43,23 @@ for ce in core_eff:
         output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
         output_parent_path = source + output_sub
 
-        # # generate planet compositions from hypatia and calcualte mantle fo2
-        # mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=ce, X_ferric=Xf,
-        #                     T_final=T_iso, verbose=True,
-        #                     oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
-        #                     planet_kwargs={},
-        #                     # compare_buffer='qfm',
-        #                     output_parent_path=output_parent_path,
-        #                     alphamelts_path=alphamelts_path_starlite,
-        #                     # perplex_path='/raid1/cmg76/perple_x/',  # for qfm data table
-        #                     names_file='/home/claire/Works/rocky-water/py/host_names.txt',
-        #                     # use_local_composition=False,
-        #                     use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
-        #                     existing_output_parent=output_parent_starlite, # '/raid1/cmg76/perple_x/output/rocky-fo2/',
-        #                     suffix=str(Xf*100).replace('.', ',') + 'fer',
-        #                     skip_names=skip_stars,
-        #                     # restart='HIP 22627'
-        #                     )
-
-        # calculate mantle fo2 only
-        mf.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
-                          T_final=T_iso, verbose=True,)
+        # generate planet compositions from hypatia and calcualte mantle fo2
+        mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=ce, X_ferric=Xf,
+                            T_final=T_iso, verbose=True,
+                            oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
+                            planet_kwargs={},
+                            # compare_buffer='qfm',
+                            output_parent_path=output_parent_path,
+                            alphamelts_path=alphamelts_path_starlite,
+                            # perplex_path='/raid1/cmg76/perple_x/',  # for qfm data table
+                            names_file='/home/claire/Works/rocky-water/py/host_names.txt',
+                            # use_local_composition=False,
+                            use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
+                            existing_output_parent=opp_starlite, # '/raid1/cmg76/perple_x/output/rocky-fo2/',
+                            suffix=str(Xf*100).replace('.', ',') + 'fer',
+                            skip_names=skip_stars,
+                            # restart='HIP 22627'
+                            )
         mf.common_Tmin(output_parent_path)
 
 
