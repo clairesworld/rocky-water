@@ -7,7 +7,7 @@ import os
 import simplejson
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = 'da273b8fff556e19106980bef2c653e7'
+key = 'e66851d6aee9e3cfb79368a3fa2d4952'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
