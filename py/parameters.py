@@ -45,6 +45,7 @@ si_sol = 7.52 - 12
 mg_sol = 7.54 - 12
 na_sol = 6.30 - 12
 ti_sol = 4.90 - 12
+cr_sol = 5.64 - 12
 p_sol = 5.46 - 12
 
 # print(10 ** mg_sol / 10 ** si_sol)   # sun = 1.04
