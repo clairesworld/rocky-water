@@ -62,6 +62,18 @@ class PerplexFugacityData(px.PerplexData):
             self.oxide_list.remove('TiO2')
             self.wt_oxides.pop('TiO2')
 
+    def print_comp(self):
+        print('wt.% oxides\n-----------')
+        for k in self.wt_oxides:
+            print("{0:<7}".format(k), "{:5.2f}%".format(self.wt_oxides[k]))
+        print('Mg/Si', self.mgsi)
+
+        X_fer_back = bulk.test_ferric_ratio_from_O2(self.wt_oxides['FeO'], self.wt_oxides['O2'])
+        print('Fe3+/Fe', X_fer_back)
+
+        # insert Fe2O3 like MELTS - FeO already represents all mantle Fe - already gets printed
+        wt_dict_o2 = bulk.insert_fe2o3({k: v for k, v in self.wt_oxides.items() if k != 'O2'}, X_fer_back)
+
     def command_vertex_grid(self, build_file_end=''):
         """ string for vertex command file - only entry is project name in operational mode 5 """
         s = self.name + build_file_end
@@ -186,7 +198,7 @@ class PerplexFugacityData(px.PerplexData):
             os.remove(frendly_command_file)
         os.chdir(cwd)  # return to original dir
 
-    def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, isotherm=None, verbose=True, build_file_end='',
+    def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, T_iso=None, verbose=True, build_file_end='',
                  vertex_data='hp622ver', run=True, compare_buffer=None, check_comp=False, points_file=None,
                  mu0_file=None, save=True, excluded_phases=[], run_vertex='auto', **kwargs):
         """
@@ -196,7 +208,7 @@ class PerplexFugacityData(px.PerplexData):
         p_max :
         T_min :
         T_max :
-        isotherm : Numeric or None
+        T_iso : Numeric or None
             Temperature value for doing calculations for an isothermal section, None if not applicable
         verbose :
         build_file_end :
@@ -218,12 +230,12 @@ class PerplexFugacityData(px.PerplexData):
             print(self.__dict__)
 
         # decide which T, p points to calculate
-        if isotherm is not None:
+        if T_iso is not None:
             if points_file is not None:
                 raise Exception('ERROR: cannot take both points_file and isotherm, set one of these to None')
             try:
                 # run werami over an isothermal section
-                points_file = self.write_isothermal_points(T0=isotherm, p_min=p_min, p_max=p_max, delta_p=1000)
+                points_file = self.write_isothermal_points(T0=T_iso, p_min=p_min, p_max=p_max, delta_p=1000)
             except TypeError as e:
                 print('ERROR: trying to write an isotherm section but isotherm is not a valid numeric')
                 raise e
@@ -386,12 +398,15 @@ class PerplexFugacityData(px.PerplexData):
             self.write_adiabat(P, T, fout=self.perplex_path + 'points_files/' + fname, verbose=False, overwrite=True)
         return 'points_files/' + fname
 
-    def read_fo2_results(self):
+    def read_fo2_results(self, verbose=False):
         if np.isnan(self.data['P(bar)'].to_numpy().all()):
             raise Exception('ERROR: PerplexFugacityData not initialised properly - not loaded dataframe')
 
         self.logfo2 = self.data['logfo2'].to_numpy()
-        self.delta_qfm = self.data['delta_qfm'].to_numpy()
+        try:
+            self.delta_qfm = self.data['delta_qfm'].to_numpy()
+        except KeyError:
+            pass
 
         pressure = self.data['P(bar)'].to_numpy() * 1e-4
         temperature = self.data['T(K)'].to_numpy()
@@ -409,17 +424,29 @@ class PerplexFugacityData(px.PerplexData):
             raise Exception('attempting to read in mismatching temperature data!')
 
         # save 1 GPa i.e. spinel stability field
-        idx = find_nearest_idx(self.pressure, 1)
+        try:
+            idx = find_nearest_idx(pressure, 1)
+        except ValueError as e:
+            print(self.name)
+            print('pressure', pressure)
+            print('self.data\n', self.data.head())
+            raise e
         self.logfo2_1GPa = self.logfo2[idx]
-        self.delta_qfm_1GPa = self.delta_qfm[idx]
+        try:
+            self.delta_qfm_1GPa = self.delta_qfm[idx]
+        except KeyError:
+            pass
 
         # save 4 GPa i.e. garnet stability field
-        idx = find_nearest_idx(self.pressure, 4)
+        idx = find_nearest_idx(pressure, 4)
         self.logfo2_4GPa = self.logfo2[idx]
-        self.delta_qfm_4GPa = self.delta_qfm[idx]
+        try:
+            self.delta_qfm_4GPa = self.delta_qfm[idx]
+        except KeyError:
+            pass
 
 
-def init_from_results(name, X_ferric=None, **kwargs):
+def init_from_results(name, X_ferric=None, load_results_csv=False, **kwargs):
     """ currently not saving X_ferric in directory name so must enter known value manually """
     # TODO parse star from name using possible prefixes
 
@@ -427,15 +454,29 @@ def init_from_results(name, X_ferric=None, **kwargs):
 
     spl = name.split('_')
     # M_p = float(''.join(filter(str.isdigit, spl[0]))) * M_E  # get planet mass - not good if decimal
-    core_efficiency = int(''.join(filter(str.isdigit, spl[1]))) / 100.0
-    star = spl[2]
+    try:
+        core_efficiency = int(''.join(filter(str.isdigit, spl[1]))) / 100.0
+        star = spl[2]
+    except IndexError:
+        star = None
+        core_efficiency = None
     kwargs.update({'name': name, 'X_ferric': X_ferric, 'star': star, 'core_efficiency': core_efficiency})
-    kwargs.update(**read_dict_from_build(**kwargs))  # get other important input stuff from build file
 
-    dat = PerplexFugacityData(**kwargs)
+
+
+    try:
+        kwargs.update(**read_dict_from_build(**kwargs))  # get other important input stuff from build file
+        dat = PerplexFugacityData(**kwargs)
+    except FileNotFoundError:
+        # if verbose:
+        #     print('perplex input data not found:', name)
+        return None
 
     # load saved results
-    dat.data = pd.read_csv(dat.output_path + dat.name + '_results.csv', sep='\t', index_col=0)
+    if load_results_csv:
+        dat.data = pd.read_csv(dat.output_path + dat.name + '_results.csv', sep='\t', index_col=0)
+        print('self.data\n', dat.data.head())
+        dat.read_fo2_results(verbose=False)
 
     return dat
 
@@ -706,8 +747,7 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
     dat = PerplexFugacityData(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                               core_efficiency=core_efficiency, **kwargs)
 
-    logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max,
-                          verbose=verbose, **kwargs)
+    logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, verbose=verbose, **kwargs)
     if verbose:
         print('log fo2 of system:', logfo2)
     return True

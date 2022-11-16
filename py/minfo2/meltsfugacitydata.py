@@ -7,6 +7,7 @@ import subprocess
 import py.main as rw
 import py.minfo2.perplexfugacitydata as pf
 import py.parameters as p
+from py.useful_and_bespoke import find_nearest_idx
 
 output_parent_default = '/home/claire/Works/min-fo2/alphamelts_output/'
 alphamelts_path_default = '/home/claire/Works/alphamelts/'
@@ -85,6 +86,21 @@ class MeltsFugacityData:
         n_FeO = self.wt_oxides['FeO'] / p.M_FeO
         self.mg_number = n_MgO / (n_MgO + n_FeO) * 100
         return self.mg_number
+
+    def print_comp(self):
+        print('wt.% oxides\n-----------')
+        for k in self.wt_oxides:
+            print("{0:<7}".format(k), "{:5.2f}%".format(self.wt_oxides[k]))
+        print('Mg/Si', self.mgsi)
+
+        X_fer_back = bulk.test_ferric_ratio(self.wt_oxides['FeO'], self.wt_oxides['Fe2O3'])
+        print('Fe3+/Fe', X_fer_back)
+
+        # insert O2 like Perple_x - already gets printed
+        test_wt_oxides = self.wt_oxides.copy()
+        m_Fe2O3 = test_wt_oxides.pop('Fe2O3')
+        test_wt_oxides['FeO'] = test_wt_oxides['FeO'] + m_Fe2O3 # add Fe2O3 back in
+        wt_dict_o2 = bulk.insert_o2_from_wt_comp(test_wt_oxides, X_ferric=X_fer_back)
 
     def batchfile_text_fo2calc(self, melts_file):
         """ contents to write to alphamelts batchfile for fo2 calc """
@@ -200,7 +216,7 @@ class MeltsFugacityData:
         # check if already loaded
         if (not self.data['P(bar)'].isnull().values.any()) or (not self.data['T(K)'].isnull().values.any()):
             if not reload_TP:
-                print('already loaded T,P from alphaMELTS! to overwrite, use reload_TP=True')
+                print('                already loaded T,P from alphaMELTS! to overwrite, use reload_TP=True')
                 return None
 
         fname = 'System_main_tbl.txt'
@@ -214,7 +230,7 @@ class MeltsFugacityData:
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
             except IndexError as e:
-                print('T_of_interest not found, min:', df.Temperature.iloc[-1])
+                print('             T_of_interest not found, min:', df.Temperature.iloc[-1])
                 return False
 
             # append P and T
@@ -362,14 +378,66 @@ class MeltsFugacityData:
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
 
+    def read_fo2_results(self, verbose=True):
+
+        if np.isnan(self.data['P(bar)'].to_numpy().all()):
+            try:
+                self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+                if verbose:
+                    print('loaded df\n', self.data.head())
+            except FileNotFoundError:
+                print('...results.csv file not found! skipping')
+                return False
+
+        self.logfo2 = self.data['logfo2'].to_numpy()
+        try:
+            self.delta_qfm = self.data['delta_qfm'].to_numpy()
+        except KeyError:
+            pass
+
+        pressure = self.data['P(bar)'].to_numpy() * 1e-4
+        temperature = self.data['T(K)'].to_numpy()
+        if (not hasattr(self, 'pressure')) or self.pressure is None:
+            self.pressure = pressure
+        elif (self.pressure != pressure).any():
+            print('pressure', pressure)
+            print('self.pressure', self.pressure)
+            raise Exception('attempting to read in mismatching pressure data!')
+        if (not hasattr(self, 'temperature')) or self.temperature is None:
+            self.temperature = temperature
+        elif (self.temperature != temperature).any():
+            print('temperature', temperature)
+            print('self.temperature', self.temperature)
+            raise Exception('attempting to read in mismatching temperature data!')
+
+        # save 1 GPa i.e. spinel stability field
+        idx = find_nearest_idx(pressure, 1)
+        self.logfo2_1GPa = self.logfo2[idx]
+        try:
+            self.delta_qfm_1GPa = self.delta_qfm[idx]
+        except (KeyError, AttributeError):
+            pass
+
+        # save 4 GPa i.e. garnet stability field
+        idx = find_nearest_idx(pressure, 4)
+        self.logfo2_4GPa = self.logfo2[idx]
+        try:
+            self.delta_qfm_4GPa = self.delta_qfm[idx]
+        except (KeyError, AttributeError):
+            pass
+
 
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
-                      T_final=1373, load_results_csv=False, verbose=True, **kwargs):
+                      T_final=1373, load_results_csv=False, verbose=True, X_ferric=None, **kwargs):
 
     parts = name.split('_')
-    star = parts[2]
-    X_ferric = parts[4]
+    try:
+        star = parts[2]
+        X_ferric = parts[4]
+    except IndexError:
+        # non conventional name
+        star = None
     wt_oxides = {}
 
     subfolders = [f.name for f in os.scandir(output_parent_path + name + '/') if f.is_dir()]
@@ -387,8 +455,11 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         try:
             melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/pl.melts').readlines()
         except FileNotFoundError as e:
-            print(e, 'skipping...')
-            return None
+            try:
+                melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
+            except FileNotFoundError:
+                print(e, 'skipping...')
+                return None
 
         for line in melts_file_contents:
             if 'Initial Composition:' in line:
@@ -402,6 +473,8 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         if load_results_csv:
             try:
                 dat.data = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
+                dat.read_fo2_results(verbose=False)
+
                 if verbose:
                     print('loaded df\n', dat.data.head())
             except FileNotFoundError:

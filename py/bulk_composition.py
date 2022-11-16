@@ -111,25 +111,28 @@ def o2_molar_ratio(n_FeO, X_ferric=0.05, **kwargs):
     n_ferrous = n_FeO - n_ferric
     n_O2 = X_ferric / 4 * n_FeO  # 2 mol Fe2O3 for every O2 and 2 mol Fe3+ for every mol Fe2O3
 
-    print('n_Fe2+', n_ferrous, 'n_O2', n_O2, 'n_Fe3+', n_ferric, 'r', X_ferric)
+    # print('n_Fe2+', n_ferrous, 'n_O2', n_O2, 'n_Fe3+', n_ferric, 'r', X_ferric)
     return n_O2
 
 
 # o2_molar_ratio(10, 0.05)
 
 
-def ferric_ratio(n_FeO, n_O2):
+def test_ferric_ratio_from_O2(m_FeOstar, m_O2):
     """ 4FeO + O2 <--> 2Fe2O3, where O2 is limiting """
 
-    n_ferrous_eq = n_O2 * 4  # number of mol Fe(2+)O being used = 2
+    n_FeO = m_FeOstar / p.M_FeO
+    n_O2 = m_O2 / p.M_O2
+    # n_ferrous_eq = n_O2 * 4  # number of mol Fe(2+)O being used = 2
     n_Fe2O3_eq = n_O2 * 2  # number of mol Fe(3+)2O3 taking up oxygen = 1
     n_ferric_eq = n_Fe2O3_eq * 2  # number of mol Fe(3+) from above - i.e. 2 mol Fe(3+) for every mol Fe2O3
-    n_ferrous_extra = n_FeO - n_ferric_eq  # number of mol Fe2+ left = 8
+    # n_ferrous_extra = n_FeO - n_ferric_eq  # number of mol Fe2+ left = 8
     X_ferric = n_ferric_eq / n_FeO  # molar ratio of Fe(3+) to total Fe
-    print('n_Fe2+', n_ferrous_extra, 'n_O2', n_O2, 'n_Fe3+', n_ferric_eq, 'r', X_ferric)
+    # print('n_Fe2+', n_ferrous_extra, 'n_O2', n_O2, 'n_Fe3+', n_ferric_eq, 'r', X_ferric)
+    return X_ferric
 
 
-# ferric_ratio(n_FeO=10, n_O2=0.12)
+# test_ferric_ratio_from_O2(n_FeO=10, n_O2=0.12)
 
 
 def insert_o2_from_wt_comp(wt_oxides_dict, **kwargs):
@@ -158,7 +161,7 @@ def insert_o2_from_wt_comp(wt_oxides_dict, **kwargs):
         new_wt_dict[key] = n * M  # convert to mole fraction
 
     # renormalise
-    print('wt.% oxides\n-----------')
+    print('wt.% oxides with O2 added\n-----------')
     factor = 100 / sum(new_wt_dict.values())
     for k in new_wt_dict:
         new_wt_dict[k] = new_wt_dict[k] * factor
@@ -181,7 +184,7 @@ def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100):
     wt_oxides_dict['FeO'] = m_FeO
     wt_oxides_dict['Fe2O3'] = m_Fe2O3
 
-    print('wt.% oxides\n-----------')
+    print('wt.% oxides with Fe2O3 added\n-----------')
     factor = mass_tot / sum(wt_oxides_dict.values())
     for k in wt_oxides_dict:
         wt_oxides_dict[k] = wt_oxides_dict[k] * factor
@@ -196,7 +199,7 @@ def test_ferric_ratio(m_FeO, m_Fe2O3):
     n_FeO = m_FeO / p.M_FeO
     n_FeII = n_FeO
     Xfer = n_FeIII / n_FeII
-    print('X ferric', Xfer)
+    return Xfer
 
 # dmm = {'SiO2': 44.71, 'Al2O3':3.98, 'FeO': 8.008 + 0.191, 'MgO': 38.73, 'CaO': 3.17}
 # test_ferric_ratio(8.008, 0.191)
@@ -210,3 +213,5 @@ def test_ferric_ratio(m_FeO, m_Fe2O3):
 # eq2 = sym.Eq((2*m_Fe2O3/M_Fe2O3) / (m_FeO / M_FeO + 2*m_Fe2O3/M_Fe2O3),X_ferric)
 # result = sym.solve([eq1,eq2],(m_FeO,m_Fe2O3))
 # print(result)
+
+

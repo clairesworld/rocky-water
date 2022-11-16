@@ -13,7 +13,7 @@ X_ferric = 0.03
 core_eff = 0.88
 output_sub = 'hypatia_' + str(int(core_eff * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric/'
 
-# output_parent_path = pf.output_parent_apollo + output_sub
+# output_parent_path = pfug.output_parent_apollo + output_sub
 # perplex_path = '/raid1/cmg76/perple_x/'
 output_parent_path = pf.output_parent_default
 perplex_path = '/home/claire/Works/perple_x/'
@@ -29,38 +29,38 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=1, T_min=T_min, T_max=T_max, isotherm
                     mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                     use_local_compositon=False, names_file='/home/claire/Works/rocky-water/py/host_names.txt',
                     # use_local_composition=True, existing_dir='hypatia88Fe/',  # try local first
-                    # existing_output_parent=pf.output_parent_apollo,  <== existing kwarg
+                    # existing_output_parent=pfug.output_parent_apollo,  <== existing kwarg
                     # restart='2MASS 23155829+3127462'
                     )
 
 # # can (re)do fo2 calculations with this using existing vertex files
-# pf.fo2_from_local(output_parent_path=output_parent_path, mu0_file='data_tables/mu_o2_standard.tab',
+# pfug.fo2_from_local(output_parent_path=output_parent_path, mu0_file='data_tables/mu_o2_standard.tab',
 #                   compare_buffer='qfm', check_comp=True, suppress_output=False, isotherm=T_iso)
 #
 
 # do solar and Earth
 # for (name, test_oxides, star) in zip(['dmm', 'sun_88Fe'], [wt_oxides_DMM, None], [None, 'sun']):
-#     pf.fo2_from_oxides(name=name, p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=test_oxides,
+#     pfug.fo2_from_oxides(name=name, p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=test_oxides,
 #                     X_ferric=X_ferric, isotherm=T_iso, core_efficiency=core_eff, star=star,
 #                     run=True, compare_buffer='qfm',
 #                     suppress_output=False, check_comp=True, verbose=True,
-#                     mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_px,
+#                     mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pfug.output_parent_px,
 #                     )
 
 
 # # # like Stolper
-# pf.fo2_from_oxides(name='Stolper', p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=pf.wt_oxides_DMM_ext,
+# pfug.fo2_from_oxides(name='Stolper', p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, test_oxides=pfug.wt_oxides_DMM_ext,
 #                 X_ferric=0.031, isotherm=T_iso,
 #                 run=True, compare_buffer='qfm',
 #                 suppress_output=False, check_comp=True, verbose=True,
-#                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pf.output_parent_px,
+#                 mu0_file='data_tables/mu_o2_standard.tab', output_parent_path=pfug.output_parent_px,
 #                 )
 
 
 # # do pMELTS calc
 # oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']
 # output_parent_path_melts = '/home/claire/Works/min-fo2/alphamelts_output/' + output_sub
-# mf.fo2_from_hypatia(pressures_of_interest, n_sample=1, T_final=T_iso, oxides=oxide_list,
+# mfug.fo2_from_hypatia(pressures_of_interest, n_sample=1, T_final=T_iso, oxides=oxide_list,
 #                     X_ferric=X_ferric, core_efficiency=core_eff, planet_kwargs={'Tp': 999},
 #                     #solve_interior=False, --> already a parameter
 #                     suppress_output=False, verbose=True,
@@ -68,7 +68,7 @@ pf.fo2_from_hypatia(p_min, p_max, n_sample=1, T_min=T_min, T_max=T_max, isotherm
 #                     compare_buffer='qfm',
 #                     use_local_compositon=False,
 #                     # use_local_composition=True, existing_dir='hypatia88Fe/',  # try local first
-#                     # existing_output_parent=pf.output_parent_apollo,  <== existing kwarg
+#                     # existing_output_parent=pfug.output_parent_apollo,  <== existing kwarg
 #                     # restart='2MASS 23155829+3127462'
 #                     )
 

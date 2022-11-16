@@ -8,8 +8,8 @@ import subprocess
 import py.main as rw
 from scipy import interpolate
 import py.parameters as p
-import perplexfugacitydata as pf
-import meltsfugacitydata as mf
+import perplexfugacitydata as pfug
+import meltsfugacitydata as mfug
 import matplotlib.pyplot as plt
 from py.useful_and_bespoke import colorize, colourbar, iterable_not_string
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -92,7 +92,7 @@ def apply_filters(df, name, p_min=None, p_max=None, output_parent_path=None):
     # # check high-fo2 scenarios
     # if (df['delta_qfm'] > 0).any():
     #     print(name, ': fo2 > QFM')
-    #     dat = pf.init_from_build(name, output_parent_path=output_parent_path)
+    #     dat = pfug.init_from_build(name, output_parent_path=output_parent_path)
     #     print('      Mg/Si =', dat.mgsi)
 
     return df
@@ -110,6 +110,7 @@ def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, x
 
     # read in results
     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
+
     if verbose:
         print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
     df = apply_filters(df, name, p_min, p_max)
@@ -120,8 +121,8 @@ def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, x
         pressure = df['P(bar)'] * 1e-4
         T = df['T(K)'].unique()[0]  # for 2D
     except Exception as e:
-        print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
-        raise e
+        print('\nWARNING: loaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
+        return fig, ax
 
     # plot fo2 columns
     fo2 = df['logfo2']
@@ -250,25 +251,26 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
             if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                 name = os.path.basename(sub)
                 if name not in exclude_names:
-                    # get colouring
-                    if cmap_var is not None:
-                        if model == 'perplex':
-                            dat = pf.init_from_results(name, output_parent_path=output_parent_path)
-                        elif model == 'melts':
-                            dat = mf.init_from_results(name, output_parent_path=output_parent_path, verbose=False,
-                                                       **kwargs)
-                        try:
-                            z = eval('dat.' + cmap_var)
-                        except AttributeError as e:
-                            print('cmap_var not valid')
-                            raise e
-                        linec = colorize(z, cmap=cmap, vmin=vmin, vmax=vmax)[0]  # override input linec
-                        # print(name, cmap_var, z)
+                    if model == 'perplex':
+                        dat = pfug.init_from_results(name, output_parent_path=output_parent_path)
+                    elif model == 'melts':
+                        dat = mfug.init_from_results(name, output_parent_path=output_parent_path, verbose=False,
+                                                     **kwargs)
+                    if dat is not None:
+                        # get colouring
+                        if cmap_var is not None:
+                            try:
+                                z = eval('dat.' + cmap_var)
+                            except AttributeError as e:
+                                print('cmap_var not valid')
+                                raise e
+                            linec = colorize(z, cmap=cmap, vmin=vmin, vmax=vmax)[0]  # override input linec
+                            # print(name, cmap_var, z)
 
-                    fig, ax = fo2_xsection(name=name, output_parent_path=output_parent_path, fig=fig, ax=ax,
-                                           save=False, make_legend=False, verbose=verbose, linec=linec,
-                                           show_buffer=once, **kwargs)
-                    once = False  # only draw once
+                        fig, ax = fo2_xsection(name=name, output_parent_path=output_parent_path, fig=fig, ax=ax,
+                                               save=False, make_legend=False, verbose=verbose, linec=linec,
+                                               show_buffer=once, **kwargs)
+                        once = False  # only draw buffer once
             elif verbose:
                 print(sub, 'is empty')
 
@@ -303,7 +305,7 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
         fig.savefig(figpath + fname + '.png', bbox_inches='tight')
 
 
-def stolper_subplot(name=None, fname=None, save=True, fig=None, axes=None, **kwargs):
+def stolper_subplot(name=None, title=None, fname=None, save=True, fig=None, axes=None, **kwargs):
     if fname is None:
         fname = name + '_fo2_subplot'
 
@@ -315,7 +317,7 @@ def stolper_subplot(name=None, fname=None, save=True, fig=None, axes=None, **kwa
     axes[0].set_xlabel('')
     axes[0].set_xticks([])
 
-    axes[0].set_title(name)
+    axes[0].set_title(title)
     plt.subplots_adjust(hspace=0)
     if save:
         fig.savefig(figpath + fname + '.png')
@@ -363,7 +365,7 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
                         df = filter_silica_sat(df)
                     idx = df['P(bar)'].sub(p_of_interest * 1e4).abs().idxmin()
                     row = df.iloc[idx]
-                    d = pf.read_dict_from_build(name=name, output_parent_path=output_parent_path)
+                    d = pfug.read_dict_from_build(name=name, output_parent_path=output_parent_path)
 
                     # loop over components to check (subplots)
                     for ii, (ax, component) in enumerate(zip(axes, components)):
@@ -440,7 +442,7 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                 if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                     name = os.path.basename(sub)
                     if name not in exclude_names:
-                        dat = pf.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp)
+                        dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp)
                         if exclude_silica:
                             dat.data = filter_silica_sat(dat.data)
                         dat.read_fo2_results()
@@ -473,6 +475,112 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
         fig.savefig(figpath + fname + '.png')
     return fig, ax
 
+
+def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin=None, vmax=None, xlabel=None, ylabel=None,
+             title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10,
+             labelsize=16, legsize=12, save=True, fname=None, exclude_names=[], exclude_silica=True, x_scale=1, **kwargs):
+    # get matching names
+
+    if cmap and (not vmin or not vmax):
+        raise NotImplementedError('Cannot colour-code without explicit vmin and vmax')
+    if cmap:
+        # get normalised cmap
+        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+        colours = cm.ScalarMappable(norm=norm, cmap=cmap)
+    if fname is None:
+        fname = 'compare_pop_hist'
+    if xlabel is None:
+        xlabel = x_var + ' (' + model1 + ')'
+    if ylabel is None:
+        ylabel = x_var + ' (' + model2 + ')'
+    if zlabel is None:
+        zlabel = z_var
+
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    ax.set_xlabel(xlabel, fontsize=labelsize)
+    ax.set_ylabel(ylabel, fontsize=labelsize)
+
+    # parse X_ferric
+    spl = os.path.dirname(dir1).split('/')[-1].split('_')
+    X_ferric = None
+    for sp in spl:
+        if 'ferric' in sp:
+            X_ferric = int(''.join(filter(str.isdigit, sp)))
+
+    # get directory names in folder
+    subfolders = rw.get_run_dirs(output_path=dir1)
+    df = pd.DataFrame(columns=['name', 'x1', 'x2', 'z'], index=range(len(subfolders)))
+    once = True
+    idx = 0
+    if subfolders:  # nonzero
+        for ii, sub in enumerate(subfolders):
+            if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
+                name = os.path.basename(sub)
+                if name not in exclude_names:
+                    if model1 == 'melts':
+                        dat = mfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir1, verbose=False)
+                    elif model1 == 'perplex':
+                        dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir1, verbose=False)
+                    # if exclude_silica:
+                    #     print('todo')
+                    #     dat.data = filter_silica_sat(dat.data)
+                    if dat is not None:
+                        dat.read_fo2_results(verbose=False)
+                        df.x1.iloc[ii] = eval('dat.' + x_var) * x_scale
+                        df.name.iloc[ii] = name
+                        if z_var is not None:
+                            df.z.iloc[ii] = eval('dat.' + z_var)
+
+                        # print('added row', ii, df.iloc[ii])
+                        idx += 1
+
+    df.dropna(inplace=True, subset=['x1'])
+    # print('df after dir1\n', df.head())
+
+    # get matching runs
+    for ii in range(len(df)):
+        name = df.name.iloc[ii]
+        if model2 == 'melts':
+            dat = mfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir2, verbose=False, **kwargs)
+        elif model2 == 'perplex':
+            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir2, verbose=False, load_results_csv=True, **kwargs)
+        # if exclude_silica:
+        #     dat.data = filter_silica_sat(dat.data)
+        if dat is not None:
+            try:
+                dat.read_fo2_results(verbose=False)
+                df.x2.iloc[ii] = eval('dat.' + x_var) * x_scale
+            except FileNotFoundError:
+                if verbose:
+                    print('results file not found:', dir2 + name)
+    df.dropna(inplace=True, subset=['x2'])
+
+    print('df\n', df.head(), '\nn =', len(df))
+
+    # set colours
+    if z_var is not None:
+        c = df.z
+    else:
+        c = c
+        cmap = None
+
+    sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, s=s, marker=marker)
+
+    # make cbar
+    if z_var is not None:
+        cax = colourbar(sc, ax=ax, label=zlabel, labelsize=labelsize, ticksize=ticksize)
+
+    # 1:1 line
+    xlims = ax.get_xlim()
+    for delta in [-2, -1, 0, 1, 2]:
+        ax.plot(xlims, np.array(xlims) + delta, c='k', ls='--', lw=3 - np.abs(delta))
+
+    ax.set_xlim(xlims)
+    ax.tick_params(axis='both', labelsize=ticksize)
+
+    if save:
+        fig.savefig(figpath + fname + '.pdf', bbox_inches='tight')
+    return fig, ax
 
 
 """ checking weird cases? """
