@@ -22,6 +22,7 @@ M_Fe = 55.845
 M_Na = 22.989769
 M_P = 30.97
 M_Ti = 47.867
+M_Cr = 51.9961
 
 # molar masses of oxides
 M_SiO2 = M_Si + 2 * M_O
@@ -34,6 +35,7 @@ M_PO4 = M_P = 4 * M_O
 M_O2 = 2 * M_O
 M_Fe2O3 = 2 * M_Fe + 3 * M_O
 M_TiO2 = M_Ti + (2 * M_O)
+M_Cr2O3 = 2 * M_Cr + (3 * M_O)
 
 # solar composition from Lodders 09 in log10(N_X/N_H)
 ca_sol = 6.33 - 12
