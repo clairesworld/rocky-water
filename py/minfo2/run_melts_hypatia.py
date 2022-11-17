@@ -35,9 +35,13 @@ location = 'apollo'  # 'starlite'
 if location == 'apollo':
     source = opp_apollo
     alphamelts_path = alphamelts_path_apollo
+    perplex_path = '/raid1/cmg76/perple_x/'
+    names_file = '/home/cmg76/Works/rocky-water/py/host_names.txt'
 elif location == 'starlite':
     source = opp_starlite
     alphamelts_path = alphamelts_path_starlite
+    perplex_path = '/home/claire/Works/perple_x/'
+    names_file = '/home/claire/Works/rocky-water/py/host_names.txt'
 for ce in core_eff:
     for Xf in X_ferric:
         output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext_Cr/'
@@ -51,8 +55,8 @@ for ce in core_eff:
                             compare_buffer='qfm',
                             output_parent_path=output_parent_path,
                             alphamelts_path=alphamelts_path,
-                            perplex_path='/raid1/cmg76/perple_x/',  # for qfm data table
-                            # names_file='/home/claire/Works/rocky-water/py/host_names.txt',
+                            perplex_path=perplex_path,  # for qfm data table
+                            names_file=names_file,
                             # use_local_composition=False,
                             use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext_Cr/',  # try local first
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
