@@ -533,7 +533,7 @@ def fo2_from_oxides(name, pressures_of_interest, pl=None,
 
 
 def common_Tmin(output_parent_path, store=True, **kwargs):
-    names = [f.name for f in os.scandir(output_parent_path + '/') if f.is_dir()]
+    names = [f.name for f in os.scandir(output_parent_path) if f.is_dir()]
     df = pd.DataFrame(columns=['name', 'T_min'
                                        , 'mass_melt_min', 'n_pressures'], index=range(len(names)))
     for row, sub in enumerate(names):

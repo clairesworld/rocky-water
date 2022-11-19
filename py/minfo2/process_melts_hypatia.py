@@ -38,7 +38,7 @@ elif location == 'starlite':
 
 for ce in core_eff:
     for Xf in X_ferric:
-        output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
+        output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext_Cr/'
         output_parent_path = source + output_sub
 
         mfug.common_Tmin(output_parent_path)
