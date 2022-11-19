@@ -18,7 +18,8 @@ import matplotlib.cm as cm
 
 figpath = '/home/claire/Works/min-fo2/figs_scratch/'
 output_parent_px = '/home/claire/Works/min-fo2/perplex_output/'
-output_parent_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
+output_parent_mlt_earth = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
+output_parent_mlt = '/home/claire/Works/min-fo2/alphamelts_output/'
 plot_kwargs = {'labelsize': 16}
 melt_phases = ['ctjL', 'dijL', 'enL'] + ['liquid']  # perplex + melts
 c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 'tab:orange', 'Gt': 'tab:purple',
@@ -445,7 +446,8 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                         dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp)
                         if exclude_silica:
                             dat.data = filter_silica_sat(dat.data)
-                        dat.read_fo2_results()
+                        if ('logfo2' not in dat.data.columns) or (dat.data.logfo2.isnull().values.any()):
+                            dat.read_fo2_results()
                         x.append(eval('dat.' + x_var) * x_scale)
             print(opp, 'n_runs =', len(x))
 
@@ -477,18 +479,18 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
 
 
 def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin=None, vmax=None, xlabel=None, ylabel=None,
-             title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10,
-             labelsize=16, legsize=12, save=True, fname=None, exclude_names=[], exclude_silica=True, x_scale=1, **kwargs):
+             title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10, dmm=True, c_dmm='r',
+             labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True, x_scale=1, **kwargs):
     # get matching names
 
-    if cmap and (not vmin or not vmax):
-        raise NotImplementedError('Cannot colour-code without explicit vmin and vmax')
-    if cmap:
-        # get normalised cmap
-        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
-        colours = cm.ScalarMappable(norm=norm, cmap=cmap)
+    # if cmap and (not vmin or not vmax):
+    #     raise NotImplementedError('Cannot colour-code without explicit vmin and vmax')
+    # if cmap:
+    #     # get normalised cmap
+    #     norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+    #     colours = cm.ScalarMappable(norm=norm, cmap=cmap)
     if fname is None:
-        fname = 'compare_pop_hist'
+        fname = 'fo2_mdl'
     if xlabel is None:
         xlabel = x_var + ' (' + model1 + ')'
     if ylabel is None:
@@ -499,6 +501,7 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
     ax.set_xlabel(xlabel, fontsize=labelsize)
     ax.set_ylabel(ylabel, fontsize=labelsize)
+    ax.set_title(title, fontsize=labelsize)
 
     # parse X_ferric
     spl = os.path.dirname(dir1).split('/')[-1].split('_')
@@ -525,7 +528,8 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
                     #     print('todo')
                     #     dat.data = filter_silica_sat(dat.data)
                     if dat is not None:
-                        dat.read_fo2_results(verbose=False)
+                        if ('logfo2' not in dat.data.columns) or (dat.data.logfo2.isnull().values.any()):
+                            dat.read_fo2_results(verbose=False)
                         df.x1.iloc[ii] = eval('dat.' + x_var) * x_scale
                         df.name.iloc[ii] = name
                         if z_var is not None:
@@ -560,11 +564,15 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
     # set colours
     if z_var is not None:
         c = df.z
+        if vmin is None:
+            vmin = np.min(c)
+        if vmax is None:
+            vmax = np.max(c)
     else:
         c = c
         cmap = None
 
-    sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, s=s, marker=marker)
+    sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, vmin=vmin, vmax=vmax, s=s, marker=marker)
 
     # make cbar
     if z_var is not None:
@@ -576,10 +584,22 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
         ax.plot(xlims, np.array(xlims) + delta, c='k', ls='--', lw=3 - np.abs(delta))
 
     ax.set_xlim(xlims)
+    ax.set_ylim(xlims)
     ax.tick_params(axis='both', labelsize=ticksize)
 
+    if dmm:
+        # add DMM
+        print('at dmm')
+        mdat = mfug.init_from_results('Stolper', output_parent_path=mfug.output_parent_default,
+                                      load_results_csv=True, verbose=False)
+        pdat = pfug.init_from_results('Stolper', output_parent_path=pfug.output_parent_default,
+                                      load_results_csv=True, verbose=False)
+        x, y = eval('mdat.' + x_var)*x_scale, eval('pdat.' + x_var)*x_scale
+        ax.scatter(x, y, c=eval('mdat.' + z_var), cmap=cmap, vmin=vmin, vmax=vmax, edgecolors=c_dmm, marker='o', s=s)
+        ax.text(x, y, 'DMM', ha='left', va='top', c=c_dmm)
+
     if save:
-        fig.savefig(figpath + fname + '.pdf', bbox_inches='tight')
+        fig.savefig(figpath + fname + ffmt, bbox_inches='tight')
     return fig, ax
 
 

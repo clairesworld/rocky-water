@@ -475,7 +475,7 @@ def init_from_results(name, X_ferric=None, load_results_csv=False, **kwargs):
     # load saved results
     if load_results_csv:
         dat.data = pd.read_csv(dat.output_path + dat.name + '_results.csv', sep='\t', index_col=0)
-        print('self.data\n', dat.data.head())
+        # print('self.data\n', dat.data.head())
         dat.read_fo2_results(verbose=False)
 
     return dat
