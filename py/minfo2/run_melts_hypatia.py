@@ -63,7 +63,7 @@ for ce in core_eff:
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
                             skip_names=skip_stars,
                             # restart='HIP 22627'
-                            dry_setup=True,
+                            # dry_setup=True,
                             )
         mf.common_Tmin(output_parent_path)
 

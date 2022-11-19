@@ -550,13 +550,13 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
         df.to_csv(output_parent_path + 'completion_analysis.csv', sep="\t")
 
 
-def fo2_from_local(output_parent_path, **kwargs):
+def fo2_from_local(output_parent_path, num=-1, **kwargs):
     """for existing melts runs (e.g. done remotely), do the same fo2 analysis"""
 
     # get all runs in directory
     subfolders = [f.name for f in os.scandir(output_parent_path) if f.is_dir()]
     bad = []
-    for name in subfolders:
+    for name in subfolders[:num]:
         dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
         if dat is not None:
             okay = dat.fo2_calc(save=True, run_alphamelts=False, **kwargs)

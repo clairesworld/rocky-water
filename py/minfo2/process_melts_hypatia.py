@@ -6,7 +6,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.append(os.path.dirname(PARENT_DIR))
 
-import py.minfo2.meltsfugacitydata as mf
+import py.minfo2.meltsfugacitydata as mfug
 
 """
 source /raid1/cmg76/venv/bin/activate
@@ -15,7 +15,7 @@ cd ~/Works/rocky-water/
 
 # set paths
 alphamelts_path_apollo = '/raid1/cmg76/alphamelts/'
-opp_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
+opp_apollo = '/raid1/cmg76/alphamelts/output/rocky-fo2/'  #earth-tea23/'
 alphamelts_path_starlite = '/home/claire/Works/alphamelts/'
 opp_starlite = '/home/claire/Works/min-fo2/alphamelts_output/hypatia_local2/'
 opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
@@ -41,12 +41,14 @@ for ce in core_eff:
         output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
         output_parent_path = source + output_sub
 
+        mfug.common_Tmin(output_parent_path)
+
         # calculate mantle fo2 only
-        mf.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
-                          compare_buffer='qfm', perplex_path=perplex_path,
-                          T_of_interest=T_of_interest, # reload_TP=True,
-                          verbose=False)
-        # mfug.common_Tmin(output_parent_path)
+        # mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
+        #                   compare_buffer='qfm', perplex_path=perplex_path,
+        #                   T_of_interest=T_of_interest,  # reload_TP=True,
+        #                   verbose=False)
+
 
 
 
