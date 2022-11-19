@@ -311,7 +311,7 @@ class MeltsFugacityData:
                  verbose=False, **kwargs):
 
         try:
-            # run alphamelts
+            # run alphamelts -- note will check if run exists at run_alphamelts_at_p()
             if run_alphamelts:
                 self.run_alphamelts_all_p(**kwargs)
 
