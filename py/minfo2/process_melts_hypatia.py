@@ -38,8 +38,9 @@ elif location == 'starlite':
 
 for ce in core_eff:
     for Xf in X_ferric:
-        output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext_Cr/'
+        output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
         output_parent_path = source + output_sub
+        # output_parent_path = '/raid1/cmg76/alphamelts/output/rocky-fo2/hypatia_88coreeff_3ferric_ext_Cr/'
 
         # mfug.common_Tmin(output_parent_path)
 
