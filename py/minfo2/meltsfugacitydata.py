@@ -13,7 +13,7 @@ output_parent_default = '/home/claire/Works/min-fo2/alphamelts_output/'
 alphamelts_path_default = '/home/claire/Works/alphamelts/'
 
 map_to_px_phase = {'olivine': 'Ol', 'orthopyroxene': 'Opx', 'clinopyroxene': 'Cpx', 'spinel': 'Sp', 'garnet': 'Gt',
-                   'quartz': 'q'}
+                   'feldspar': 'Plag', 'quartz': 'q'}
 
 
 # solution_phases_default = ['olivine', 'spinel', 'garnet', 'orthopyroxene', 'clinopyroxene']  # opx and cpx automatic?
