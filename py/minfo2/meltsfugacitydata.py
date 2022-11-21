@@ -217,7 +217,7 @@ class MeltsFugacityData:
         if (not self.data['P(bar)'].isnull().values.any()) or (not self.data['T(K)'].isnull().values.any()):
             if not reload_TP:
                 print('                already loaded T,P from alphaMELTS! to overwrite, use reload_TP=True')
-                return None
+                return True
 
         fname = 'System_main_tbl.txt'
         for row, path in enumerate(self.output_p_paths):
@@ -270,7 +270,7 @@ class MeltsFugacityData:
 
                 # append phases to self df
                 m_tot = df['mass'].loc[idx]
-                for ph in [col for col in df.columns if col.endswith('_0')]:
+                for ph in [col[:-2] for col in df.columns if col.endswith('_0')]:
                     if ph != 'liquid_0':
                         try:
                             self.data.loc[row, ph] = df[ph].loc[
@@ -312,6 +312,7 @@ class MeltsFugacityData:
 
         try:
             # run alphamelts -- note will check if run exists at run_alphamelts_at_p()
+
             if run_alphamelts:
                 self.run_alphamelts_all_p(**kwargs)
 

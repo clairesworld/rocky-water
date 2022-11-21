@@ -325,7 +325,7 @@ def stolper_subplot(name=None, title=None, fname=None, save=True, fig=None, axes
 
 
 def element_xplot(p_of_interest=1, components=[], output_parent_path=output_parent_px, fig=None, axes=None,
-                  xlabel=None, ylabel=None, ylim=(-11.5, -7),
+                  xlabel=None, ylabel=None, ylim=(-11.5, -7), model='melts',
                   linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, **kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
@@ -357,28 +357,36 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
         # loop over runs
         ys = []
         for ii, sub in enumerate(subfolders):
-            if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
-                name = os.path.basename(sub)
+            name = os.path.basename(sub)
+            if (len(os.listdir(sub)) > 1) and os.path.exists(output_parent_path + name + '/' + name + '_results.csv'):  # 1 if contains nH_star e.g.
                 if name not in exclude_names:
                     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
                     df = apply_filters(df, name)
                     if exclude_silica:
                         df = filter_silica_sat(df)
                     idx = df['P(bar)'].sub(p_of_interest * 1e4).abs().idxmin()
-                    row = df.iloc[idx]
-                    d = pfug.read_dict_from_build(name=name, output_parent_path=output_parent_path)
+                    try:
+                        row = df.iloc[idx]
+                    except TypeError as e:
+                        # pressure not found
+                        continue
+                    if model == 'melts':
+                        dat = mfug.init_from_results(name=name, output_parent_path=output_parent_path, verbose=False)
+                    elif model == 'perplex':
+                        dat = pfug.init_from_results(name=name, output_parent_path=output_parent_path)
 
                     # loop over components to check (subplots)
                     for ii, (ax, component) in enumerate(zip(axes, components)):
 
                         # search for component in oxides
-                        if component in d['wt_oxides'].keys():
-                            x = d['wt_oxides'][component]
+                        if component in dat.wt_oxides.keys():
+                            x = dat.wt_oxides[component]
+                        # search for component in phase comp
                         elif 'X_' + component in row.index:
                             x = row['X_' + component]
                         else:
                             if verbose:
-                                print(name, ':', component, 'not found in', d['wt_oxides'].keys(), 'or', row.index)
+                                print(name, ':', component, 'not found in', dat['wt_oxides'].keys(), 'or', row.index)
                             x = np.nan
                         y = row['logfo2']
                         ax.scatter(x, y, c=linec, s=5)
