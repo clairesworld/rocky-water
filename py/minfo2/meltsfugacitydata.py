@@ -271,7 +271,7 @@ class MeltsFugacityData:
                 # append phases to self df
                 m_tot = df['mass'].loc[idx]
                 for ph in [col[:-2] for col in df.columns if col.endswith('_0')]:
-                    if ph != 'liquid_0':
+                    if ph != 'liquid':
                         try:
                             self.data.loc[row, ph] = df[ph].loc[
                                                            idx] / m_tot * 100  # renormalise to 100 g total mass, only need last row
