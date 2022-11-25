@@ -358,7 +358,7 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
         ys = []
         for ii, sub in enumerate(subfolders):
             name = os.path.basename(sub)
-            if (len(os.listdir(sub)) > 1) and os.path.exists(output_parent_path + name + '/' + name + '_results.csv'):  # 1 if contains nH_star e.g.
+            if (len(os.listdir(sub)) > 0) and os.path.exists(output_parent_path + name + '/' + name + '_results.csv'):  # 1 if contains nH_star e.g.
                 if name not in exclude_names:
                     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
                     df = apply_filters(df, name)
@@ -375,25 +375,27 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
                     elif model == 'perplex':
                         dat = pfug.init_from_results(name=name, output_parent_path=output_parent_path)
 
-                    # loop over components to check (subplots)
-                    for ii, (ax, component) in enumerate(zip(axes, components)):
+                    if dat is not None:
+                        # loop over components to check (subplots)
+                        for ii, (ax, component) in enumerate(zip(axes, components)):
 
-                        # search for component in oxides
-                        if component in dat.wt_oxides.keys():
-                            x = dat.wt_oxides[component]
-                        # search for component in phase comp
-                        elif 'X_' + component in row.index:
-                            x = row['X_' + component]
-                        else:
-                            if verbose:
-                                print(name, ':', component, 'not found in', dat['wt_oxides'].keys(), 'or', row.index)
-                            x = np.nan
-                        y = row['logfo2']
-                        ax.scatter(x, y, c=linec, s=5)
-                        if once:
-                            ys.append(y)
-                            T = df['T(K)'].unique()[0]  # isothermal
-
+                            # search for component in oxides
+                            if component in dat.wt_oxides.keys():
+                                x = dat.wt_oxides[component]
+                            # search for component in phase comp
+                            elif 'X_' + component in row.index:
+                                x = row['X_' + component]
+                            else:
+                                if verbose:
+                                    print(name, ':', component, 'not found in', dat.wt_oxides.keys(), 'or', row.index)
+                                x = np.nan
+                            y = row['logfo2']
+                            ax.scatter(x, y, c=linec, s=5)
+                            if once:
+                                ys.append(y)
+                                T = df['T(K)'].unique()[0]  # isothermal
+                    else:
+                        print('problem initialising data object for', name)
             elif verbose:
                 print(sub, 'is empty')
         once = False
@@ -409,7 +411,7 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
     ax_histy.spines.top.set_visible(False)
     ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
 
-    plt.suptitle(str(p_of_interest) + ' GPa, ' + str(T) + ' K', fontsize=labelsize)
+    # plt.suptitle(str(p_of_interest) + ' GPa, ' + str(T) + ' K', fontsize=labelsize)
 
     if save:
         fig.savefig(figpath + fname + '.png')

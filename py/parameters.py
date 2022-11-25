@@ -9,8 +9,8 @@ sec2Gyr = 1e-9 / years2sec
 AU2m = 1.5e11
 R_b = 8.3144598  # universal gas constant in J mol −1 K −1
 sb = 5.67e-8  # Stefan Boltzmann constant in W m^-2 K^-4
-# print('earth ocean', TO/M_E * 1e6, 'ppm')
-
+print('earth ocean', TO/M_E * 1e6, 'pp·m')
+# ROB HAS JUST GONE TO THE LOO
 # molar masses
 M_O = 15.999
 M_Si = 28.0855
