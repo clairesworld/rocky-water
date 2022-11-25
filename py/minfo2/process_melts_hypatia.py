@@ -42,7 +42,7 @@ for ce in core_eff:
         output_parent_path = source + output_sub
         # output_parent_path = '/raid1/cmg76/alphamelts/output/rocky-fo2/hypatia_88coreeff_3ferric_ext_Cr/'
 
-        # mfug.common_Tmin(output_parent_path)
+        mfug.common_Tmin(output_parent_path)
 
         # calculate mantle fo2 only
         mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
