@@ -47,6 +47,7 @@ class MeltsFugacityData:
 
         self.name = name
         self.star = star
+        self.X_ferric = X_ferric
 
         if 'Fe2O3' not in wt_oxides:
             # get O2 mantle fraction
@@ -69,9 +70,10 @@ class MeltsFugacityData:
         self.T_final = T_final
 
         if verbose:
-            print('\ninitialising MeltsFugacityData data with:')
+            print('\ninitialising MeltsFugacityData data', name, 'with:')
             print('        T =', self.T_final, 'K')
             print('        p =', self.pressures_of_interest, 'bar')
+            print('        X_ferric =', self.X_ferric)
             print('\n')
 
     def get_mgsi(self, **kwargs):
@@ -437,14 +439,13 @@ class MeltsFugacityData:
             pass
 
 
-
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
-                      T_final=1373, load_results_csv=False, verbose=True, X_ferric=None, **kwargs):
-
+                      T_final=1373, load_results_csv=False, verbose=True, **kwargs):
+    import re
     parts = name.split('_')
     try:
         star = parts[2]
-        X_ferric = parts[4]
+        X_ferric = float(re.findall('\d+\.\d+', parts[4].replace(',', '.'))[0] ) * 1e-2
     except IndexError:
         # non conventional name
         star = None
@@ -483,7 +484,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         if load_results_csv:
             try:
                 dat.data = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
-                dat.read_fo2_results(verbose=False)
+                dat.read_fo2_results(verbose=verbose)
 
                 if verbose:
                     print('loaded df\n', dat.data.head())

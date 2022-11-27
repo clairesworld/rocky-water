@@ -446,7 +446,7 @@ class PerplexFugacityData(px.PerplexData):
             pass
 
 
-def init_from_results(name, X_ferric=None, load_results_csv=False, **kwargs):
+def init_from_results(name, X_ferric=None, load_results_csv=False, verbose=False, **kwargs):
     """ currently not saving X_ferric in directory name so must enter known value manually """
     # TODO parse star from name using possible prefixes
 
@@ -476,7 +476,7 @@ def init_from_results(name, X_ferric=None, load_results_csv=False, **kwargs):
     if load_results_csv:
         dat.data = pd.read_csv(dat.output_path + dat.name + '_results.csv', sep='\t', index_col=0)
         # print('self.data\n', dat.data.head())
-        dat.read_fo2_results(verbose=False)
+        dat.read_fo2_results(verbose=verbose)
 
     return dat
 

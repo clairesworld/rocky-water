@@ -99,7 +99,7 @@ def apply_filters(df, name, p_min=None, p_max=None, output_parent_path=None):
     return df
 
 
-def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None,
+def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None, c_buf='k',
                  show_buffer=True, linec='k', lw=1, alpha=1, labelsize=16, save=True, fname=None, make_legend=True,
                  p_min=None, p_max=None, ymin=None, ymax=None, verbose=False, exclude_silica=True, **kwargs):
     """ plot isothermal cross section, p range in GPa """
@@ -131,11 +131,11 @@ def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, x
     ax.plot(pressure, fo2, c=linec, lw=lw, alpha=alpha, label='log($f$O$_2$)')
     if show_buffer:
         fo2_qfm = df['logfo2_qfm']
-        ax.plot(pressure, fo2_qfm, c='k', lw=1, ls=(0, (10, 4)), label='FMQ')
+        ax.plot(pressure, fo2_qfm, c=c_buf, lw=1, ls=(0, (10, 4)), label='FMQ')
 
     # set legends and labels, clean up axes
     if make_legend:
-        ax.legend()
+        ax.legend(frameon=False)
     if xlabel is None:
         xlabel = 'Pressure (GPa)\nat ' + str(int(T)) + ' K'
     if ylabel is None:
@@ -204,7 +204,7 @@ def phases_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None
     ax.set_xlabel(xlabel, fontsize=labelsize)
     ax.set_ylabel(ylabel, fontsize=labelsize)
     if make_legend:
-        ax.legend()
+        ax.legend(frameon=False)
     ax.set_xlim(p_min, p_max)
     ax.set_ylim(0, ax.get_ylim()[1])
 
@@ -322,6 +322,7 @@ def stolper_subplot(name=None, title=None, fname=None, save=True, fig=None, axes
     plt.subplots_adjust(hspace=0)
     if save:
         fig.savefig(figpath + fname + '.png')
+    return fig, axes
 
 
 def element_xplot(p_of_interest=1, components=[], output_parent_path=output_parent_px, fig=None, axes=None,
@@ -419,7 +420,7 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
 
 
 def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, figpath=figpath, save=True,
-                     exclude_names=[], exclude_silica=True,
+                     exclude_names=[], exclude_silica=True, model='perplex',
                      ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12, bins=20,
                      hist_kwargs={}, legtitle=None, **kwargs):
     """ z_var is the colour/linestyle coding, must be consistent across all runs in dir[n] """
@@ -453,12 +454,21 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                 if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                     name = os.path.basename(sub)
                     if name not in exclude_names:
-                        dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp)
-                        if exclude_silica:
-                            dat.data = filter_silica_sat(dat.data)
-                        if ('logfo2' not in dat.data.columns) or (dat.data.logfo2.isnull().values.any()):
-                            dat.read_fo2_results()
-                        x.append(eval('dat.' + x_var) * x_scale)
+                        if model == 'perplex':
+                            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp, load_results_csv=True)
+                        elif model == 'melts':
+                            dat = mfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp,
+                                                         load_results_csv=True)
+                        if dat is not None:
+                            if exclude_silica:
+                                dat.data = filter_silica_sat(dat.data)
+                            try:
+                                x.append(eval('dat.' + x_var) * x_scale)
+                            except TypeError as e:
+                                print(e)
+                                print('    error reading ', name, '\n', dat.data.head())
+                            except AttributeError as e:
+                                print(e)
             print(opp, 'n_runs =', len(x))
 
             z = eval('dat.' + z_var) * z_scale  # only need 1 (last in this case)
