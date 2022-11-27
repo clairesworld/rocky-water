@@ -440,7 +440,7 @@ class MeltsFugacityData:
 
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
-                      T_final=1373, load_results_csv=False, verbose=True, **kwargs):
+                      T_final=1373, load_results_csv=False, verbose=True, X_ferric=None, **kwargs):
     import re
     parts = name.split('_')
     try:
