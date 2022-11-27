@@ -55,7 +55,7 @@ output_parent_path = '/raid1/cmg76/alphamelts/output/rocky-fo2/mgsi_from_earth/'
 mfug.common_Tmin(output_parent_path)
 
 # calculate mantle fo2 only
-ce, X_ferric = 0.88, 0.3
+ce, X_ferric = 0.88, 0.03
 mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
                     compare_buffer='qfm', perplex_path=perplex_path,
                     T_of_interest=T_of_interest,  # reload_TP=True,
