@@ -70,7 +70,7 @@ elif location == 'starlite':
 wt_oxides_DMM_ext = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'FeO': 8.17,
                      'Na2O': 0.28, 'TiO2': 0.13}  # Workman & Hart depleted mantle, extended
 from py.main import update_MgSi
-ce, Xf = 0.88, 0.3
+ce, Xf = 0.88, 0.03
 output_parent_path = '/raid1/cmg76/alphamelts/output/rocky-fo2/mgsi_from_earth/'
 for mgsi in np.linspace(0.75, 1.5, num=25):
     test_oxides = update_MgSi(mgsi, wt_oxides_DMM_ext)
