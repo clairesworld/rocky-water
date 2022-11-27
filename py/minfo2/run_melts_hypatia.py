@@ -71,11 +71,10 @@ wt_oxides_DMM_ext = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'F
                      'Na2O': 0.28, 'TiO2': 0.13}  # Workman & Hart depleted mantle, extended
 from py.main import update_MgSi
 ce, Xf = 0.88, 0.3
-output_sub = 'mgsi_from_earth'
-output_parent_path = source + output_sub
+output_parent_path = '/raid1/cmg76/alphamelts/output/rocky-fo2/mgsi_from_earth/'
 for mgsi in np.linspace(0.75, 1.5, num=25):
     test_oxides = update_MgSi(mgsi, wt_oxides_DMM_ext)
-    name = 'mgsi' + str(mgsi).replace('.',',')
+    name = 'mgsi' + str(mgsi).replace('.', ',')
     # generate planet compositions from mgsi
     mf.fo2_from_oxides(name, pressures_of_interest, core_efficiency=ce, X_ferric=Xf,
                         T_final=T_iso, verbose=True,
