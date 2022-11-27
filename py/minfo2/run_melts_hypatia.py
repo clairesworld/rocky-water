@@ -73,7 +73,7 @@ from py.main import update_MgSi
 ce, Xf = 0.88, 0.3
 output_sub = 'mgsi_from_earth'
 output_parent_path = source + output_sub
-for mgsi in np.linspace(0.75, 1.5):
+for mgsi in np.linspace(0.75, 1.5, num=25):
     test_oxides = update_MgSi(mgsi, wt_oxides_DMM_ext)
     name = 'mgsi' + str(mgsi).replace('.',',')
     # generate planet compositions from mgsi
