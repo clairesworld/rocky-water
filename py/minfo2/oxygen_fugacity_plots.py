@@ -25,9 +25,10 @@ melt_phases = ['ctjL', 'dijL', 'enL'] + ['liquid']  # perplex + melts
 c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 'tab:orange', 'Gt': 'tab:purple',
                         'q': 'tab:red', 'coe': 'tab:pink'}
 
-c_phase_dict_stolper = {'olivine': 'tab:green', 'orthopyroxene': 'k', 'clinopyroxene': 'tab:gray',
-                        'spinel': 'tab:orange', 'garnet': 'tab:purple',
-                        'quartz': 'tab:red', 'coesite': 'tab:pink'}
+
+# c_phase_dict_stolper = {'olivine': 'tab:green', 'orthopyroxene': 'k', 'clinopyroxene': 'tab:gray',
+#                         'spinel': 'tab:orange', 'garnet': 'tab:purple',
+#                         'quartz': 'tab:red', 'coesite': 'tab:pink'}
 
 
 def filter_silica_sat(df):
@@ -37,6 +38,7 @@ def filter_silica_sat(df):
         df.iloc[:, 2:] = np.nan  # everything except p, T
         # print(df.head())
     return df
+
 
 def remove_no_solution(df):
     """ remove rows with no stable perple_x solution """
@@ -99,7 +101,8 @@ def apply_filters(df, name, p_min=None, p_max=None, output_parent_path=None):
     return df
 
 
-def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None, c_buf='k',
+def fo2_xsection(name=None, df=None, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None,
+                 c_buf='k', legsize=12,
                  show_buffer=True, linec='k', lw=1, alpha=1, labelsize=16, save=True, fname=None, make_legend=True,
                  p_min=None, p_max=None, ymin=None, ymax=None, verbose=False, exclude_silica=True, **kwargs):
     """ plot isothermal cross section, p range in GPa """
@@ -110,40 +113,45 @@ def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, x
         fig, ax = plt.subplots(1, 1)
 
     # read in results
-    df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
+    if df is None:
+        df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
 
-    if verbose:
-        print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
-    df = apply_filters(df, name, p_min, p_max)
-    if exclude_silica:
-        df = filter_silica_sat(df)
+        if verbose:
+            print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
+        df = apply_filters(df, name, p_min, p_max)
+        if exclude_silica:
+            df = filter_silica_sat(df)
 
-    try:
-        pressure = df['P(bar)'] * 1e-4
-        T = df['T(K)'].unique()[0]  # for 2D
-    except Exception as e:
-        print('\nWARNING: loaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
-        return fig, ax
+    if not df['P(bar)'].isnull().all():
+        try:
+            pressure = df['P(bar)'] * 1e-4
+            T = df['T(K)'].unique()[0]  # for 2D
+        except Exception as e:
+            print('\nWARNING: loaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
+            return fig, ax
 
-    # plot fo2 columns
-    fo2 = df['logfo2']
-    # delta_qfm = df['delta_qfm']
-    ax.plot(pressure, fo2, c=linec, lw=lw, alpha=alpha, label='log($f$O$_2$)')
-    if show_buffer:
-        fo2_qfm = df['logfo2_qfm']
-        ax.plot(pressure, fo2_qfm, c=c_buf, lw=1, ls=(0, (10, 4)), label='FMQ')
+        # plot fo2 columns
+        fo2 = df['logfo2']
+        # delta_qfm = df['delta_qfm']
+        ax.plot(pressure, fo2, c=linec, lw=lw, alpha=alpha)
+        if show_buffer:
+            try:
+                fo2_qfm = df['logfo2_qfm']
+                ax.plot(pressure, fo2_qfm, c=c_buf, lw=1, ls=(0, (10, 4)), label='FMQ')
+            except KeyError:
+                print(name, 'logfo2_qfm not calculated')
 
-    # set legends and labels, clean up axes
-    if make_legend:
-        ax.legend(frameon=False)
-    if xlabel is None:
-        xlabel = 'Pressure (GPa)\nat ' + str(int(T)) + ' K'
-    if ylabel is None:
-        ylabel = 'log($f$O$_2$)'
-    ax.set_xlabel(xlabel, fontsize=labelsize)
-    ax.set_ylabel(ylabel, fontsize=labelsize)
-    ax.set_xlim(p_min, p_max)
-    ax.set_ylim(ymin, ymax)
+        # set legends and labels, clean up axes
+        if make_legend:
+            ax.legend(frameon=False, fontsize=legsize)
+        if xlabel is None:
+            xlabel = 'Pressure (GPa)\nat ' + str(int(T)) + ' K'
+        if ylabel is None:
+            ylabel = 'log($f$O$_2$)'
+        ax.set_xlabel(xlabel, fontsize=labelsize)
+        ax.set_ylabel(ylabel, fontsize=labelsize)
+        ax.set_xlim(p_min, p_max)
+        ax.set_ylim(ymin, ymax)
 
     if save:
         fig.savefig(figpath + fname + '.png')
@@ -152,7 +160,7 @@ def fo2_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, x
 
 def phases_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None, xlabel=None, ylabel=None,
                     linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None, y_annot=45,
-                    show_in_out=True, axes_all=None, make_legend=True, p_min=None, p_max=None,
+                    show_in_out=True, axes_all=None, make_legend=True, p_min=None, p_max=None, mode='line',
                     model='perplex', **kwargs):
     if fname is None:
         fname = name + '_phase_xsection'
@@ -163,15 +171,11 @@ def phases_xsection(name, output_parent_path=output_parent_px, fig=None, ax=None
     df = apply_filters(df, name, p_min, p_max)
     pressure = df['P(bar)'] * 1e-4
     T = df['T(K)'].unique()[0]
-
+    print(name, '\n', df.head())
     # plot all composition columns
     for col in df.columns:
-        if model == 'perplex':
-            phase_name = col[2:]
-            is_phase = col.startswith('X_') and (phase_name not in melt_phases) and ((df[col] != 0).any())
-        elif model == 'melts':
-            phase_name = col[:-2]
-            is_phase = col.endswith('_0') and (phase_name not in melt_phases) and ((df[col] != 0).any())
+        phase_name = col[2:]
+        is_phase = col.startswith('X_') and (phase_name not in melt_phases) and ((df[col] != 0).any())
         if is_phase:
             if c_dict is not None:
                 c = c_dict[phase_name]
@@ -306,19 +310,40 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
         fig.savefig(figpath + fname + '.png', bbox_inches='tight')
 
 
-def stolper_subplot(name=None, title=None, fname=None, save=True, fig=None, axes=None, **kwargs):
+def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, p_max=None, title=None, fname=None,
+                    save=True, fig=None, axes=None, exclude_silica=True, phase_mode='stacked', verbose=True, **kwargs):
     if fname is None:
         fname = name + '_fo2_subplot'
 
-    if fig is None:
-        fig, axes = plt.subplots(2, 1, figsize=(6, 8))
-    fig, axes[0] = fo2_xsection(fig=fig, ax=axes[0], save=False, name=name, **kwargs)
-    fig, axes[1] = phases_xsection(name=name, fig=fig, ax=axes[1], save=False, show_in_out=True, axes_all=axes,
-                                   **kwargs)
-    axes[0].set_xlabel('')
-    axes[0].set_xticks([])
+    df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
+    if not df['logfo2'].isnull().all():
+        if verbose:
+            print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
+        df = apply_filters(df, name, p_min, p_max)
+        if exclude_silica:
+            df = filter_silica_sat(df)
 
-    axes[0].set_title(title)
+        if fig is None:
+            fig, axes = plt.subplots(2, 1, figsize=(6, 8))
+        fig, axes[0] = fo2_xsection(df=df, fig=fig, ax=axes[0], save=False, name=name, output_parent_path=output_parent_path, **kwargs)
+
+        if phase_mode == 'stacked':
+            fig, axes[1] = single_composition(df, phases=['Gt', 'Cpx', 'Opx', 'Ol', 'Plag'], fig=fig, ax=axes[1],
+                                              comp_stacked=True, fig_path=figpath, save=False,
+                                              show=False, legtitle=None, p_max=p_max,
+                                              ylabel='Phase fraction (wt%)', xlabel='Pressure (GPa)',
+                                              verbose=verbose, make_legend=True,
+                                              leg_bbox_to_anchor=(1, 1), orientation='horizontal', scale=1,
+                                              output_parent_path=output_parent_path,
+                                              **kwargs)
+        else:
+            fig, axes[1] = phases_xsection(name=name, df=df, fig=fig, ax=axes[1], save=False, show_in_out=True,
+                                           axes_all=axes, output_parent_path=output_parent_path,
+                                           **kwargs)
+        axes[0].set_xlabel('')
+        # axes[0].set_xticks([])
+
+    fig.suptitle(title)
     plt.subplots_adjust(hspace=0)
     if save:
         fig.savefig(figpath + fname + '.png')
@@ -359,7 +384,8 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
         ys = []
         for ii, sub in enumerate(subfolders):
             name = os.path.basename(sub)
-            if (len(os.listdir(sub)) > 0) and os.path.exists(output_parent_path + name + '/' + name + '_results.csv'):  # 1 if contains nH_star e.g.
+            if (len(os.listdir(sub)) > 0) and os.path.exists(
+                    output_parent_path + name + '/' + name + '_results.csv'):  # 1 if contains nH_star e.g.
                 if name not in exclude_names:
                     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
                     df = apply_filters(df, name)
@@ -420,8 +446,9 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
 
 
 def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, figpath=figpath, save=True,
-                     exclude_names=[], exclude_silica=True, model='perplex',
-                     ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12, bins=20,
+                     exclude_names=[], exclude_silica=True, model='perplex', hilite=None, figsize=(7, 5), fig=None, ax=None,
+                     ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12,
+                     bins=20, ticksize=12, labelpad=None, x_shift=0, legloc=None,
                      hist_kwargs={}, legtitle=None, **kwargs):
     """ z_var is the colour/linestyle coding, must be consistent across all runs in dir[n] """
     if cmap and (not vmin or not vmax):
@@ -437,7 +464,8 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
     if legtitle is None:
         legtitle = z_var
 
-    fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
     for jj, opp in enumerate(dirs):
         spl = os.path.dirname(opp).split('/')[-1].split('_')
         X_ferric = None
@@ -455,15 +483,16 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                     name = os.path.basename(sub)
                     if name not in exclude_names:
                         if model == 'perplex':
-                            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp, load_results_csv=True)
+                            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp,
+                                                         load_results_csv=True, **kwargs)
                         elif model == 'melts':
                             dat = mfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp,
-                                                         load_results_csv=True)
+                                                         load_results_csv=True, **kwargs)
                         if dat is not None:
                             if exclude_silica:
                                 dat.data = filter_silica_sat(dat.data)
                             try:
-                                x.append(eval('dat.' + x_var) * x_scale)
+                                x.append(eval('dat.' + x_var) * x_scale - x_shift)
                             except TypeError as e:
                                 print(e)
                                 print('    error reading ', name, '\n', dat.data.head())
@@ -485,12 +514,20 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                 sd = np.nanstd(x)  # because otherwise some fo2 results set to nan
             else:
                 sd = np.std(x)
-            ax.hist(x, color=c, ls=linestyle, histtype='step', label=str(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
+            c_alpha = list(c)
+            c_alpha[3] = 0.5
+            if hilite is not None and (jj == hilite):
+                ax.hist(x, ec=c, fc=c_alpha, ls=linestyle, histtype='stepfilled', label='{:.0f}%'.format(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
+                    bins=bins, density=True, **hist_kwargs)
+            else:
+                ax.hist(x, color=c, alpha=0.5, ls=linestyle, histtype='step',
+                    label='{:.0f}%'.format(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
                     bins=bins, density=True, **hist_kwargs)
 
-    ax.set_xlabel(xlabel, fontsize=labelsize)
+    ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=labelpad)
     ax.set_title(title, fontsize=labelsize)
-    leg = ax.legend(title=legtitle, fontsize=legsize, frameon=False)
+    ax.tick_params(axis='both', labelsize=ticksize)
+    leg = ax.legend(title=legtitle, fontsize=legsize, frameon=False, loc=legloc)
     leg.get_title().set_fontsize(legsize)  # legend 'Title' fontsize
 
     if save:
@@ -498,9 +535,12 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
     return fig, ax
 
 
-def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin=None, vmax=None, xlabel=None, ylabel=None,
-             title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10, dmm=True, c_dmm='r',
-             labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True, x_scale=1, **kwargs):
+def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin=None, vmax=None, xlabel=None,
+             ylabel=None,
+             title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10, dmm=True,
+             c_dmm='r',
+             labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True,
+             x_scale=1, **kwargs):
     # get matching names
 
     # if cmap and (not vmin or not vmax):
@@ -567,7 +607,8 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
         if model2 == 'melts':
             dat = mfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir2, verbose=False, **kwargs)
         elif model2 == 'perplex':
-            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir2, verbose=False, load_results_csv=True, **kwargs)
+            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=dir2, verbose=False,
+                                         load_results_csv=True, **kwargs)
         # if exclude_silica:
         #     dat.data = filter_silica_sat(dat.data)
         if dat is not None:
@@ -614,12 +655,106 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
                                       load_results_csv=True, verbose=False)
         pdat = pfug.init_from_results('Stolper', output_parent_path=pfug.output_parent_default,
                                       load_results_csv=True, verbose=False)
-        x, y = eval('mdat.' + x_var)*x_scale, eval('pdat.' + x_var)*x_scale
+        x, y = eval('mdat.' + x_var) * x_scale, eval('pdat.' + x_var) * x_scale
         ax.scatter(x, y, c=eval('mdat.' + z_var), cmap=cmap, vmin=vmin, vmax=vmax, edgecolors=c_dmm, marker='o', s=s)
         ax.text(x, y, 'DMM', ha='left', va='top', c=c_dmm)
 
     if save:
         fig.savefig(figpath + fname + ffmt, bbox_inches='tight')
+    return fig, ax
+
+
+def single_composition(df, phases=['Plag', 'Gt', 'Cpx', 'Opx', 'Ol'],
+                       comp_stacked=True, fig_path=figpath, save=True, filename='min-mode',
+                       show=False, legtitle=None, override_ax_arrow=False, ylabelpad=None, xlabelpad=None,
+                       xlabel=None, ylabel=None, cmap='tab20', labelsize=16, p_max=None,
+                       verbose=False, fig=None, ax=None, title=None, extension='.png', make_legend=True,
+                       leg_bbox_to_anchor=(1, 1), legsize=14, orientation='horizontal', scale=100, **plot_kwargs):
+    import matplotlib
+    """ comp_stacked: plot cumulative modes
+    p_max: maximum pressure to plot in GPa (e.g., to see UM and MTZ better"""
+
+    # setup plot
+    if ax is None:
+        fig, ax = plt.subplots(1, 1)
+
+    ax.set_title(title, fontsize=labelsize)
+
+    pressures = df['P(bar)'].to_numpy() * 1e-4
+    x = pressures
+    # p_max_orig = p_max
+    if p_max is None:
+        p_max = np.max(x)
+
+    if orientation == 'horizontal':
+        ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
+        ax.set_ylabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
+        ax.set_xlim(1000e-4, p_max)
+    elif orientation == 'vertical':
+        ax.set_ylabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
+        ax.set_xlabel(ylabel, fontsize=labelsize, labelpad=ylabelpad)
+        ax.set_ylim(1000e-4, p_max)
+        ax.invert_yaxis()
+
+    # get colours from cmap
+    cmap_vals = matplotlib.cm.get_cmap(cmap)
+    n_phases = len(phases)
+    colours = [cmap_vals(j) for j in np.arange(0, n_phases) / n_phases]
+
+    for ii, phase in enumerate(phases):
+        # loop over phases and either plot instantly (not stacked) or create stackplot matrix
+        col = 'X_' + phase  # weight fraction of phase
+        try:
+            # dat.data[col].replace(0, np.nan, inplace=True)
+            y = df[col].to_numpy(dtype=float) * scale
+        except KeyError:
+            print(col, 'not found in data')
+            y = np.zeros(len(df), dtype=float)  # assign null value so phase order is retained
+        if comp_stacked:
+            # add to array for stackplot
+            if ii == 0:
+                y_stacked = y  # initialise
+            else:
+                y_stacked = np.vstack((y_stacked, y))
+        else:
+            # or, if not a stackplot, plot immediately
+            if orientation == 'horizontal':
+                ax.plot(x, y, c=colours[ii], label=phase, **plot_kwargs)
+            elif orientation == 'vertical':
+                ax.plot(y, x, c=colours[ii], label=phase, **plot_kwargs)
+    # make stackplot at this point
+    print('y stacked\n', y_stacked)
+    y_stacked = np.nan_to_num(y_stacked)
+    if comp_stacked:
+        # print('y_stacked', np.shape(y_stacked))
+        if orientation == 'horizontal':
+            ax.stackplot(x, y_stacked, labels=phases, colors=colours)
+        elif orientation == 'vertical':
+            y_trans = np.cumsum(y_stacked, axis=0)
+            # print('y_trans', np.shape(y_trans))
+            for s, col in enumerate(phases):
+                ax.fill_betweenx(x, y_trans[s, :], label=phase, fc=colours[s], zorder=-s)
+            ax.set_xlim(0, 100)
+        # ax.scatter(x, [50]*len(x), marker='.', s=20, c='k', zorder=100)  # show perple_x resolution
+
+    if make_legend:
+        leg = ax.legend(loc='upper left', bbox_to_anchor=leg_bbox_to_anchor, frameon=False, fontsize=legsize,
+                        title=legtitle)
+        if legtitle is not None:
+            leg.get_title().set_fontsize(legsize)  # legend 'Title' fontsize
+    # print('p_max', p_max)
+    # if p_max_orig is None:
+    #     p_max = np.max(x)
+    # else:
+    #     # assume not all pressures are given, annotate axis to indicate there's more and not an error
+    #     ax = annotate_ax_continuation(ax, 'x')
+    # ax.set_xlim(0, p_max)
+
+    if save:
+        plt.tight_layout()
+        fig.savefig(fig_path + filename + extension, bbox_inches='tight')
+    if show:
+        plt.show()
     return fig, ax
 
 

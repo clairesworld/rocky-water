@@ -609,7 +609,11 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
         if T0 in df['T(K)'].unique():
             if exists:  # both T and P already there
-                return np.squeeze(df[(df['P(bar)'] == p0) and (df['T(K)'] == T0)]['logfo2'])
+                # print('p0', p0, 'T0', T0)
+                df = df.loc[(df['P(bar)'] == p0)]
+                df = df.loc[(df['T(K)'] == T0)]
+                return np.squeeze(df['logfo2'])
+                # return np.squeeze(df.loc[(df['P(bar)'] == p0) and (df['T(K)'] == T0)]['logfo2'])
             exists = 'T'
             df = df[df['T(K)'] == T0]
 
