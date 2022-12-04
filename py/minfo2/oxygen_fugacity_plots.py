@@ -115,7 +115,7 @@ def fo2_xsection(name=None, df=None, output_parent_path=output_parent_px, fig=No
     # read in results
     if df is None:
         df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
-
+        print(output_parent_path + name + '/' + name + '_results.csv', 'exists')
         if verbose:
             print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
         df = apply_filters(df, name, p_min, p_max)
@@ -134,6 +134,7 @@ def fo2_xsection(name=None, df=None, output_parent_path=output_parent_px, fig=No
         fo2 = df['logfo2']
         # delta_qfm = df['delta_qfm']
         ax.plot(pressure, fo2, c=linec, lw=lw, alpha=alpha)
+        # print('plotted', pressure[0], fo2[0])
         if show_buffer:
             try:
                 fo2_qfm = df['logfo2_qfm']
@@ -253,8 +254,12 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
     once = True
     if subfolders:  # nonzero
         for ii, sub in enumerate(subfolders):
-            if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
-                name = os.path.basename(sub)
+            name = os.path.basename(sub)
+            # print(sub + name + '_results.csv')
+            # print(os.path.exists(sub + name + '_results.csv'))
+
+            if (len(os.listdir(sub)) > 1) and (os.path.exists(sub + '/' + name + '_results.csv')):  # 1 if contains nH_star e.g.
+
                 if name not in exclude_names:
                     if model == 'perplex':
                         dat = pfug.init_from_results(name, output_parent_path=output_parent_path)

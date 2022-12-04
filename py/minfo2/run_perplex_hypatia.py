@@ -18,14 +18,14 @@ T_iso = 1373
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
-oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3']
+oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O'] #, 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
 X_ferric = 0.03
-core_eff = [0.88]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
+core_eff = [0.7, 0.65]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
 
 for ce in core_eff:
-    output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext_Cr/'
+    output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
     output_parent_path = pf.output_parent_apollo + output_sub
 
     # only need to run this once to get build files (i.e., bulk composition) and vertex output files
@@ -39,7 +39,7 @@ for ce in core_eff:
                         mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                         # use_local_compositon=False,
-                        use_local_composition=False, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
+                        use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
                         # existing_output_parent=pfug.output_parent_apollo,  # <== existing kwarg
                         # restart='2MASS 23155829+3127462'
                         run_vertex=True,  # overwrite existing vertex files

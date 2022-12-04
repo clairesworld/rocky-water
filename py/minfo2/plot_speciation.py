@@ -8,7 +8,7 @@ from py.minfo2.perplexfugacitydata import read_qfm_os
 from py.perplexdata import perplex_path_default
 
 # parameterised IW
-initial_H2O_mole_fraction = 0.5
+initial_H2O_mole_fraction = 1
 initial_CO2_mole_fraction = 0.5
 T = 1800  # K
 P = 1  # bar
@@ -60,7 +60,7 @@ CO2_mole_fraction_QFM = initial_CO2_mole_fraction - CO_mole_fraction_QFM
 
 # plot
 # plt.style.use('dark_background')
-fig, ax = plt.subplots(1, 1, figsize=(11, 1))
+fig, ax = plt.subplots(1, 1, figsize=(11, 3))
 # fig, ax = plt.subplots(1, 1, figsize=(6, 3))
 lw = 3
 fontsize = 18  # 22
@@ -80,9 +80,11 @@ ax.set_ylabel('Volatile mole fraction', fontsize=fontsize + 4)
 ax.set_title(r'1 bar, 1800 K', fontsize=fontsize + 4)
 ax.set_xlim(buffer.min(), buffer.max())
 ax.tick_params(axis='both', which='major', labelsize=fontsize - 2)
-ax.legend(frameon=False, fontsize=fontsize, bbox_to_anchor=(1.01, 1), loc='upper left')
-ax.set_xlim(-4, 3)
-# ax.set_xlim(-6, 1)
+ax.legend(frameon=False, fontsize=fontsize,
+          # bbox_to_anchor=(1.01, 1),  loc='upper left'
+          )
+# ax.set_xlim(-4, 3)
+ax.set_xlim(-6, 1)
 
 fig, ax = dark_background(fig, ax)
 
