@@ -22,7 +22,8 @@ oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O'] #, 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
 X_ferric = 0.03
-core_eff = [0.7, 0.65]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
+# core_eff = [0.7, 0.65]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
+core_eff = [0.99, 0.95, 0.97]
 
 for ce in core_eff:
     output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
@@ -39,9 +40,9 @@ for ce in core_eff:
                         mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                         # use_local_compositon=False,
-                        use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
+                        use_local_composition=True, existing_dir='hypatia_88coreeff_5ferric_ext/',  # try local first
                         # existing_output_parent=pfug.output_parent_apollo,  # <== existing kwarg
                         # restart='2MASS 23155829+3127462'
-                        run_vertex=True,  # overwrite existing vertex files
+                        run_vertex='auto',  # overwrite existing vertex files if exist
                         suffix=str(X_ferric*100).replace('.', ',') + 'fer',
                         )

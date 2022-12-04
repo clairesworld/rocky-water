@@ -256,7 +256,8 @@ class PerplexFugacityData(px.PerplexData):
             self.run_perplex(werami_command_end='_werami_command_mu.txt',
                              werami_command_text_fn=self.command_werami_mu,
                              vertex_command_text_fn=self.command_vertex_grid,
-                             output_file_end='_mu.tab', build_file_end=build_file_end, verbose=verbose, clean=True,
+                             output_file_end='_mu.tab', build_file_end=build_file_end, verbose=verbose,
+                             clean=True, ## store_vertex_output means files don't get deleited
                              werami_kwargs={'points_file': points_file}, run_vertex=run_vertex,
                              store_vertex_output=True,
                              **kwargs)

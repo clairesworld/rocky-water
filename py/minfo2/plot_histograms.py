@@ -48,7 +48,7 @@ fig.savefig(fo2plt.figpath + 'hist_fer.png', bbox_inches='tight', facecolor=fig.
 
 # set these
 X_ferric = 3
-coreeff_list = [70, 80, 85, 88, 99]
+coreeff_list = [80, 85, 88, 99]
 
 dirs = [fo2plt.output_parent_px + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric_ext/' for ce in coreeff_list]
 if p_of_interest == 1:
