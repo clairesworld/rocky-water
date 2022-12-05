@@ -87,10 +87,19 @@ def tally_runs(output_parent_path, **kwargs):
     return good, bad
 
 
+""" across core eff """
 X_ferric = 3
 coreeff_list = [80, 85, 88, 99]
 dirs = [fo2plt.output_parent_mlt_earth + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric_ext/' for ce in coreeff_list]
-
 for d in dirs:
-    print('-----\n', d)git
+    print('-----\n', d)
+    good, bad = tally_runs(d)
+
+
+""" across Xferric """
+ce = 88
+X_ferric_list = [1, 3, 5, 7, 9]
+dirs = [fo2plt.output_parent_mlt_earth + 'hypatia_' + str(ce) + 'coreeff_' + str(Xf) + 'ferric_ext/' for Xf in X_ferric_list]
+for d in dirs:
+    print('-----\n', d)
     good, bad = tally_runs(d)
