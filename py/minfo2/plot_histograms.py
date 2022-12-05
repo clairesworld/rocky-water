@@ -8,7 +8,7 @@ from py.useful_and_bespoke import dark_background
 core_eff = 88
 X_ferric_list = [1, 3, 5, 7, 9]
 p_of_interest = 1
-model = 'perplex'
+model = 'melts'
 
 if model == 'melts':
     dirs = [fo2plt.output_parent_mlt_earth + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/' for Xf in
@@ -47,26 +47,27 @@ fig.savefig(fo2plt.figpath + 'hist_fer.png', bbox_inches='tight', facecolor=fig.
 """ across core partitioning """
 
 # set these
-X_ferric = 3
-coreeff_list = [80, 85, 88, 99]
+# X_ferric = 3
+# coreeff_list = [80, 85, 88, 99]
+#
+# dirs = [fo2plt.output_parent_px + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric_ext/' for ce in coreeff_list]
+# if p_of_interest == 1:
+#     x_var = 'delta_qfm_1GPa'
+#     xlabel = 'log(fO$_2$) at 1 GPa'
+#     fname = 'compare_pop_hist_coreeff_1GPa'
+# elif p_of_interest == 4:
+#     x_var = 'delta_qfm_4GPa'
+#     xlabel = 'log(fO$_2$) at 4 GPa'
+#     fname = 'compare_pop_hist_coreeff_4GPa'
+# fig, ax = fo2plt.compare_pop_hist(dirs, x_var=x_var, z_var='core_eff', x_scale=1, z_scale=1, fname=fname,
+#                         save=False, exclude_names=[], legtitle=r'Fe percentage into core',
+#                         ls='-', cmap='cool', vmin=0.65, vmax=1, xlabel='log(fO$_2$) at 1 GPa', bins=40)
+# ax.set_yticks([])
+# ax.set_xlabel('log$f$O$_2$ ($\Delta$QFM)', fontsize=18, labelpad=12)
+# ax.set_title(str(p_of_interest) + ' GPa', fontsize=18)
+# ax.set_xlim(-4, 3)
+# ax.set_ylim(0, 1.8)
+#
+# fig.savefig(fo2plt.figpath + 'hist_core.png', bbox_inches='tight', facecolor=fig.get_facecolor())
 
-dirs = [fo2plt.output_parent_px + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric_ext/' for ce in coreeff_list]
-if p_of_interest == 1:
-    x_var = 'delta_qfm_1GPa'
-    xlabel = 'log(fO$_2$) at 1 GPa'
-    fname = 'compare_pop_hist_coreeff_1GPa'
-elif p_of_interest == 4:
-    x_var = 'delta_qfm_4GPa'
-    xlabel = 'log(fO$_2$) at 4 GPa'
-    fname = 'compare_pop_hist_coreeff_4GPa'
-fig, ax = fo2plt.compare_pop_hist(dirs, x_var=x_var, z_var='core_eff', x_scale=1, z_scale=1, fname=fname,
-                        save=False, exclude_names=[], legtitle=r'Fe percentage into core',
-                        ls='-', cmap='cool', vmin=0.65, vmax=1, xlabel='log(fO$_2$) at 1 GPa', bins=40)
-ax.set_yticks([])
-ax.set_xlabel('log$f$O$_2$ ($\Delta$QFM)', fontsize=18, labelpad=12)
-ax.set_title(str(p_of_interest) + ' GPa', fontsize=18)
-ax.set_xlim(-4, 3)
-ax.set_ylim(0, 1.8)
-
-fig.savefig(fo2plt.figpath + 'hist_core.png', bbox_inches='tight', facecolor=fig.get_facecolor())
 plt.show()
