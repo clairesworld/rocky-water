@@ -22,8 +22,10 @@ opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 
 # set these
 T_of_interest = 1373.15  # 1673.15
-X_ferric = [0.03, 0.02, 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
-core_eff = [0.88, 0.85, 0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
+# X_ferric = [0.03, 0.02, 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
+# core_eff = [0.88, 0.85, 0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
+core_eff = [0.70]
+X_ferric = [0.03]
 location = 'apollo'  # 'starlite'
 
 # run
@@ -45,7 +47,7 @@ for ce in core_eff:
         mfug.common_Tmin(output_parent_path)
 
         # calculate mantle fo2 only
-        mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=X_ferric, alphamelts_path=alphamelts_path,
+        mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=Xf, alphamelts_path=alphamelts_path,
                           compare_buffer='qfm', perplex_path=perplex_path,
                           T_of_interest=T_of_interest,  # reload_TP=True,
                           verbose=False)
