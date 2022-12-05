@@ -549,6 +549,7 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
                                        , 'mass_melt_min', 'n_pressures'], index=range(len(names)))
     for row, sub in enumerate(names):
         dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
+        dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
         if dat:  # existing runs
             dat.find_common_T_final_from_results()
             df.at[row, 'name'] = dat.name
