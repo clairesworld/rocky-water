@@ -19,8 +19,6 @@ matplotlib.use('Agg')
 
 opp_mlt = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 # opp_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
-# opp_mlt = mfug.output_parent_default  # fo2plt.output_parent_mlt + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
-# opp_px = pfug.output_parent_default  # fo2plt.output_parent_px + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
 
 """ scatter plot of where Fe3+ is on ternary diagram """
 
@@ -56,7 +54,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                 z = [eval('dat.' + z_var)]
             else:
                 z = 'k'
-            print('z', z)
+            # print('z', z)
 
             d = dat.read_phase_comp(p_of_interest=p_of_interest, T_of_interest=T_of_interest, component=component,
                                     verbose=False)
@@ -69,8 +67,14 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             for k in d2:
                 d2[k] = d2[k] * factor
             print('d2', d2, 'sum', sum(d2.values()))
-            xyz = tuple([d2[k] for k in phases])  # preserve order
-            print('[xyz]', [xyz])
+
+            xyz = []
+            for k in phases:  # preserve order
+                try:
+                    xyz.append(d2[k])
+                except KeyError:
+                    xyz.append(0)  # e. g. no spinel in this composition?
+            xyz = tuple(xyz)
             tax.scatter([xyz], marker='s', c=z, cmap=cmap, vmin=None, vmax=None)
 
     if name is not None:
