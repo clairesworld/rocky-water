@@ -5,7 +5,7 @@ from py.useful_and_bespoke import dark_background
 import numpy as np
 import meltsfugacitydata as mfug
 import perplexfugacitydata as pfug
-import py.main as rw
+from py import main as rw
 import os
 
 opp_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
