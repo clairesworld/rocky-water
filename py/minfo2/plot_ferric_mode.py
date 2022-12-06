@@ -13,6 +13,10 @@ import meltsfugacitydata as mfug
 import perplexfugacitydata as pfug
 from py import main as rw
 
+# for running remotely
+import matplotlib
+matplotlib.use('Agg')
+
 opp_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 # opp_mlt = mfug.output_parent_default  # fo2plt.output_parent_mlt + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
 # opp_px = pfug.output_parent_default  # fo2plt.output_parent_px + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
