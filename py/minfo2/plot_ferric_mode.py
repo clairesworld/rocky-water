@@ -81,21 +81,25 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='s', c=z, cmap=cmap, vmin=None, vmax=None)
+        tax.scatter([xyz], marker='o', c=z, cmap=cmap, vmin=vmin, vmax=vmax)
+        return 1
 
     if name is not None:
         draw_point(name, z_var)
     else:
+        count = 0
         if model == 'melts':
             opp = opp_mlt + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
         subfolders = rw.get_run_dirs(output_path=opp)
         for ii, sub in enumerate(subfolders):
             if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                 name = os.path.basename(sub)
-                draw_point(name, z_var)
+                add = draw_point(name, z_var)
+                count != add
 
     if save:
-        plt.savefig(fig_path + 'ferric_ternary_' + str(p_of_interest) + 'GPa.pdf', bbox_inches='tight')
+        plt.savefig(fig_path + 'ferric_ternary_' + str(p_of_interest) + 'GPa.png', bbox_inches='tight')
+    print('num points', count)
 
 
 ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
