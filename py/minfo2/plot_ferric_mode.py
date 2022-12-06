@@ -63,6 +63,9 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             d2 = {x:np.round(y, 3) for x,y in d.items() if (y!=0) and (~np.isnan(y))}  # round to remove fp imprecision
             if len(d2) > 3:
                 raise NotImplementedError(name, 'more than 3 ferric hosts:', d2)
+            if sum(d2.values()) == 0:
+                print('name', d2, 'sum = 0')
+                return None  # exit to outer function
             factor = 100 / sum(d2.values())
             for k in d2:
                 d2[k] = d2[k] * factor

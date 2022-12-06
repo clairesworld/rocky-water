@@ -23,7 +23,7 @@ class MeltsFugacityData:
     def __init__(self, name='test', star=None,  # solution_phases=solution_phases_default,
                  output_parent_path=output_parent_default, wt_oxides=pf.wt_oxides_DMM, X_ferric=0.03,
                  alphamelts_path=alphamelts_path_default,
-                 T_final=None, pressures_of_interest=None, verbose=True,
+                 T_final=None, pressures_of_interest=None, verbose=False,
                  **kwargs):
 
         """
