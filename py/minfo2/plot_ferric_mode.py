@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(PARENT_DIR))
 
 import ternary
 import matplotlib.pyplot as plt
-# import oxygen_fugacity_plots as fo2plt
+import oxygen_fugacity_plots as fo2plt
 from py.useful_and_bespoke import dark_background
 import numpy as np
 import meltsfugacitydata as mfug
