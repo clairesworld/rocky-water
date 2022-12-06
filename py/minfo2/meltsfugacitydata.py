@@ -438,6 +438,28 @@ class MeltsFugacityData:
         except (KeyError, AttributeError):
             pass
 
+    def read_phase_main(self, phase, verbose=False):
+        pass
+
+    def read_phase_comp(self, p_of_interest, verbose=False):
+        """
+        Parameters
+        ----------
+        p_of_interest : GPa
+        verbose :
+
+        Returns
+        -------
+
+        """
+        try:
+            df = pd.read_csv(self.output_path + str(float(p_of_interest * 1000)) + 'bar/Phase_main_tbl.txt', sep='\t')
+            if verbose:
+                print('loaded df\n', self.data.head())
+        except FileNotFoundError:
+            print('...results.csv file not found! skipping')
+            return False
+
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
                       T_final=1373, load_results_csv=False, verbose=True, X_ferric=None, **kwargs):

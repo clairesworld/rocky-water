@@ -21,6 +21,10 @@ def completion_df(output_parent_path, T_of_interest=1373.0, col_out=['logfo2'], 
     if not iterable_not_string(col_out):
         col_out = [col_out]
 
+    if not os.path.exists(output_parent_path):
+        print(output_parent_path, 'does not exist')
+        return None
+
     # get directory names in folder
     subfolders = rw.get_run_dirs(output_path=output_parent_path)
     n_stars = len(subfolders)
@@ -80,6 +84,9 @@ def completion_df(output_parent_path, T_of_interest=1373.0, col_out=['logfo2'], 
 
 def tally_runs(output_parent_path, **kwargs):
     df = completion_df(output_parent_path, **kwargs)
+    if df is None:
+        return [], []
+
     good = [df.loc[ii].name for ii in range(len(df)) if df.loc[ii].p_missing == 0]
     bad = [df.loc[ii].name for ii in range(len(df)) if df.loc[ii].name not in good]
     print('good:', len(good), '/', len(df))
@@ -87,10 +94,13 @@ def tally_runs(output_parent_path, **kwargs):
     return good, bad
 
 
+# source = fo2plt.output_parent_mlt_earth
+source = fo2plt.output_parent_px
+
 """ across core eff """
 X_ferric = 3
-coreeff_list = [80, 85, 88, 99]
-dirs = [fo2plt.output_parent_mlt_earth + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric_ext/' for ce in coreeff_list]
+coreeff_list = [65, 70, 75, 80, 85, 88, 90, 95, 99]
+dirs = [source + 'hypatia_' + str(ce) + 'coreeff_' + str(X_ferric) + 'ferric_ext/' for ce in coreeff_list]
 for d in dirs:
     print('-----\n', d)
     good, bad = tally_runs(d)
@@ -99,7 +109,7 @@ for d in dirs:
 """ across Xferric """
 ce = 88
 X_ferric_list = [1, 3, 5, 7, 9]
-dirs = [fo2plt.output_parent_mlt_earth + 'hypatia_' + str(ce) + 'coreeff_' + str(Xf) + 'ferric_ext/' for Xf in X_ferric_list]
+dirs = [source + 'hypatia_' + str(ce) + 'coreeff_' + str(Xf) + 'ferric_ext/' for Xf in X_ferric_list]
 for d in dirs:
     print('-----\n', d)
     good, bad = tally_runs(d)

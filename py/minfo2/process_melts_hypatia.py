@@ -24,7 +24,7 @@ opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 T_of_interest = 1373.15  # 1673.15
 # X_ferric = [0.03, 0.02, 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
 # core_eff = [0.88, 0.85, 0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
-core_eff = [0.70]
+core_eff = [0.70, 0.95, 0.99, 0.65]
 X_ferric = [0.03]
 location = 'apollo'  # 'starlite'
 
