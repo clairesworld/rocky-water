@@ -1,12 +1,17 @@
+import os
+import sys
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.append(os.path.dirname(PARENT_DIR))
+
 import ternary
 import matplotlib.pyplot as plt
-import oxygen_fugacity_plots as fo2plt
+# import oxygen_fugacity_plots as fo2plt
 from py.useful_and_bespoke import dark_background
 import numpy as np
 import meltsfugacitydata as mfug
 import perplexfugacitydata as pfug
 from py import main as rw
-import os
 
 opp_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 # opp_mlt = mfug.output_parent_default  # fo2plt.output_parent_mlt + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
