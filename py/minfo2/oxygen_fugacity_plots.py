@@ -5,7 +5,7 @@ import pathlib
 import subprocess
 # import py.perplexdata as px
 # import py.bulk_composition as bulk
-import py.main as rw
+from py import main as rw
 from scipy import interpolate
 import py.parameters as p
 import perplexfugacitydata as pfug
