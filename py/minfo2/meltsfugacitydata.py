@@ -399,7 +399,7 @@ class MeltsFugacityData:
                     print('loaded df\n', self.data.head())
             except FileNotFoundError:
                 print('...results.csv file not found! skipping')
-                return False
+                return None
 
         self.logfo2 = self.data['logfo2'].to_numpy()
         try:
@@ -503,12 +503,12 @@ class MeltsFugacityData:
                         wt_pt_dict[phase] = np.nan
         except FileNotFoundError:
             print('...results.csv file not found! skipping')
-            return False
+            return None
         return wt_pt_dict
 
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
-                      T_final=1373, load_results_csv=False, verbose=True, X_ferric=None, **kwargs):
+                      T_final=1373, load_results_csv=False, verbose=False, X_ferric=None, **kwargs):
     import re
     parts = name.split('_')
     try:

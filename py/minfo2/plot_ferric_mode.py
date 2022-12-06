@@ -49,36 +49,39 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             dat = mfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp,
                                          load_results_csv=False, **kwargs)
 
-        if dat is not None:
-            if z_var is not None:
-                z = [eval('dat.' + z_var)]
-            else:
-                z = 'k'
-            # print('z', z)
+        if dat is None:
+            return None
+        if z_var is not None:
+            z = [eval('dat.' + z_var)]
+        else:
+            z = 'k'
+        # print('z', z)
 
-            d = dat.read_phase_comp(p_of_interest=p_of_interest, T_of_interest=T_of_interest, component=component,
-                                    verbose=False)
+        d = dat.read_phase_comp(p_of_interest=p_of_interest, T_of_interest=T_of_interest, component=component,
+                                verbose=False)
 
-            # get opx, cpx, sp or gt, normalise to 100
-            d2 = {x:np.round(y, 3) for x,y in d.items() if (y!=0) and (~np.isnan(y))}  # round to remove fp imprecision
-            if len(d2) > 3:
-                raise NotImplementedError(name, 'more than 3 ferric hosts:', d2)
-            if sum(d2.values()) == 0:
-                print('name', d2, 'sum = 0')
-                return None  # exit to outer function
-            factor = 100 / sum(d2.values())
-            for k in d2:
-                d2[k] = d2[k] * factor
-            print('d2', d2, 'sum', sum(d2.values()))
+        if d is None:
+            return None
+        # get opx, cpx, sp or gt, normalise to 100
+        d2 = {x:np.round(y, 3) for x,y in d.items() if (y!=0) and (~np.isnan(y))}  # round to remove fp imprecision
+        if len(d2) > 3:
+            raise NotImplementedError(name, 'more than 3 ferric hosts:', d2)
+        if sum(d2.values()) == 0:
+            print('name', d2, 'sum = 0')
+            return None  # exit to outer function
+        factor = 100 / sum(d2.values())
+        for k in d2:
+            d2[k] = d2[k] * factor
+        print('d2', d2, 'sum', sum(d2.values()))
 
-            xyz = []
-            for k in phases:  # preserve order
-                try:
-                    xyz.append(d2[k])
-                except KeyError:
-                    xyz.append(0)  # e. g. no spinel in this composition?
-            xyz = tuple(xyz)
-            tax.scatter([xyz], marker='s', c=z, cmap=cmap, vmin=None, vmax=None)
+        xyz = []
+        for k in phases:  # preserve order
+            try:
+                xyz.append(d2[k])
+            except KeyError:
+                xyz.append(0)  # e. g. no spinel in this composition?
+        xyz = tuple(xyz)
+        tax.scatter([xyz], marker='s', c=z, cmap=cmap, vmin=None, vmax=None)
 
     if name is not None:
         draw_point(name, z_var)
