@@ -438,13 +438,48 @@ class MeltsFugacityData:
         except (KeyError, AttributeError):
             pass
 
-    def read_phase_main(self, phase, verbose=False):
-        pass
+    def read_phase_main(self, phase, p_of_interest, T_of_interest, verbose=False):
+        filename = self.output_path + str(float(p_of_interest * 1e4)).replace('.', ',') + 'bar/Phase_main_tbl.txt'
+        tmp = []
+        with open(filename) as file:
+            start = False
+            for line in file:
+                line = line.rstrip()  # remove trailing whitespace
+                if line.startswith(phase):
+                    start = True
+                if start:
+                    if line.strip() == "":
+                        break  # finished once you get to blank line
+                    # find T_of_interest
+                    bits = line.split()
+                    if (bits[1] == 'Temperature') or (bits[1] == str(T_of_interest)):
+                        tmp.append(line)
+        if not start:
+            # never found this phase
+            print(phase, 'not found')
+            return None
+        if len(tmp) < 2:
+            print(T_of_interest, 'K not found')
+            return None
 
-    def read_phase_comp(self, p_of_interest, verbose=False):
+        # write temp file (not sure how to make df otherwise)
+        with open('tmp.txt', 'w') as f:
+            for line in tmp:
+                f.write(f"{line}\n")
+
+        df = pd.read_csv('tmp.txt', skiprows=0, index_col=None, sep=r"\s+")
+        # print(df.head())
+
+        os.remove('tmp.txt')
+        return df
+
+    def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(), verbose=False):
         """
         Parameters
         ----------
+        phases :
+        T_of_interest :
+        component :
         p_of_interest : GPa
         verbose :
 
@@ -452,13 +487,24 @@ class MeltsFugacityData:
         -------
 
         """
+        wt_pt_dict = {ph: None for ph in phases}
         try:
-            df = pd.read_csv(self.output_path + str(float(p_of_interest * 1000)) + 'bar/Phase_main_tbl.txt', sep='\t')
-            if verbose:
-                print('loaded df\n', self.data.head())
+            for phase in phases:
+                df = self.read_phase_main(phase, p_of_interest, T_of_interest, verbose=verbose)
+                if df is None:
+                    wt_pt_dict[phase] = np.nan
+                else:
+                    if verbose:
+                        print(phase,'loaded df\n', df.head())
+                    try:
+                        wt_pt_dict[phase] = df[component].iloc[0]
+                    except KeyError:
+                        print(component, 'not found in', phase)
+                        wt_pt_dict[phase] = np.nan
         except FileNotFoundError:
             print('...results.csv file not found! skipping')
             return False
+        return wt_pt_dict
 
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
