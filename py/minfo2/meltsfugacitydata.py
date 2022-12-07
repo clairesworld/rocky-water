@@ -515,7 +515,7 @@ class MeltsFugacityData:
                         try:
                             mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
                         except KeyError as e:
-                            self.read_melts_phases(T_of_interest=T_of_interest, which='mass', verbose=False)
+                            self.read_melts_phases(T_of_interest=T_of_interest, which='mass', verbose=True, reload_TP=True)
                             print(self.data.head())
                             mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
                     else:
