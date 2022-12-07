@@ -62,7 +62,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
         if z_var is not None:
             z = [eval('dat.' + z_var)]
-            ternary.heatmap({}, scale=100, ax=plt.gca(), cmap=cmap)
+            ternary.heatmap({}, scale=100, ax=plt.gca(), vmin=vmin, vmax=vmax, cmap=cmap)
             # ternary.colormapping.colorbar_hack(plt.gca(), vmin, vmax, cmap, scientific=False,
             #               cbarlabel=z_label)  #, **cb_kwargs)
             #
@@ -119,7 +119,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 
 ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='viridis', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                    model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
                 z_label='Mg/Si',
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
