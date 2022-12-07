@@ -86,7 +86,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         factor = 100 / sum(d2.values())
         for k in d2:
             d2[k] = d2[k] * factor
-        print('d2', d2, 'sum', sum(d2.values()))
+        # print('d2', d2, 'sum', sum(d2.values()))
 
         xyz = []
         for k in phases:  # preserve order

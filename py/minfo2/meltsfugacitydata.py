@@ -456,7 +456,8 @@ class MeltsFugacityData:
                         tmp.append(line)
         if not start:
             # never found this phase
-            print(phase, 'not found')
+            if verbose:
+                print(phase, 'not found')
             return None
         if len(tmp) < 2:
             print(T_of_interest, 'K not found')
@@ -561,7 +562,8 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
 
         return dat
     else:
-        print('no melts files at', name)
+        if verbose:
+            print('no melts files at', name)
         return None
 
 
