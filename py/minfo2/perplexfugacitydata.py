@@ -594,7 +594,8 @@ class PerplexFugacityData(px.PerplexData):
 
 
 def init_from_results(name, X_ferric=None, load_results_csv=False, verbose=False, **kwargs):
-    """ currently not saving X_ferric in directory name so must enter known value manually """
+    """ currently not saving X_ferric in directory name so must enter known value manually
+    output_parent_path in kwargs"""
     # TODO parse star from name using possible prefixes
 
     # from py.parameters import M_E

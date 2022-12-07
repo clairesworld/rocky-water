@@ -36,9 +36,11 @@ for ce in core_eff:
             name = os.path.basename(sub)
             # star = name.split('_')[2]
 
-            dat = pf.init_from_results(name, X_ferric, load_results_csv=True)
+            dat = pf.init_from_results(name, X_ferric, load_results_csv=True, output_parent_path=output_parent_path)
             if dat:
                 dat.ferric_composition_calc(T_iso=T_iso, p_min=p_min, p_max=p_max, verbose=True)
                 print('finished', name)
+            else:
+                print('error loading')
     else:
         print('no local output found in', output_parent_path)
