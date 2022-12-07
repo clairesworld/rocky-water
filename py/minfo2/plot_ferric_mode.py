@@ -103,6 +103,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         count = 0
         if model == 'melts':
             opp = opp_mlt + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
+        elif model == 'perplex':
+            opp = pfug.output_parent_apollo + 'hypatia_' + str(core_eff) + 'coreeff_' + str(int(Xf)) + 'ferric_ext/'
         subfolders = rw.get_run_dirs(output_path=opp)
         for ii, sub in enumerate(subfolders):
             if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
@@ -144,7 +146,7 @@ fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, 
                     model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Sp'],
                 z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
                     # name='Stolper',
-                           opp=pfug.output_parent_apollo,
+                    #        opp=pfug.output_parent_apollo,
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
 # plt.show()
