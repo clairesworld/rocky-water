@@ -59,9 +59,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         if z_var is not None:
             z = [eval('dat.' + z_var)]
 
-            cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=14,
-                          ticksize=ticksize, labelpad=17, loc='right',
-                          rot=None, discrete=False, cmap=cmap, c='k', pad=0.05)
+            cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=fontsize,
+                          ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.05)
         else:
             z = 'k'
         # print('z', z)
