@@ -58,6 +58,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
         if z_var is not None:
             z = [eval('dat.' + z_var)]
+            ternary.colormapping.colorbar_hack(plt.gca(), vmin, vmax, cmap, scientific=False,
+                          cbarlabel=z_label)  #, **cb_kwargs)
             #
             # cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=fontsize,
             #               ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.05)
@@ -89,7 +91,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', c=z, s=60, alpha=0.2, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
+        tax.scatter([xyz], marker='o', c=z, s=90, alpha=0.3, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:
