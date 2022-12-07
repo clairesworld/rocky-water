@@ -516,10 +516,11 @@ class MeltsFugacityData:
                             mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
                         except KeyError as e:
                             # this is probably because T_of_interest not found - won't fill in _results.csv
+                            # for 1M_88Ceff_HIP84856_999K_3,0fer, other weird issue
                             self.read_melts_phases(T_of_interest=T_of_interest, which='mass', verbose=True, reload_TP=True)
                             print(self.data.head())
-                            print(self.name)
-                            mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
+                            print(self.name, e)
+                            return None
                     else:
                         mass_ph = 1
 
