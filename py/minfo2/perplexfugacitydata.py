@@ -266,7 +266,6 @@ class PerplexFugacityData(px.PerplexData):
         for icol in range(2,len(df_w.columns),2):  # skip first 2 (T, P), every 1st is FeO
             col = df_w.columns[icol]
             ph = map_from_JH_phase[re.sub(r'[0-9]', '', col[2:-1])]  # remove C[*] and trailing digit
-            print(ph)
             if ph == phase:
                 ph_FeOstar = df_w.iloc[irow, icol]
                 ph_O2 = df_w.iloc[irow, icol + 1]
@@ -334,8 +333,8 @@ class PerplexFugacityData(px.PerplexData):
                             # print('mass', phase, mass_ph)
                         except KeyError as e:
                             print(self.data.head())
-                            print(self.name, e)
-                            return None
+                            print(self.name, 'key error', e)
+                            mass_ph = 0
                     else:
                         mass_ph = 1
 
