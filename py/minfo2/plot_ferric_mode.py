@@ -54,11 +54,11 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         tax.ticks(axis='lbr', linewidth=1, multiple=10, tick_formats="%.0f", fontsize=ticksize)
 
         # add colourbar
-        if z_var:
-            cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label,
-                             labelsize=fontsize,
-                             ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.1, shrink=0.5,
-                             size="3%")
+        # if z_var:
+            # cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label,
+            #                  labelsize=fontsize,
+            #                  ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.1, shrink=0.5,
+            #                  size="3%")
 
     # fig.set_size_inches(10, 10)
     tax.set_background_color(color='w', zorder=-1000, alpha=0)
@@ -77,10 +77,6 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
             print('dropping case with quartz')
             return None
-
-        # if 'X_Sp' not in dat.data.columns:
-        #     print('no spinel in', name)
-        #     print(dat.data.head())
 
         if z_var:
             z = [eval('dat.' + z_var)]
@@ -104,7 +100,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         factor = 100 / sum(d2.values())
         for k in d2:
             d2[k] = d2[k] * factor
-        # print('d2', d2, 'sum', sum(d2.values()))
+        print('d2', d2, 'sum', sum(d2.values()))
 
         xyz = []
         for k in phases_px:  # preserve order
@@ -141,15 +137,15 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 fig, axes = plt.subplots(2,2, figsize=(20, 20))
 _, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'garnet'],
+                    model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
                 z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5, title='MELTS',
                            ax=axes[0][0],
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
 _, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Gt'],
-                   mec='k', marker='d', lw=1.5,
+                    model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Sp'],
+                   mec='k', marker='d', lw=1.5, title='Perple_x',
                            ax = axes[0][1],
                     # name='Stolper',
                     #        opp=pfug.output_parent_apollo,
@@ -158,7 +154,7 @@ _, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf=3.
 
 _, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'garnet'],
-                z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5, title='Perple_x',
+                z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5,
                            ax=axes[1][0],
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')

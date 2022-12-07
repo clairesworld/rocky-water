@@ -332,7 +332,7 @@ class PerplexFugacityData(px.PerplexData):
                             mass_ph = self.data['X_' + phase].iloc[idx]
                             # print('mass', phase, mass_ph)
                         except KeyError as e:
-                            print(self.data.head())
+                            # print(self.data.head())
                             print(self.name, 'key error', e)
                             mass_ph = 0
                     else:
