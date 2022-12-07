@@ -541,9 +541,9 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
 
 
 def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin=None, vmax=None, xlabel=None,
-             ylabel=None,
+             ylabel=None, alpha=0.5,
              title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10, dmm=True,
-             c_dmm='r',
+             c_dmm='r', xlims=None,
              labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True,
              x_scale=1, **kwargs):
     # get matching names
@@ -638,14 +638,15 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var=None, cmap=None, c='k', vmin
         c = c
         cmap = None
 
-    sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, vmin=vmin, vmax=vmax, s=s, marker=marker)
+    sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, vmin=vmin, vmax=vmax, s=s, marker=marker, alpha=alpha)
 
     # make cbar
     if z_var is not None:
         cax = colourbar(sc, ax=ax, label=zlabel, labelsize=labelsize, ticksize=ticksize)
 
     # 1:1 line
-    xlims = ax.get_xlim()
+    if xlims is None:
+        xlims = ax.get_xlim()
     for delta in [-2, -1, 0, 1, 2]:
         ax.plot(xlims, np.array(xlims) + delta, c='k', ls='--', lw=3 - np.abs(delta))
 
