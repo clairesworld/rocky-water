@@ -474,7 +474,8 @@ class MeltsFugacityData:
         os.remove('tmp.txt')
         return df
 
-    def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(), verbose=False):
+    def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+                        absolute_abundance=True, verbose=False):
         """
         Parameters
         ----------
@@ -488,20 +489,39 @@ class MeltsFugacityData:
         -------
 
         """
-        wt_pt_dict = {ph: None for ph in phases}
+        if absolute_abundance and (not hasattr(self, 'data')):
+            self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+
+        try:
+            idx = self.pressures_of_interest.index(p_of_interest*1e4)
+            print('p idx', idx, p_of_interest)
+        except ValueError as e:
+            # pressure not found
+            print(p_of_interest, 'GPa not found')
+            raise e
+
+        wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
         try:
             for phase in phases:
                 df = self.read_phase_main(phase, p_of_interest, T_of_interest, verbose=verbose)
-                if df is None:
-                    wt_pt_dict[phase] = np.nan
+
+                if df is None:  # phase not found
+                    wt_pt_dict[map_to_px_phase[phase]] = np.nan
                 else:
                     if verbose:
                         print(phase,'loaded df\n', df.head())
+
+                    if absolute_abundance:
+                        # normalise to total quantity of phase
+                        mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
+                    else:
+                        mass_ph = 1
+
                     try:
-                        wt_pt_dict[phase] = df[component].iloc[0]
+                        wt_pt_dict[map_to_px_phase[phase]] = df[component].iloc[0] * mass_ph
                     except KeyError:
                         print(component, 'not found in', phase)
-                        wt_pt_dict[phase] = np.nan
+                        wt_pt_dict[map_to_px_phase[phase]] = np.nan
         except FileNotFoundError:
             print('...results.csv file not found! skipping')
             return None
