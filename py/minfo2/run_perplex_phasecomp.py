@@ -37,6 +37,7 @@ for ce in core_eff:
             # star = name.split('_')[2]
 
             dat = pf.init_from_results(name, X_ferric, load_results_csv=True)
-            dat.ferric_composition_calc(T_iso=T_iso, p_min=p_min, p_max=p_max, verbose=True)
+            if dat:
+                dat.ferric_composition_calc(T_iso=T_iso, p_min=p_min, p_max=p_max, verbose=True)
     else:
         print('no local output found in', output_parent_path)
