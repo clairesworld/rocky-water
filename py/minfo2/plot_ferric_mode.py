@@ -98,7 +98,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                 name = os.path.basename(sub)
                 add = draw_point(name, z_var)
-                count += add
+                if add is not None:
+                    count += add
 
     if save:
         plt.savefig(fig_path + 'ferric_ternary_' + str(p_of_interest) + 'GPa.png', bbox_inches='tight')
