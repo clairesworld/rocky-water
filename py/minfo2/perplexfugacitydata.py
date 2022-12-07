@@ -259,7 +259,7 @@ class PerplexFugacityData(px.PerplexData):
         try:
             irow = df_w.loc[(df_w['T(K)'] == T_of_interest) & (df_w['P(bar)'] == p_of_interest * 1e4)].index[0]
         except IndexError:
-            print(self.name, T_of_interest, p_of_interest, 'not found')
+            print(self.name, T_of_interest, p_of_interest*1e4, 'not found')
             print(df_w.head())
             return None
         # convert FeO + O2 into Fe2O3
