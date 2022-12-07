@@ -494,7 +494,6 @@ class MeltsFugacityData:
 
         try:
             idx = self.pressures_of_interest.index(p_of_interest*1e4)
-            print('p idx', idx, p_of_interest)
         except ValueError as e:
             # pressure not found
             print(p_of_interest, 'GPa not found')
@@ -509,11 +508,15 @@ class MeltsFugacityData:
                     wt_pt_dict[map_to_px_phase[phase]] = np.nan
                 else:
                     if verbose:
-                        print(phase,'loaded df\n', df.head())
+                        print(phase, 'loaded df\n', df.head())
 
                     if absolute_abundance:
                         # normalise to total quantity of phase
-                        mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
+                        try:
+                            mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
+                        except KeyError as e:
+                            print(self.data.head())
+                            print(e)
                     else:
                         mass_ph = 1
 
