@@ -62,6 +62,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
         if z_var is not None:
             z = [eval('dat.' + z_var)]
+            ternary.heatmap({}, scale=100, ax=plt.gca(), cmap=cmap)
             # ternary.colormapping.colorbar_hack(plt.gca(), vmin, vmax, cmap, scientific=False,
             #               cbarlabel=z_label)  #, **cb_kwargs)
             #
