@@ -189,7 +189,7 @@ def colourbar(mappable=None, vector=None, ax=None, vmin=None, vmax=None, label='
         cbar.ax.xaxis.set_label_position('top')
         rotation = 0
     else:
-        cbar = fig.colorbar(mappable, cax=cax, **kwargs)
+        cbar = fig.colorbar(mappable, cax=cax, shrink=shrink, **kwargs)
         rotation = 270
     cbar.set_label(label, rotation=rotation, labelpad=labelpad, fontsize=labelsize, c=c)
 

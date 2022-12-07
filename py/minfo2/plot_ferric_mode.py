@@ -25,7 +25,7 @@ opp_mlt = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 
 
 def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    z_label=None, model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=14, offset=0.1,
+                    z_label=None, model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=16, offset=0.1,
                     phases=['Opx', 'CPx', 'Sp'],
                     absolute_abundance=True,
                     name=None, opp=None, save=False, mec=None, lw=1.5, ticksize=12, fig_path=fo2plt.figpath,
@@ -91,7 +91,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.3, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
+        tax.scatter([xyz], marker='o', edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.4, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:
@@ -119,7 +119,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     tax.gridlines(color="blue", multiple=5)
     tax.get_axes().axis('off')
     tax.clear_matplotlib_ticks()
-    tax.ticks(axis='lbr', linewidth=1, multiple=10, tick_formats="%.0f")
+    tax.ticks(axis='lbr', linewidth=1, multiple=10, tick_formats="%.0f", fontsize=ticksize)
 
     # add colourbar
     if z_var:
