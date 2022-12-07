@@ -106,7 +106,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 
 ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='viridus', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                    model='melts', cmap='cividis', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
