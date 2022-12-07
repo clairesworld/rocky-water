@@ -33,15 +33,35 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                     fig=None, tax=None, **kwargs):
     """ plot distribution of component between 3 phases """
 
-    if fig is None:
-        fig, tax = ternary.figure(scale=100)
-    fig.set_size_inches(10, 10)
-    tax.set_background_color(color='w', zorder=-1000, alpha=0)
-
     if model == 'perplex':
         phases_px = phases
     else:
-        phases_px = [mfug.map_to_px_phase[k] for k in phases]
+        phases_px = [mfug.map_to_px_phase[k] for k in phases]#
+
+    if fig is None:
+        fig, tax = ternary.figure(scale=100)
+        # plot setup
+        tax.bottom_axis_label(phases_px[0], fontsize=fontsize, offset=0)
+        tax.right_axis_label(phases_px[1], fontsize=fontsize, offset=offset)
+        tax.left_axis_label(phases_px[2], fontsize=fontsize, offset=offset)
+        tax.set_title("Fe$^{3+}$ modality (" + str(p_of_interest) + ' GPa)', fontsize=fontsize)
+
+        # Draw Boundary and Gridlines
+        tax.boundary(linewidth=2.0)
+        tax.gridlines(color="blue", multiple=5)
+        tax.get_axes().axis('off')
+        tax.clear_matplotlib_ticks()
+        tax.ticks(axis='lbr', linewidth=1, multiple=10, tick_formats="%.0f", fontsize=ticksize)
+
+        # add colourbar
+        if z_var:
+            cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label,
+                             labelsize=fontsize,
+                             ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.1, shrink=0.5,
+                             size="3%")
+
+    fig.set_size_inches(10, 10)
+    tax.set_background_color(color='w', zorder=-1000, alpha=0)
 
     def draw_point(name, z_var):
         if model == 'perplex':
@@ -113,40 +133,23 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                 if add is not None:
                     count += add
 
-    # plot setup
-    tax.bottom_axis_label(phases_px[0], fontsize=fontsize, offset=0)
-    tax.right_axis_label(phases_px[1], fontsize=fontsize, offset=offset)
-    tax.left_axis_label(phases_px[2], fontsize=fontsize, offset=offset)
-    tax.set_title("Fe$^{3+}$ modality", fontsize=fontsize)
-
-    # Draw Boundary and Gridlines
-    tax.boundary(linewidth=2.0)
-    tax.gridlines(color="blue", multiple=5)
-    tax.get_axes().axis('off')
-    tax.clear_matplotlib_ticks()
-    tax.ticks(axis='lbr', linewidth=1, multiple=10, tick_formats="%.0f", fontsize=ticksize)
-
-    # add colourbar
-    if z_var:
-        cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=fontsize,
-                      ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.1, shrink=0.5, size="3%")
     if save:
         plt.savefig(fig_path + 'ferric_ternary_' + str(p_of_interest) + 'GPa.png', bbox_inches='tight')
     print('num points', count)
     return fig, tax
 
 
-# fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-#                     model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
-#                 z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
-#                     # name='Stolper', opp=mfug.output_parent_default
-#                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
+fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
+                    model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
+                    # name='Stolper', opp=mfug.output_parent_default
+                save=False,fig_path='/raid1/cmg76/alphamelts/figs/')
 
 fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Sp'],
-                z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
+                   mec='k', marker='d', lw=2,
                     # name='Stolper',
                     #        opp=pfug.output_parent_apollo,
-                save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
+                save=True, fig_path='/raid1/cmg76/alphamelts/figs/', fig=fig, tax=tax)
 
 # plt.show()
