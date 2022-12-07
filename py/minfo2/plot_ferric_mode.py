@@ -18,6 +18,7 @@ from py.useful_and_bespoke import colourbar
 import matplotlib
 matplotlib.use('Agg')
 
+perplex_path_apollo = '/raid1/cmg76/perple_x/'
 opp_mlt = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 # opp_mlt = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 
@@ -44,7 +45,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
     def draw_point(name, z_var):
         if model == 'perplex':
-            dat = pfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp,
+            dat = pfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp, perplex_path=perplex_path_apollo,
                                          load_results_csv=True, **kwargs)
 
         elif model == 'melts':
@@ -133,8 +134,14 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     return fig, tax
 
 
+# fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
+#                     model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+#                 z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
+#                     # name='Stolper', opp=mfug.output_parent_default
+#                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
+
 fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                    model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Sp'],
                 z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
