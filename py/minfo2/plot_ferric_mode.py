@@ -27,10 +27,10 @@ opp_mlt = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 
 def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     z_label=None, model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=16, offset=0.1,
-                    phases=['Opx', 'CPx', 'Sp'], marker='o',
+                    phases=['Opx', 'CPx', 'Sp'], marker='o', title=None,
                     absolute_abundance=True,
                     name=None, opp=None, save=False, mec=None, lw=1.5, ticksize=12, fig_path=fo2plt.figpath,
-                    fig=None, tax=None, **kwargs):
+                    fig=None, tax=None, ax=None, **kwargs):
     """ plot distribution of component between 3 phases """
 
     if model == 'perplex':
@@ -38,13 +38,13 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     else:
         phases_px = [mfug.map_to_px_phase[k] for k in phases]#
 
-    if fig is None:
-        fig, tax = ternary.figure(scale=100)
+    if tax is None:
+        fig, tax = ternary.figure(scale=100, ax=ax)
         # plot setup
         tax.bottom_axis_label(phases_px[0], fontsize=fontsize, offset=0)
         tax.right_axis_label(phases_px[1], fontsize=fontsize, offset=offset)
         tax.left_axis_label(phases_px[2], fontsize=fontsize, offset=offset)
-        tax.set_title("Fe$^{3+}$ modality (" + str(p_of_interest) + ' GPa)', fontsize=fontsize)
+        tax.set_title(title, fontsize=fontsize)
 
         # Draw Boundary and Gridlines
         tax.boundary(linewidth=2.0)
@@ -60,7 +60,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                              ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.1, shrink=0.5,
                              size="3%")
 
-    fig.set_size_inches(10, 10)
+    # fig.set_size_inches(10, 10)
     tax.set_background_color(color='w', zorder=-1000, alpha=0)
 
     def draw_point(name, z_var):
@@ -139,18 +139,39 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     return fig, tax
 
 
+fig, axes = plt.subplots(2,2, figsize=(20, 20))
+fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
+                    model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'garnet'],
+                z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5, title='MELTS',
+                           ax=axes[0][0],
+                    # name='Stolper', opp=mfug.output_parent_default
+                save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
+
+fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
+                    model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Gt'],
+                   mec='k', marker='d', lw=1.5,
+                           ax = axes[0][1],
+                    # name='Stolper',
+                    #        opp=pfug.output_parent_apollo,
+                save=True, fig_path='/raid1/cmg76/alphamelts/figs/'#, fig=fig, tax=tax
+ )
+
 fig, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'garnet'],
-                z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5,
+                z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5, title='Perple_x',
+                           ax=axes[1][0],
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
 fig, tax = ternary_scatter(p_of_interest=3.9, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Gt'],
                    mec='k', marker='d', lw=1.5,
+                           ax = axes[1][1],
                     # name='Stolper',
                     #        opp=pfug.output_parent_apollo,
                 save=True, fig_path='/raid1/cmg76/alphamelts/figs/'#, fig=fig, tax=tax
  )
 
+fig.suptitle("Fe$^{3+}$ modality", fontsize=16)
+fig.savefig('/raid1/cmg76/alphamelts/figs/ternary4.png')
 # plt.show()
