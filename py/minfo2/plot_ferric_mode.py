@@ -33,6 +33,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     tax.bottom_axis_label(phases[0], fontsize=fontsize, offset=offset)
     tax.right_axis_label(phases[1], fontsize=fontsize, offset=offset)
     tax.left_axis_label(phases[2], fontsize=fontsize, offset=offset)
+    tax.set_title("Fe$^{3+}$ distribution", fontsize=fontsize)
 
     # Draw Boundary and Gridlines
     tax.boundary(linewidth=2.0)
@@ -44,13 +45,15 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     def draw_point(name, z_var):
         if model == 'perplex':
             dat = pfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp,
-                                         load_results_csv=False, **kwargs)
+                                         load_results_csv=True, **kwargs)
         elif model == 'melts':
             dat = mfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp,
-                                         load_results_csv=False, **kwargs)
-
+                                         load_results_csv=True, **kwargs)
         if dat is None:
             return None
+        if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
+            return None
+
         if z_var is not None:
             z = [eval('dat.' + z_var)]
         else:
@@ -81,7 +84,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', c=z, cmap=cmap, vmin=vmin, vmax=vmax)
+        tax.scatter([xyz], marker='o', c=z, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:
@@ -103,7 +106,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 
 ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='rainbow', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                    model='melts', cmap='viridus', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
