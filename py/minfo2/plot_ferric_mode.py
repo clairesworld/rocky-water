@@ -84,7 +84,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', c=z, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
+        tax.scatter([xyz], marker='o', c=z, s=30, alpha=0.5, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:
@@ -98,7 +98,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
                 name = os.path.basename(sub)
                 add = draw_point(name, z_var)
-                count != add
+                count += add
 
     if save:
         plt.savefig(fig_path + 'ferric_ternary_' + str(p_of_interest) + 'GPa.png', bbox_inches='tight')
