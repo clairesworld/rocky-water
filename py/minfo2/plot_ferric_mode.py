@@ -30,10 +30,10 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
     fig, tax = ternary.figure(scale=100)
     fig.set_size_inches(10, 10)
-    tax.bottom_axis_label(phases[0], fontsize=fontsize, offset=offset)
+    tax.bottom_axis_label(phases[0], fontsize=fontsize, offset=0)
     tax.right_axis_label(phases[1], fontsize=fontsize, offset=offset)
     tax.left_axis_label(phases[2], fontsize=fontsize, offset=offset)
-    tax.set_title("Fe$^{3+}$ distribution", fontsize=fontsize)
+    tax.set_title("Fe$^{3+}$ modality", fontsize=fontsize)
 
     # Draw Boundary and Gridlines
     tax.boundary(linewidth=2.0)
@@ -84,7 +84,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', c=z, s=30, alpha=0.5, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
+        tax.scatter([xyz], marker='o', c=z, s=50, alpha=0.2, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:
@@ -107,7 +107,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 
 ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='cividis', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                    model='melts', cmap='viridis', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
