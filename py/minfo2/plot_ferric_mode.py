@@ -12,6 +12,7 @@ import numpy as np
 import meltsfugacitydata as mfug
 import perplexfugacitydata as pfug
 from py import main as rw
+from py.useful_and_bespoke import colourbar
 
 # for running remotely
 import matplotlib
@@ -24,8 +25,8 @@ opp_mlt = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 
 
 def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                    model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=14, offset=0.1, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
-                    name=None, opp=None, save=False, fig_path=fo2plt.figpath, **kwargs):
+                    z_label=None, model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=14, offset=0.1, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                    name=None, opp=None, save=False, ticksize=12, fig_path=fo2plt.figpath, **kwargs):
     """ plot distribution of component between 3 phases """
 
     fig, tax = ternary.figure(scale=100)
@@ -52,10 +53,15 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         if dat is None:
             return None
         if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
+            print('dropping case with quartz')
             return None
 
         if z_var is not None:
             z = [eval('dat.' + z_var)]
+
+            cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=14,
+                          ticksize=ticksize, labelpad=17, loc='right',
+                          rot=None, discrete=False, cmap=cmap, c='k', pad=0.05)
         else:
             z = 'k'
         # print('z', z)
@@ -84,7 +90,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', c=z, s=50, alpha=0.2, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
+        tax.scatter([xyz], marker='o', c=z, s=60, alpha=0.2, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:
@@ -108,6 +114,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='melts', cmap='viridis', vmin=0.5, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'spinel'],
+                z_label='Mg/Si',
                     # name='Stolper', opp=mfug.output_parent_default
                 save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
