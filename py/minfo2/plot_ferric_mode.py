@@ -56,9 +56,9 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             print('dropping case with quartz')
             return None
 
-        if 'X_Sp' not in dat.data.columns:
-            print('no spinel in', name)
-            print(dat.data.head())
+        # if 'X_Sp' not in dat.data.columns:
+        #     print('no spinel in', name)
+        #     print(dat.data.head())
 
         if z_var:
             z = [eval('dat.' + z_var)]
@@ -82,7 +82,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         factor = 100 / sum(d2.values())
         for k in d2:
             d2[k] = d2[k] * factor
-        # print('d2', d2, 'sum', sum(d2.values()))
+        print('d2', d2, 'sum', sum(d2.values()))
 
         xyz = []
         for k in phases:  # preserve order
