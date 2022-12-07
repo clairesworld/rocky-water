@@ -141,15 +141,16 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
 fig, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='melts', cmap='viridis', vmin=0.69, vmax=1.6, phases=['orthopyroxene', 'clinopyroxene', 'garnet'],
-                z_label='Mg/Si', mec='xkcd:scarlet', lw=2,
+                z_label='Mg/Si', mec='xkcd:scarlet', lw=1.5,
                     # name='Stolper', opp=mfug.output_parent_default
-                save=False,fig_path='/raid1/cmg76/alphamelts/figs/')
+                save=True,fig_path='/raid1/cmg76/alphamelts/figs/')
 
-fig, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
+fig, tax = ternary_scatter(p_of_interest=3.9, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=['Opx', 'Cpx', 'Gt'],
-                   mec='k', marker='d', lw=2,
+                   mec='k', marker='d', lw=1.5,
                     # name='Stolper',
                     #        opp=pfug.output_parent_apollo,
-                save=True, fig_path='/raid1/cmg76/alphamelts/figs/', fig=fig, tax=tax)
+                save=True, fig_path='/raid1/cmg76/alphamelts/figs/'#, fig=fig, tax=tax
+ )
 
 # plt.show()
