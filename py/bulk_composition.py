@@ -171,14 +171,7 @@ def insert_o2_from_wt_comp(wt_oxides_dict, **kwargs):
 
 def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100):
     m_FeOstar = wt_oxides_dict['FeO']
-    # A = (2 * (1 - X_ferric) * p.M_FeO) / (X_ferric * p.M_Fe2O3)
-    # m_FeO = A / (1 + A)
-    # m_Fe2O3 = m_FeOstar - m_FeO
-    m_FeO = 2 * p.M_FeO * m_FeOstar * (1 - X_ferric) / (p.M_Fe2O3 * X_ferric - 2 * p.M_FeO * X_ferric + 2 * p.M_FeO)
-    m_Fe2O3 = p.M_Fe2O3 * X_ferric * m_FeOstar / (p.M_Fe2O3 * X_ferric - 2 * p.M_FeO * X_ferric + 2 * p.M_FeO)
-
-    # print('m_FeO', m_FeO, 'g')
-    # print('m_Fe2O3', m_Fe2O3, 'g')
+    m_FeO, m_Fe2O3 = partition_FeOstar(m_FeOstar, X_ferric)
 
     # renormalise
     wt_oxides_dict['FeO'] = m_FeO
@@ -191,6 +184,19 @@ def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100):
         print("{0:<7}".format(k), "{:5.2f}%".format(wt_oxides_dict[k]))
 
     return wt_oxides_dict
+
+
+def partition_FeOstar(m_FeOstar, X_ferric):
+    # A = (2 * (1 - X_ferric) * p.M_FeO) / (X_ferric * p.M_Fe2O3)
+    # m_FeO = A / (1 + A)
+    # m_Fe2O3 = m_FeOstar - m_FeO
+
+    m_FeO = 2 * p.M_FeO * m_FeOstar * (1 - X_ferric) / (p.M_Fe2O3 * X_ferric - 2 * p.M_FeO * X_ferric + 2 * p.M_FeO)
+    m_Fe2O3 = p.M_Fe2O3 * X_ferric * m_FeOstar / (p.M_Fe2O3 * X_ferric - 2 * p.M_FeO * X_ferric + 2 * p.M_FeO)
+
+    # print('m_FeO', m_FeO, 'g')
+    # print('m_Fe2O3', m_Fe2O3, 'g')
+    return m_FeO, m_Fe2O3
 
 
 def test_ferric_ratio(m_FeO, m_Fe2O3):

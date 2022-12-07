@@ -21,6 +21,10 @@ solution_phases_default = ['Cpx(JH)', 'O(JH)', 'Sp(JH)', 'Grt(JH)', 'Opx(JH)', '
 wt_oxides_DMM_ext = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'FeO': 8.17,
                      'Na2O': 0.28, 'TiO2': 0.13}  # Workman & Hart depleted mantle, extended
 
+map_from_JH_phase = {'O(JH)': 'Ol', 'Opx(JH)': 'Opx', 'Cpx(JH)': 'Cpx', 'Sp(JH)': 'Sp', 'Grt(JH)': 'Gt',
+                     'Pl(JH)': 'Plag'}
+
+
 class PerplexFugacityData(px.PerplexData):
 
     def __init__(self, name='test', star=None, solution_phases=solution_phases_default,
@@ -47,7 +51,7 @@ class PerplexFugacityData(px.PerplexData):
         self.perplex_path = perplex_path
 
         self.pressure = None  # GPa
-        self.temperature = None  # bar
+        self.temperature = None  # K
         self.logfo2 = None
         self.delta_qfm = None
         self.logfo2_1GPa = None  # spinel field
@@ -107,6 +111,32 @@ class PerplexFugacityData(px.PerplexData):
         s = s + '25\n'  # Select a property: 25 - Modes of all phases
         s = s + 'n\n'  # Output cumulative modes (y/n)?
         s = s + 'n\n'  # Include fluid in computation of aggregate( or modal) properties(y / n)?
+        s = s + '0\n'  # Select operational mode: 0 - EXIT
+        return s
+
+    def command_werami_phase_feiii_composition_grid(self,
+                                                    points_file=px.perplex_path_default + 'Earth_1600K_adiabat.dat',
+                                                    build_file_end='', **kwargs):
+        """ string for werami command file to get chemical potentials """
+
+        s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
+        s = s + '4\n'  # Select operational mode: 4 - as in 3 [properties along a 1d path], but input from file
+        s = s + '2\n'  # Path will be described by:  2 - a file containing a list of x-y points
+        s = s + points_file + '\n'  # Enter the file name:
+        s = s + '1\n'  # every nth plot will be plotted, enter n:
+        for ph in self.solution_phases:
+            for i_ox in [self.oxide_list.index('FeO') + 1, self.oxide_list.index('O2') + 1]:
+                print('i_ox', i_ox, 'oxide_list', self.oxide_list)
+                s = s + '8\n'  # Select a property: Composition (Mol, Mass, or Wt%) of a solution phase
+                s = s + ph + '\n'  # Enter solution (left justified):
+                s = s + 'n\n'  # Define the composition in terms of the species/endmembers of Opx(JH)    (y/n)?
+                s = s + '1\n'  # How many components in the numerator of the composition (<15)?
+                s = s + str(i_ox) + '\n1\n'  # Enter component indices and weighting factors for the numerator:
+                s = s + str(len(self.wt_oxides)) + '\n'  # How many components in the denominator of the composition
+                for i in range(1, len(self.wt_oxides) + 1):
+                    s = s + str(i) + '\n1\n'  # Enter component indices and weighting factors for the denominator:
+                s = s + 'n\n'  # Change it (y/n)? This composition will be designated: C[Opx(JH)1]
+        s = s + '0\n'  # Select an additional property or enter 0 to finish:
         s = s + '0\n'  # Select operational mode: 0 - EXIT
         return s
 
@@ -198,6 +228,122 @@ class PerplexFugacityData(px.PerplexData):
             os.remove(frendly_command_file)
         os.chdir(cwd)  # return to original dir
 
+    def ferric_composition_calc(self, T_iso=None, points_file=None, p_min=1000, p_max=40000, verbose=True,
+                                build_file_end='', **kwargs):
+        # decide which T, p points to calculate
+        if T_iso is not None:
+            if points_file is not None:
+                raise Exception('ERROR: cannot take both points_file and isotherm, set one of these to None')
+            try:
+                # run werami over an isothermal section
+                points_file = self.write_isothermal_points(T0=T_iso, p_min=p_min, p_max=p_max, delta_p=1000)
+            except TypeError as e:
+                print('ERROR: trying to write an isotherm section but isotherm is not a valid numeric')
+                raise e
+        elif points_file is None:
+            raise NotImplementedError('ERROR: need either input points_file or input isotherm')
+        self.run_perplex(werami_command_end='_werami_command_ferric_comp.txt',
+                         werami_command_text_fn=self.command_werami_phase_feiii_composition_grid,
+                         vertex_command_text_fn=self.command_vertex_grid,
+                         output_file_end='_ferric_comp.tab', build_file_end=build_file_end, verbose=verbose,
+                         clean=True, werami_kwargs={'points_file': points_file}, run_vertex='auto',
+                         suppress_output=False,
+                         **kwargs)
+
+    def read_ferric_phase_comp(self, phase=None, T_of_interest=None, p_of_interest=None, scale=100):
+        import re
+        # load data
+        df_w = self.read_werami(fend='_ferric_comp.tab')
+
+        # find idx of T of interest
+        irow = df_w.loc[(df_w['T(K)'] == T_of_interest) & (df_w['P(bar)'] == p_of_interest * 1e4)].index[0]
+        # convert FeO + O2 into Fe2O3
+        for icol in range(2,len(df_w.columns),2):  # skip first 2 (T, P), every 1st is FeO
+            col = df_w.columns[icol]
+            ph = map_from_JH_phase[re.sub(r'[0-9]', '', col[2:-1])]  # remove C[*] and trailing digit
+            print(ph)
+            if ph == phase:
+                ph_FeOstar = df_w.iloc[irow, icol]
+                ph_O2 = df_w.iloc[irow, icol + 1]
+                # print('\n\n\n\nFeO* in', ph, ph_FeOstar)
+                # print('O2 in', ph, ph_O2)
+
+                # convert to Fe2O3
+                Xf = bulk.test_ferric_ratio_from_O2(ph_FeOstar, ph_O2)
+                m_FeO, m_Fe2O3 = bulk.partition_FeOstar(ph_FeOstar, Xf)
+
+                # print('Xf', Xf, 'm_Fe2O3', m_Fe2O3)
+
+                # print('returns n_o2', bulk.o2_molar_ratio(m_FeO / p.M_FeO, X_ferric=Xf))
+
+                return pd.DataFrame({'P(bar)': [df_w.iloc[irow, 0]], 'T(K)':
+                    [df_w.iloc[irow, 1]], 'Fe2O3': [m_Fe2O3 * scale]})
+
+            # # process in results df
+            # if len(self.data) == 0:
+            #     try:
+            #         self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t', index_col=0)
+            #     except FileNotFoundError:
+            #         raise Exception(self.name, 'results.csv not found')
+
+    def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=solution_phases_default,
+                        absolute_abundance=True, verbose=False):
+        """
+        Parameters
+        ----------
+        phases :
+        T_of_interest :
+        component :
+        p_of_interest : GPa
+        verbose :
+
+        Returns
+        -------
+
+        """
+        if absolute_abundance and (not hasattr(self, 'data')):
+            self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+
+        wt_pt_dict = {map_from_JH_phase[ph]: None for ph in phases}
+        try:
+            for ph in phases:
+                phase = map_from_JH_phase[ph]
+                df = self.read_ferric_phase_comp(phase=phase, T_of_interest=T_of_interest, p_of_interest=p_of_interest)
+                if df is None:  # phase not found
+                    wt_pt_dict[phase] = np.nan
+                else:
+                    if verbose:
+                        print(phase, 'loaded df\n', df.head())
+
+                    if absolute_abundance:
+                        # normalise to total quantity of phase
+                        try:
+                            idx = self.data.loc[(self.data['P(bar)'] == p_of_interest * 1e4)].index[0]
+                        except ValueError as e:
+                            # pressure not found
+                            print(p_of_interest, 'GPa not found')
+                            raise e
+
+                        try:
+                            mass_ph = self.data['X_' + phase].iloc[idx]
+                            print('mass', phase, mass_ph)
+                        except KeyError as e:
+                            print(self.data.head())
+                            print(self.name, e)
+                            return None
+                    else:
+                        mass_ph = 1
+
+                    try:
+                        wt_pt_dict[phase] = df[component].iloc[0] * mass_ph
+                    except KeyError:
+                        print(component, 'not found in', phase)
+                        wt_pt_dict[phase] = np.nan
+        except FileNotFoundError:
+            print('...results.csv file not found! skipping')
+            return None
+        return wt_pt_dict
+
     def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, T_iso=None, verbose=True, build_file_end='',
                  vertex_data='hp622ver', run=True, compare_buffer=None, check_comp=False, points_file=None,
                  mu0_file=None, save=True, excluded_phases=[], run_vertex='auto', **kwargs):
@@ -257,7 +403,7 @@ class PerplexFugacityData(px.PerplexData):
                              werami_command_text_fn=self.command_werami_mu,
                              vertex_command_text_fn=self.command_vertex_grid,
                              output_file_end='_mu.tab', build_file_end=build_file_end, verbose=verbose,
-                             clean=True, ## store_vertex_output means files don't get deleited
+                             clean=True,  ## store_vertex_output means files don't get deleited
                              werami_kwargs={'points_file': points_file}, run_vertex=run_vertex,
                              store_vertex_output=True,
                              **kwargs)
@@ -267,7 +413,7 @@ class PerplexFugacityData(px.PerplexData):
                                  werami_command_text_fn=self.command_werami_composition_grid,
                                  vertex_command_text_fn=self.command_vertex_grid,
                                  output_file_end='_comp.tab', build_file_end=build_file_end, verbose=verbose,
-                                 clean=True, werami_kwargs={'points_file': points_file}, run_vertex=run_vertex,
+                                 clean=True, werami_kwargs={'points_file': points_file}, run_vertex='auto',
                                  **kwargs)
 
         # extract mu and T of interest from output data
@@ -458,12 +604,10 @@ def init_from_results(name, X_ferric=None, load_results_csv=False, verbose=False
     try:
         core_efficiency = int(''.join(filter(str.isdigit, spl[1]))) / 100.0
         star = spl[2]
-    except IndexError:
+    except (IndexError, ValueError):
         star = None
         core_efficiency = None
     kwargs.update({'name': name, 'X_ferric': X_ferric, 'star': star, 'core_efficiency': core_efficiency})
-
-
 
     try:
         kwargs.update(**read_dict_from_build(**kwargs))  # get other important input stuff from build file
@@ -584,11 +728,13 @@ def read_dict_from_build(name=None, output_parent_path=output_parent_default, ve
     #     keys.pop()
     # return d
 
+
 def mu_to_logfo2(mu, mu_0, T):
     return np.log(np.exp((mu - mu_0) / (Rb * T))) / np.log(10)
 
 
-def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmqNl_fo2_oli.dat', verbose=False, **kwargs):
+def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmqNl_fo2_oli.dat', verbose=False,
+                **kwargs):
     """ read in oli's qfm calculations, T in K, p in bar
 
     Parameters
@@ -756,8 +902,6 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
     if verbose:
         print('log fo2 of system:', logfo2)
     return True
-
-
 
 # def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None,
 #              **kwargs):

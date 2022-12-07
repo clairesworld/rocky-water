@@ -26,7 +26,7 @@ opp_mlt = '/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/'
 
 def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     z_label=None, model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=16, offset=0.1,
-                    phases=['Opx', 'CPx', 'Sp'],
+                    phases=['Opx', 'CPx', 'Sp'], marker='o',
                     absolute_abundance=True,
                     name=None, opp=None, save=False, mec=None, lw=1.5, ticksize=12, fig_path=fo2plt.figpath,
                     fig=None, tax=None, **kwargs):
@@ -35,6 +35,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     if fig is None:
         fig, tax = ternary.figure(scale=100)
     fig.set_size_inches(10, 10)
+    tax.set_background_color(color='w', zorder=-1000, alpha=0)
 
     if model == 'perplex':
         phases_px = phases
@@ -82,7 +83,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         factor = 100 / sum(d2.values())
         for k in d2:
             d2[k] = d2[k] * factor
-        print('d2', d2, 'sum', sum(d2.values()))
+        # print('d2', d2, 'sum', sum(d2.values()))
 
         xyz = []
         for k in phases_px:  # preserve order
@@ -91,7 +92,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
         xyz = tuple(xyz)
-        tax.scatter([xyz], marker='o', edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.4, cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
+        tax.scatter([xyz], marker=marker, edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.4,
+                    cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         return 1
 
     if name is not None:

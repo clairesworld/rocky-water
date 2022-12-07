@@ -510,7 +510,7 @@ class PerplexData:
         vertex_copy_flag = False  # track if you moved vertex files
         if run_vertex == 'auto':
             run_vertex = False
-            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof']:
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof', '.dat']:
                 if not os.path.isfile(self.output_path + self.name + build_file_end + fend):
                     run_vertex = True  # if any of these files are missing, need to run
                     break
@@ -522,8 +522,10 @@ class PerplexData:
                               self.perplex_path + self.name + build_file_end + fend)
             print('   vertex output files already exist for', self.name, ', skipping to werami')
 
+        print('run_vertex', run_vertex)
         if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
             # create vertex command file
+            print('running vertex')
             vertex_command_file = self.name + build_file_end + '_vertex_command.txt'
             with open(self.perplex_path + vertex_command_file, 'w') as file:
                 s = vertex_command_text_fn(build_file_end=build_file_end)
@@ -535,6 +537,7 @@ class PerplexData:
             if verbose:
                 print('  ', output)
 
+        print('running werami')
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:
@@ -552,7 +555,7 @@ class PerplexData:
         # delete extra files and rename .tab file to something meaningful
         try:
             os.rename(self.perplex_path + self.name + build_file_end + '_1.tab',
-                      self.perplex_path + self.name + build_file_end + output_file_end)
+                      self.output_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
             print('ERROR: vertex did not complete, try running again with suppress_output=False')
             # something probably went wrong with vertex or werami, run again with full output
@@ -562,15 +565,15 @@ class PerplexData:
 
         if store_vertex_output or vertex_copy_flag:
             # move vertex files to this run's output directory
-            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof',
-                         '_vertex_command.txt']:
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof', '.dat',
+                         '_vertex_command.txt', werami_command_end, '_WERAMI_options.txt', '_VERTEX_options.txt']:
                 if os.path.isfile(self.perplex_path + self.name + build_file_end + fend):
                     os.rename(self.perplex_path + self.name + build_file_end + fend,
                               self.output_path + self.name + build_file_end + fend)
         if clean:
             # get rid of any files left in
             for fend in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tim', '.plt', '.blk', '.arf', '.tof',
-                         '_vertex_command.txt', werami_command_end]:
+                         '_vertex_command.txt', werami_command_end, ]:
                 if os.path.isfile(self.perplex_path + self.name + build_file_end + fend):
                     os.remove(self.perplex_path + self.name + build_file_end + fend)
 
