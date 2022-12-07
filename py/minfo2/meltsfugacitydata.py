@@ -235,7 +235,7 @@ class MeltsFugacityData:
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
             except IndexError as e:
-                print('             T_of_interest not found, min:', df.Temperature.iloc[-1])
+                print('             T_of_interest not found, min:', df.Temperature.iloc[-1], '--- in System_main', self.name)
                 return False
 
             # append P and T

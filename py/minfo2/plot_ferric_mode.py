@@ -85,7 +85,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         print('d2', d2, 'sum', sum(d2.values()))
 
         xyz = []
-        for k in phases:  # preserve order
+        for k in phases_px:  # preserve order
             try:
                 xyz.append(d2[k])
             except KeyError:
@@ -110,8 +110,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 
     # plot setup
     tax.bottom_axis_label(phases_px[0], fontsize=fontsize, offset=0)
-    tax.right_axis_label(phases[1], fontsize=fontsize, offset=offset)
-    tax.left_axis_label(phases[2], fontsize=fontsize, offset=offset)
+    tax.right_axis_label(phases_px[1], fontsize=fontsize, offset=offset)
+    tax.left_axis_label(phases_px[2], fontsize=fontsize, offset=offset)
     tax.set_title("Fe$^{3+}$ modality", fontsize=fontsize)
 
     # Draw Boundary and Gridlines
