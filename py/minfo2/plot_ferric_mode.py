@@ -56,6 +56,10 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             print('dropping case with quartz')
             return None
 
+        if 'X_sp' not in dat.data.columns:
+            print('no spinel in', name)
+            print(dat.data.head())
+
         if z_var is not None:
             z = [eval('dat.' + z_var)]
             ternary.colormapping.colorbar_hack(plt.gca(), vmin, vmax, cmap, scientific=False,
