@@ -256,7 +256,12 @@ class PerplexFugacityData(px.PerplexData):
         df_w = self.read_werami(fend='_ferric_comp.tab')
 
         # find idx of T of interest
-        irow = df_w.loc[(df_w['T(K)'] == T_of_interest) & (df_w['P(bar)'] == p_of_interest * 1e4)].index[0]
+        try:
+            irow = df_w.loc[(df_w['T(K)'] == T_of_interest) & (df_w['P(bar)'] == p_of_interest * 1e4)].index[0]
+        except IndexError:
+            print(self.name, T_of_interest, p_of_interest, 'not found')
+            print(df_w.head())
+            return None
         # convert FeO + O2 into Fe2O3
         for icol in range(2,len(df_w.columns),2):  # skip first 2 (T, P), every 1st is FeO
             col = df_w.columns[icol]
