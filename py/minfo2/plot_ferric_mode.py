@@ -108,12 +108,12 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                     count += add
 
     if z_var:
-        ternary.heatmap({}, scale=100, ax=plt.gca(), vmin=vmin, vmax=vmax, cmap=cmap)
+        # ternary.heatmap({}, scale=100, ax=plt.gca(), vmin=vmin, vmax=vmax, cmap=cmap)
         # ternary.colormapping.colorbar_hack(plt.gca(), vmin, vmax, cmap, scientific=False,
         #               cbarlabel=z_label)  #, **cb_kwargs)
         #
-        # cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=fontsize,
-        #               ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.05)
+        cbar = colourbar(mappable=None, vector=[vmin, vmax], ax=plt.gca(), vmin=vmin, vmax=vmax, label=z_label, labelsize=fontsize,
+                      ticksize=ticksize, labelpad=17, loc='right', cmap=cmap, c='k', pad=0.05)
     if save:
         plt.savefig(fig_path + 'ferric_ternary_' + str(p_of_interest) + 'GPa.png', bbox_inches='tight')
     print('num points', count)
