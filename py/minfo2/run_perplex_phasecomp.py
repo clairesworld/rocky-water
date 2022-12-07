@@ -39,5 +39,6 @@ for ce in core_eff:
             dat = pf.init_from_results(name, X_ferric, load_results_csv=True)
             if dat:
                 dat.ferric_composition_calc(T_iso=T_iso, p_min=p_min, p_max=p_max, verbose=True)
+                print('finished', name)
     else:
         print('no local output found in', output_parent_path)
