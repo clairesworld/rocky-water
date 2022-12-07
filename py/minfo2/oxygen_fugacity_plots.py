@@ -355,7 +355,7 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
     return fig, axes
 
 
-def element_xplot(p_of_interest=1, components=[], output_parent_path=output_parent_px, fig=None, axes=None,
+def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, fig=None, axes=None,
                   xlabel=None, ylabel=None, ylim=(-11.5, -7), model='melts',
                   linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, **kwargs):
@@ -421,7 +421,12 @@ def element_xplot(p_of_interest=1, components=[], output_parent_path=output_pare
                                 if verbose:
                                     print(name, ':', component, 'not found in', dat.wt_oxides.keys(), 'or', row.index)
                                 x = np.nan
-                            y = row['logfo2']
+                            try:
+                                y = row[y_name]
+                                print(y)
+                            except KeyError as e:
+                                print(name, 'leyerror', e)
+                                y = np.nan
                             ax.scatter(x, y, c=linec, s=5)
                             if once:
                                 ys.append(y)

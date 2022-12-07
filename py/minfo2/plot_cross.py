@@ -5,9 +5,9 @@ import oxygen_fugacity_plots as fo2plt
 
 core_eff = 88
 Xf = 3
-p_of_interest = 1
+p_of_interest = 4
 exclude_silica = True
-model = 'melts'
+model = 'perplex'
 
 if model == 'melts':
     source = fo2plt.output_parent_mlt_earth
@@ -27,12 +27,24 @@ if not exclude_silica:
 
 output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
 
-fo2plt.element_xplot(p_of_interest=p_of_interest, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'],
+# fo2plt.element_xplot(p_of_interest=p_of_interest, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'],
+#                      output_parent_path=output_parent_path,
+#                      ylim=ylim, linec='k', labelsize=16, save=True, fname='crossplot_oxides_' + str(p_of_interest),
+#                      model=model, verbose=True,
+#                      exclude_silica=exclude_silica)
+
+fo2plt.element_xplot(p_of_interest=p_of_interest, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'], y_name='X_Gt',
                      output_parent_path=output_parent_path,
-                     ylim=ylim, linec='k', labelsize=16, save=True, fname='mlt_crossplot_oxides_' + str(p_of_interest),
-                     model=model, verbose=True,
+                     ylim=(0, 0.2),
+                     linec='k', labelsize=16, save=True, fname='crossplot_gt_' + str(p_of_interest),
+                     model=model, verbose=False,
                      exclude_silica=exclude_silica)
 
-# fo2plt.element_xplot(p_of_interest=p_of_ ude_silica)
+# fo2plt.element_xplot(p_of_interest=p_of_interest, components=phcomps,
+#                      output_parent_path=output_parent_path,
+#                      ylim=ylim, linec='k', labelsize=16, save=True, fname='crossplot_phases_' + str(p_of_interest),
+#                      model=model, verbose=True,
+#                      exclude_silica=exclude_silica)
 
-# plt.show()
+
+plt.show()
