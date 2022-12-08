@@ -305,7 +305,7 @@ class MeltsFugacityData:
         # also load Fe2O3 content
         for row, pp in enumerate(self.pressures_of_interest):
             d_Fe3 = self.read_phase_comp(pp/1e4, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
-                        absolute_abundance=False, verbose=False)
+                        absolute_abundance=False, verbose=False, p_index=row)
             for key in d_Fe3:
                 label = 'X_Fe3_' + key
                 if d_Fe3[key] > 0:
@@ -495,7 +495,7 @@ class MeltsFugacityData:
         return df
 
     def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
-                        absolute_abundance=True, verbose=False):
+                        absolute_abundance=True, verbose=False, p_index=None):
         """
         Parameters
         ----------
@@ -512,12 +512,15 @@ class MeltsFugacityData:
         if absolute_abundance and (not hasattr(self, 'data')):
             self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
 
-        try:
-            idx = self.pressures_of_interest.index(p_of_interest*1e4)
-        except ValueError as e:
-            # pressure not found
-            print(p_of_interest, 'GPa not found')
-            raise e
+        if p_index:
+            idx = p_index
+        else:
+            try:
+                idx = self.pressures_of_interest.index(p_of_interest*1e4)
+            except ValueError as e:
+                # pressure not found
+                print(p_of_interest, 'GPa not found')
+                raise e
 
         wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
         try:
