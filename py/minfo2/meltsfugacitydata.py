@@ -294,7 +294,7 @@ class MeltsFugacityData:
                                                            idx] / m_tot * 100  # renormalise to 100 g total mass
                         except KeyError:
                             self.data[label] = np.nan  # add column
-                            print('cols', self.data.columns)
+                            # print('cols', self.data.columns)
                             self.data[label].iloc[row] = df[ph].loc[
                                                            idx] / m_tot * 100  # renormalise to 100 g total mass
 
@@ -303,6 +303,17 @@ class MeltsFugacityData:
             # print(self.data.head())
 
         # also load Fe2O3 content
+        for row, pp in enumerate(self.pressures_of_interest):
+            d_Fe3 = self.read_phase_comp(pp, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+                        absolute_abundance=False, verbose=False)
+            for key in d_Fe3:
+                label = 'X_Fe3_' + key
+                if d_Fe3[key] > 0:
+                    try:
+                        self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
+                    except KeyError:
+                        self.data[label] = np.nan  # add column
+                        self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
 
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
