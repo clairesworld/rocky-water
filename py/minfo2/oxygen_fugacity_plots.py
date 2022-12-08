@@ -449,12 +449,12 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                                                                           component='Fe2O3',
                                                                           phases=['Opx'],
                                                                           absolute_abundance=False)
-                                c = wt_dict_Fe3['Opx']
-                                print('c', c, name)
-                                sc_kwargs.update({'c': c})
-                                # need to check for vmin vmac cmap etc
-                            else:
-                                raise NotImplementedError(z_name, 'not implemented for scatter colouring')
+                                    c = wt_dict_Fe3['Opx']
+                                    print('c', c, name)
+                                    sc_kwargs.update({'c': c})
+                                    # todo: need to check for vmin vmac cmap etc
+                                else:
+                                    raise NotImplementedError(z_name, 'not implemented for scatter colouring')
                             ax.scatter(x, y, **sc_kwargs)
                             if once:
                                 ys.append(y)

@@ -306,14 +306,15 @@ class MeltsFugacityData:
         for row, pp in enumerate(self.pressures_of_interest):
             d_Fe3 = self.read_phase_comp(pp/1e4, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
                         absolute_abundance=False, verbose=False, p_index=row)
-            for key in d_Fe3:
-                label = 'X_Fe3_' + key
-                if d_Fe3[key] > 0:
-                    try:
-                        self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
-                    except KeyError:
-                        self.data[label] = np.nan  # add column
-                        self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
+            if d_Fe3:
+                for key in d_Fe3:
+                    label = 'X_Fe3_' + key
+                    if d_Fe3[key] > 0:
+                        try:
+                            self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
+                        except KeyError:
+                            self.data[label] = np.nan  # add column
+                            self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
 
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
@@ -553,7 +554,8 @@ class MeltsFugacityData:
                     except KeyError:
                         print(component, 'not found in', phase)
                         wt_pt_dict[map_to_px_phase[phase]] = np.nan
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            print(e, self.name)
             print('...results.csv file not found! skipping')
             return None
         return wt_pt_dict
