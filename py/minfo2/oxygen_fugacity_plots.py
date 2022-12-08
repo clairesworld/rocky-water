@@ -4,7 +4,7 @@ import os
 import pathlib
 import subprocess
 # import py.perplexdata as px
-# import py.bulk_composition as bulk
+import py.bulk_composition as bulk
 from py import main as rw
 from scipy import interpolate
 import py.parameters as p
@@ -34,7 +34,7 @@ c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 
 def filter_silica_sat(df):
     """ filter out cases saturated in quartz - these get to constant fo2 """
     if 'X_q' in df.columns:
-        # print('found q')
+        print('   found q')
         df.iloc[:, 2:] = np.nan  # everything except p, T
         # print(df.head())
     return df
@@ -355,27 +355,29 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
     return fig, axes
 
 
-def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, fig=None, axes=None,
-                  xlabel=None, ylim=(-11.5, -7), model='melts', ylabel='log($fO_2$)', xlim=None,
-                  linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
-                  make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, **kwargs):
+def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, fig=None, axes=[],
+                  ylim=(-11.5, -7), model='melts', ylabel=r'log($f_{{\rm O}_2}$)', xlim=None, xlabels=None,
+                  labelsize=16, save=True, fname=None,
+                  make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False, **sc_kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
     components can be bulk oxides or mineral phase proportion """
 
     if fname is None:
         fname = 'crossplot'
+    if xlabels is None:
+        xlabels=components
 
     # setup gridspec
     ncols = len(components)
     if fig is None:
         fig = plt.figure(figsize=(ncols * 4, 4))
-    gs = fig.add_gridspec(1, ncols + 1, width_ratios=[10] * ncols + [1],
-                          left=0.1, right=0.9,
-                          wspace=0.05)
-    axes = []
+        gs = fig.add_gridspec(1, ncols + 1, width_ratios=[10] * ncols + [1],
+                              left=0.1, right=0.9,
+                              wspace=0.05)
+        [axes.append(fig.add_subplot(gs[0, ii])) for ii in range(ncols)]
+
     for ii in range(ncols):
-        axes.append(fig.add_subplot(gs[0, ii]))
-        axes[ii].set_xlabel(components[ii], fontsize=labelsize)
+        axes[ii].set_xlabel(xlabels[ii], fontsize=labelsize)
         axes[ii].set_ylim(ylim)
         if xlim:
             axes[ii].set_xlim(xlim[ii])
@@ -396,6 +398,7 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                 if name not in exclude_names:
                     df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t')
                     df = apply_filters(df, name)
+                    print(name)
                     if exclude_silica:
                         df = filter_silica_sat(df)
                     idx = df['P(bar)'].sub(p_of_interest * 1e4).abs().idxmin()
@@ -419,17 +422,20 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                             # search for component in phase comp
                             elif 'X_' + component in row.index:
                                 x = row['X_' + component]
+                            # maybe it's an element ratio
+                            elif '/' in component:
+                                x = bulk.get_element_ratio(component, dat.wt_oxides)
                             else:
                                 if verbose:
                                     print(name, ':', component, 'not found in', dat.wt_oxides.keys(), 'or', row.index)
                                 x = np.nan
                             try:
                                 y = row[y_name]
-                                print(y)
+                                # print(y)
                             except KeyError as e:
-                                print(name, 'leyerror', e)
+                                print(name, 'keyerror', e)
                                 y = np.nan
-                            ax.scatter(x, y, c=linec, s=5)
+                            ax.scatter(x, y, **sc_kwargs)
                             if once:
                                 ys.append(y)
                                 T = df['T(K)'].unique()[0]  # isothermal
@@ -440,15 +446,16 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
         once = False
 
     # make hist
-    ax_histy = fig.add_subplot(gs[0, -1], sharey=axes[-1])
-    ax_histy.hist(ys,  # range=ylim,
-                  density=True, orientation='horizontal', color='w', edgecolor='k', bins=15)
-    ax_histy.set_xticks([])
-    ax_histy.set_yticks([])
-    ax_histy.spines.bottom.set_visible(False)
-    ax_histy.spines.right.set_visible(False)
-    ax_histy.spines.top.set_visible(False)
-    ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
+    if make_hist:
+        ax_histy = fig.add_subplot(gs[0, -1], sharey=axes[-1])
+        ax_histy.hist(ys,  # range=ylim,
+                      density=True, orientation='horizontal', color='w', edgecolor='k', bins=15)
+        ax_histy.set_xticks([])
+        ax_histy.set_yticks([])
+        ax_histy.spines.bottom.set_visible(False)
+        ax_histy.spines.right.set_visible(False)
+        ax_histy.spines.top.set_visible(False)
+        ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
 
     # plt.suptitle(str(p_of_interest) + ' GPa, ' + str(T) + ' K', fontsize=labelsize)
 

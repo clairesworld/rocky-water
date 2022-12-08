@@ -207,6 +207,53 @@ def test_ferric_ratio(m_FeO, m_Fe2O3):
     Xfer = n_FeIII / n_FeII
     return Xfer
 
+
+def get_element_ratio(ratio_str, wt_oxides):
+    """
+
+    Parameters
+    ----------
+    ratio_str : string of elements e.g. 'Mg/Si'
+    wt_oxides : dict of wt oxide composition
+
+    Returns
+    -------
+    float of element ratio
+    """
+
+    # turn wt oxides keys into elements
+    k_els = [k[:2] for k in wt_oxides.keys()]
+
+    els = ratio_str.split('/')  # should get 2
+    n = np.zeros(2)
+
+    for ii, el in enumerate(els):
+        idx = k_els.index(el)
+        ox = list(wt_oxides.keys())[idx]
+        M = eval('p.M_' + ox)
+
+        # get moles of oxide
+        n_ox = wt_oxides[ox] / M
+
+        # parse stoichiometry to get moles of element - if 3rd char is a digit
+        try:
+            a = int(ox[2])
+        except ValueError:
+            a = 1
+        n[ii] = a * n_ox
+
+        # check for Fe2O3
+        if (el == 'Fe') and ('Fe2O3' in wt_oxides):
+            idx = list(wt_oxides.keys()).index('Fe2O3')
+            n_Fe2O3 = wt_oxides['Fe2O3'] / p.M_Fe2O3 * 2
+            n[ii] = n[ii] + n_Fe2O3
+
+    # print(ratio_str, n[0] / n[1])
+    return n[0] / n[1]
+
+
+
+
 # dmm = {'SiO2': 44.71, 'Al2O3':3.98, 'FeO': 8.008 + 0.191, 'MgO': 38.73, 'CaO': 3.17}
 # test_ferric_ratio(8.008, 0.191)
 # insert_fe2o3(dmm, 0.03, mass_tot=sum(dmm.values()))

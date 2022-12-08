@@ -13,7 +13,7 @@ output_parent_default = '/home/claire/Works/min-fo2/alphamelts_output/'
 alphamelts_path_default = '/home/claire/Works/alphamelts/'
 
 map_to_px_phase = {'olivine': 'Ol', 'orthopyroxene': 'Opx', 'clinopyroxene': 'Cpx', 'spinel': 'Sp', 'garnet': 'Gt',
-                   'feldspar': 'Plag', 'quartz': 'q'}
+                   'feldspar': 'Plag', 'quartz': 'q', 'coesite': 'coe'}
 
 
 # solution_phases_default = ['olivine', 'spinel', 'garnet', 'orthopyroxene', 'clinopyroxene']  # opx and cpx automatic?
@@ -254,6 +254,7 @@ class MeltsFugacityData:
         return True
 
     def read_melts_phases(self, T_of_interest=1373.15, which='mass', verbose=False, **kwargs):
+        import re
         """ make csv of phase proportions in same format as perple_x - isothermal x-section for several pressures """
 
         if which == 'mass':
@@ -275,12 +276,13 @@ class MeltsFugacityData:
 
                 # append phases to self df
                 m_tot = df['mass'].loc[idx]
-                for ph in [col for col in df.columns if col.endswith('_0')]:
+                for ph in [col for col in df.columns if col not in ['Pressure', 'Temperature', 'mass', 'volume']]:
                     if ph != 'liquid_0':
+                        ph2 = re.sub('_0', '', ph)
                         try:
-                            label = 'X_' + map_to_px_phase[ph[:-2]]
+                            label = 'X_' + map_to_px_phase[ph2]
                         except KeyError as e:
-                            print('missing', ph[:-2], 'in map_to_px_phase dictionary')
+                            print('missing', ph2, 'in map_to_px_phase dictionary')
                             raise e
                         try:
                             self.data[label].iloc[row] = df[ph].loc[
