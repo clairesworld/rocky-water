@@ -33,10 +33,21 @@ output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) 
 #                      model=model, verbose=True,
 #                      exclude_silica=exclude_silica)
 
-fo2plt.element_xplot(p_of_interest=p_of_interest, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'], y_name='X_Gt',
+fo2plt.element_xplot(p_of_interest=p_of_interest, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'],
+                     xlim=[(30, 45), (43, 57), (1, 5), (3,10), (1,5)],
+                     y_name='X_Gt', ylabel='Gt abundance (wt%)',
                      output_parent_path=output_parent_path,
-                     ylim=(0, 0.2),
+                     ylim=(0, 16),
                      linec='k', labelsize=16, save=True, fname='crossplot_gt_' + str(p_of_interest),
+                     model=model, verbose=False,
+                     exclude_silica=exclude_silica)
+
+fo2plt.element_xplot(p_of_interest=p_of_interest, components=['MgO', 'SiO2', 'Al2O3', 'FeO', 'CaO'],
+xlim=[(30, 45), (43, 57), (1, 5), (3,10), (1,5)],
+                     y_name='X_Opx', ylabel='Opx abundance (wt%)',
+                     output_parent_path=output_parent_path,
+                     ylim=(0,80),
+                     linec='k', labelsize=16, save=True, fname='crossplot_opx_' + str(p_of_interest),
                      model=model, verbose=False,
                      exclude_silica=exclude_silica)
 

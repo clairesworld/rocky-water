@@ -356,7 +356,7 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
 
 
 def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, fig=None, axes=None,
-                  xlabel=None, ylabel=None, ylim=(-11.5, -7), model='melts',
+                  xlabel=None, ylim=(-11.5, -7), model='melts', ylabel='log($fO_2$)', xlim=None,
                   linec='k', c_dict=c_phase_dict_stolper, lw=1, labelsize=16, save=True, fname=None,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, **kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
@@ -377,9 +377,11 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
         axes.append(fig.add_subplot(gs[0, ii]))
         axes[ii].set_xlabel(components[ii], fontsize=labelsize)
         axes[ii].set_ylim(ylim)
+        if xlim:
+            axes[ii].set_xlim(xlim[ii])
         if ii > 0:
             axes[ii].set_yticks([])
-    axes[0].set_ylabel('log($fO_2$)', fontsize=labelsize)
+    axes[0].set_ylabel(ylabel, fontsize=labelsize)
 
     # get directory names in folder
     subfolders = rw.get_run_dirs(output_path=output_parent_path)

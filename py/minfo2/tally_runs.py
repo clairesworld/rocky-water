@@ -106,10 +106,10 @@ for d in dirs:
     good, bad = tally_runs(d)
 
 
-""" across Xferric """
-ce = 88
-X_ferric_list = [1, 3, 5, 7, 9]
-dirs = [source + 'hypatia_' + str(ce) + 'coreeff_' + str(Xf) + 'ferric_ext/' for Xf in X_ferric_list]
-for d in dirs:
-    print('-----\n', d)
-    good, bad = tally_runs(d)
+# """ across Xferric """
+# ce = 88
+# X_ferric_list = [1, 3, 5, 7, 9]
+# dirs = [source + 'hypatia_' + str(ce) + 'coreeff_' + str(Xf) + 'ferric_ext/' for Xf in X_ferric_list]
+# for d in dirs:
+#     print('-----\n', d)
+#     good, bad = tally_runs(d)
