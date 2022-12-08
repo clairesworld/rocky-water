@@ -304,7 +304,7 @@ class MeltsFugacityData:
 
         # also load Fe2O3 content
         for row, pp in enumerate(self.pressures_of_interest):
-            d_Fe3 = self.read_phase_comp(pp, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+            d_Fe3 = self.read_phase_comp(pp/1e4, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
                         absolute_abundance=False, verbose=False)
             for key in d_Fe3:
                 label = 'X_Fe3_' + key
