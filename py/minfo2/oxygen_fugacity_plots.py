@@ -33,8 +33,8 @@ c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 
 
 def filter_silica_sat(df):
     """ filter out cases saturated in quartz - these get to constant fo2 """
-    if 'X_q' in df.columns:
-        print('   found q')
+    if ('X_q' in df.columns) or ('X_coe' in df.columns):
+        # print('   found q')
         df.iloc[:, 2:] = np.nan  # everything except p, T
         # print(df.head())
     return df

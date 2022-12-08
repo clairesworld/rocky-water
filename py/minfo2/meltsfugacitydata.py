@@ -282,7 +282,7 @@ class MeltsFugacityData:
                         try:
                             label = 'X_' + map_to_px_phase[ph2]
                         except KeyError as e:
-                            print('missing', ph2, 'in map_to_px_phase dictionary')
+                            print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
                             raise e
                         try:
                             self.data[label].iloc[row] = df[ph].loc[
