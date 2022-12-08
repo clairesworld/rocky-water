@@ -282,6 +282,11 @@ class MeltsFugacityData:
                         try:
                             label = 'X_' + map_to_px_phase[ph2]
                         except KeyError as e:
+                            if ph2.endswith('_1'):
+                                if df[ph].loc[idx] != 0:
+                                    raise Exception(self.name, 'repeated phase', ph2, '(nonzero)')
+                                else:
+                                    continue
                             print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
                             raise e
                         try:
@@ -296,6 +301,8 @@ class MeltsFugacityData:
             if verbose:
                 print('             ...done loading phases!')
             # print(self.data.head())
+
+        # also load Fe2O3 content
 
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """

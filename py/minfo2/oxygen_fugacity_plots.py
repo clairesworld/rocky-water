@@ -357,7 +357,7 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
 
 def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, fig=None, axes=[],
                   ylim=(-11.5, -7), model='melts', ylabel=r'log($f_{{\rm O}_2}$)', xlim=None, xlabels=None,
-                  labelsize=16, save=True, fname=None,
+                  labelsize=16, save=True, fname=None, z_name=None,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False, **sc_kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
     components can be bulk oxides or mineral phase proportion """
@@ -435,6 +435,26 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                             except KeyError as e:
                                 print(name, 'keyerror', e)
                                 y = np.nan
+                            if z_name:
+                                if z_name == 'X_Fe3_Opx':
+                                    if model == 'melts':
+                                        wt_dict_Fe3 = dat.read_phase_comp(p_of_interest, T_of_interest=1373.15, component='Fe2O3',
+                                                        phases=['orthopyroxene'], absolute_abundance=False)
+                                    elif model == 'perplex':
+                                        if p_of_interest == 4:
+                                            p0 = 3.9  # fucked up
+                                        else:
+                                            p0 = 4
+                                        wt_dict_Fe3 = dat.read_phase_comp(p0, T_of_interest=1373,
+                                                                          component='Fe2O3',
+                                                                          phases=['Opx'],
+                                                                          absolute_abundance=False)
+                                c = wt_dict_Fe3['Opx']
+                                print('c', c, name)
+                                sc_kwargs.update({'c': c})
+                                # need to check for vmin vmac cmap etc
+                            else:
+                                raise NotImplementedError(z_name, 'not implemented for scatter colouring')
                             ax.scatter(x, y, **sc_kwargs)
                             if once:
                                 ys.append(y)

@@ -40,6 +40,7 @@ for jj, p_of_interest in enumerate((1, 4)):
                                     xlim=[(0.8, 1.65), (0.05, 0.2), (0, 0.18), (0.025, 0.13)],
                                     ylim=ylims[jj], c=c, s=30, alpha=0.4, labelsize=labelsize, save=False, fig=fig, axes=axes,
                                     model=model, verbose=False,
+                                    z_name = 'X_Fe3_Opx',
                                     exclude_silica=exclude_silica)
 
     axs[0] = cornertext(axs[0], str(p_of_interest) + ' GPa', size=labelsize, pos='top left')
