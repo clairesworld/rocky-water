@@ -33,8 +33,8 @@ c_phase_dict_stolper = {'Ol': 'tab:green', 'Opx': 'k', 'Cpx': 'tab:gray', 'Sp': 
 
 def filter_silica_sat(df):
     """ filter out cases saturated in quartz - these get to constant fo2 """
-    if ('X_q' in df.columns) or ('X_coe' in df.columns):
-        # print('   found q')
+    if ('X_q' in df.columns) or ('X_coe' in df.columns)  or ('X_stv' in df.columns):
+        # print('   found q or coe')
         df.iloc[:, 2:] = np.nan  # everything except p, T
         # print(df.head())
     return df
@@ -355,7 +355,7 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
     return fig, axes
 
 
-def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, fig=None, axes=[],
+def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent_path=output_parent_px, output_parent_path_melts=output_parent_mlt_earth, fig=None, axes=[],
                   ylim=(-11.5, -7), model='melts', ylabel=r'log($f_{{\rm O}_2}$)', xlim=None, xlabels=None,
                   labelsize=16, save=True, fname=None, z_name=None,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False, **sc_kwargs):
@@ -404,9 +404,14 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                     idx = df['P(bar)'].sub(p_of_interest * 1e4).abs().idxmin()
                     try:
                         row = df.iloc[idx]
-                    except TypeError as e:
+                    except (TypeError, IndexError) as e:
                         # pressure not found
                         continue
+                    # except IndexError as e:
+                    #     print(name)
+                    #     print(p_of_interest * 1e4)
+                    #     print(df['P(bar)'])
+                    #     raise e
                     if model == 'melts':
                         dat = mfug.init_from_results(name=name, output_parent_path=output_parent_path, verbose=False)
                     elif model == 'perplex':
@@ -422,6 +427,19 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                             # search for component in phase comp
                             elif 'X_' + component in row.index:
                                 x = row['X_' + component]
+                            # maybe ratio with H
+                            elif '/H' in component:
+                                try:
+                                    x = dat.nH_star[[ox[:2] for ox in dat.oxide_list].index(component[:2])]
+                                except AttributeError:
+                                    try:
+                                        nH_star = np.loadtxt(output_parent_path_melts + name + '/nH_star.txt')
+                                        x = nH_star[[ox[:2] for ox in dat.oxide_list].index(component[:2])]
+                                    except FileNotFoundError:
+                                        x = np.nan
+                                    except IndexError as e:
+                                        x = np.nan  # nHstar file is empty
+
                             # maybe it's an element ratio
                             elif '/' in component:
                                 x = bulk.get_element_ratio(component, dat.wt_oxides)
@@ -436,25 +454,16 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
                                 print(name, 'keyerror', e)
                                 y = np.nan
                             if z_name:
-                                if z_name == 'X_Fe3_Opx':
-                                    if model == 'melts':
-                                        wt_dict_Fe3 = dat.read_phase_comp(p_of_interest, T_of_interest=1373.15, component='Fe2O3',
-                                                        phases=['orthopyroxene'], absolute_abundance=False)
-                                    elif model == 'perplex':
-                                        if p_of_interest == 4:
-                                            p0 = 3.9  # fucked up
-                                        else:
-                                            p0 = 4
-                                        wt_dict_Fe3 = dat.read_phase_comp(p0, T_of_interest=1373,
-                                                                          component='Fe2O3',
-                                                                          phases=['Opx'],
-                                                                          absolute_abundance=False)
-                                    c = wt_dict_Fe3['Opx']
-                                    print('c', c, name)
-                                    sc_kwargs.update({'c': c})
-                                    # todo: need to check for vmin vmac cmap etc
+                                if z_name in dat.wt_oxides.keys():
+                                    c = dat.wt_oxides[component]
+                                # search for component in phase comp
+                                elif z_name in row.index:
+                                    c = row[z_name]
                                 else:
                                     raise NotImplementedError(z_name, 'not implemented for scatter colouring')
+                                print('c', c, name)
+                                sc_kwargs.update({'c': c})
+                                # todo: need to check for vmin vmac cmap etc
                             ax.scatter(x, y, **sc_kwargs)
                             if once:
                                 ys.append(y)
@@ -484,10 +493,10 @@ def element_xplot(p_of_interest=1, components=[], y_name='logfo2', output_parent
     return fig, axes
 
 
-def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, figpath=figpath, save=True,
+def compare_pop_hist(dirs, x_var, z_var=None, z_val=None,x_scale=1, z_scale=1, fname=None, figpath=figpath, save=True,
                      exclude_names=[], exclude_silica=True, model='perplex', hilite=None, figsize=(7, 5), fig=None, ax=None,
                      ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12,
-                     bins=20, ticksize=12, labelpad=None, x_shift=0, legloc=None,
+                     bins=20, ticksize=12, labelpad=None, x_shift=0, legloc=None, alpha=0.5,
                      hist_kwargs={}, legtitle=None, **kwargs):
     """ z_var is the colour/linestyle coding, must be consistent across all runs in dir[n] """
     if cmap and (not vmin or not vmax):
@@ -508,9 +517,12 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
     for jj, opp in enumerate(dirs):
         spl = os.path.dirname(opp).split('/')[-1].split('_')
         X_ferric = None
+        core_eff = None
         for sp in spl:
             if 'ferric' in sp:
                 X_ferric = int(''.join(filter(str.isdigit, sp)))
+            if 'coreeff' in sp:
+                core_eff = int(''.join(filter(str.isdigit, sp))) / 100
 
         # get directory names in folder
         subfolders = rw.get_run_dirs(output_path=opp)
@@ -522,15 +534,23 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                     name = os.path.basename(sub)
                     if name not in exclude_names:
                         if model == 'perplex':
-                            dat = pfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp,
+                            dat = pfug.init_from_results(name, X_ferric=X_ferric, #core_eff=core_eff,
+                                                         output_parent_path=opp,
                                                          load_results_csv=True, **kwargs)
                         elif model == 'melts':
-                            dat = mfug.init_from_results(name, X_ferric=X_ferric, output_parent_path=opp,
+                            dat = mfug.init_from_results(name, X_ferric=X_ferric, core_eff=core_eff, output_parent_path=opp,
                                                          load_results_csv=True, **kwargs)
                         if dat is not None:
                             if exclude_silica:
                                 dat.data = filter_silica_sat(dat.data)
+                                if dat.data.logfo2.isnull().values.any():
+                                    continue
                             try:
+                                ans = eval('dat.' + x_var) * x_scale
+                                if ans > 1.5:
+                                    print(dat.name)
+                                    print(dat.data.columns)
+                                    print(dat.data.tail())
                                 x.append(eval('dat.' + x_var) * x_scale - x_shift)
                             except TypeError as e:
                                 print(e)
@@ -539,7 +559,10 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
                                 print(e)
             print(opp, 'n_runs =', len(x))
 
-            z = eval('dat.' + z_var) * z_scale  # only need 1 (last in this case)
+            if not z_val:
+                z = eval('dat.' + z_var) * z_scale  # only need 1 (last in this case)
+            else:
+                z = z_val
             if cmap:
                 c = colours.to_rgba(z)  # i.e., override input c
             else:
@@ -554,9 +577,10 @@ def compare_pop_hist(dirs, x_var, z_var=None, x_scale=1, z_scale=1, fname=None, 
             else:
                 sd = np.std(x)
             c_alpha = list(c)
-            c_alpha[3] = 0.5
+            c_alpha[3] = alpha
             if hilite is not None and (jj == hilite):
-                ax.hist(x, ec=c, fc=c_alpha, ls=linestyle, histtype='stepfilled', label='{:.0f}%'.format(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
+                ax.hist(x, ec=c, fc=c_alpha, ls=linestyle, histtype='stepfilled',
+                        label='{:.0f}%'.format(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
                     bins=bins, density=True, **hist_kwargs)
             else:
                 ax.hist(x, color=c, alpha=0.5, ls=linestyle, histtype='step',

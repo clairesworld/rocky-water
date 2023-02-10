@@ -46,6 +46,10 @@ na_sol = 6.30 - 12
 ti_sol = 4.90 - 12
 cr_sol = 5.64 - 12
 p_sol = 5.46 - 12
+#
+# print('mg_sol', mg_sol)
+# print('si_sol', si_sol)
+# print('ti_sol', ti_sol)
 
 # print(10 ** mg_sol / 10 ** si_sol)   # sun = 1.04
 # print(10 ** fe_sol / 10 ** mg_sol)   # sun = 0.81

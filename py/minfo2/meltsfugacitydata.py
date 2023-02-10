@@ -21,7 +21,7 @@ map_to_px_phase = {'olivine': 'Ol', 'orthopyroxene': 'Opx', 'clinopyroxene': 'Cp
 class MeltsFugacityData:
 
     def __init__(self, name='test', star=None,  # solution_phases=solution_phases_default,
-                 output_parent_path=output_parent_default, wt_oxides=pf.wt_oxides_DMM, X_ferric=0.03,
+                 output_parent_path=output_parent_default, wt_oxides=pf.wt_oxides_DMM, X_ferric=0.03, core_eff=None,
                  alphamelts_path=alphamelts_path_default,
                  T_final=None, pressures_of_interest=None, verbose=False,
                  **kwargs):
@@ -48,6 +48,7 @@ class MeltsFugacityData:
         self.name = name
         self.star = star
         self.X_ferric = X_ferric
+        self.core_eff = core_eff
 
         if 'Fe2O3' not in wt_oxides:
             # get O2 mantle fraction
@@ -367,9 +368,13 @@ class MeltsFugacityData:
                     pass
             okay = True
         except FileNotFoundError as e:
-            print(e)
-            # alphamelts did not work at all for whatever reason
-            okay = False
+            if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):
+                print(e)
+                # alphamelts did not work at all for whatever reason
+                okay = False
+            else:
+                okay = True
+                print('Dry run, ignoring FileNotFoundError:', e)
 
         # store mega df
         df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
@@ -562,12 +567,14 @@ class MeltsFugacityData:
 
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
-                      T_final=1373, load_results_csv=False, verbose=False, X_ferric=None, **kwargs):
+                      T_final=1373, load_results_csv=False, verbose=False, X_ferric=None, core_eff=None, **kwargs):
     import re
     parts = name.split('_')
     try:
         star = parts[2]
         X_ferric = float(re.findall('\d+\.\d+', parts[4].replace(',', '.'))[0] ) * 1e-2
+        core_eff = float(re.findall('\d+\.\d+', parts[1].replace(',', '.'))[0] ) * 1e-2
+        print('core eff', core_eff)
     except IndexError:
         # non conventional name
         star = None
@@ -599,7 +606,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 parts = line.split()
                 wt_oxides[parts[2]] = float(parts[3])
 
-        dat = MeltsFugacityData(name=name, star=star, X_ferric=X_ferric, wt_oxides=wt_oxides, output_parent_path=output_parent_path,
+        dat = MeltsFugacityData(name=name, star=star, X_ferric=X_ferric, core_eff=core_eff, wt_oxides=wt_oxides, output_parent_path=output_parent_path,
                                 alphamelts_path=alphamelts_path, pressures_of_interest=pressures_of_interest, T_final=T_final, verbose=verbose)
 
         # load results csv
@@ -611,7 +618,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 if verbose:
                     print('loaded df\n', dat.data.head())
             except FileNotFoundError:
-                print('...results.csv file not found! skipping')
+                print('...results.csv file not found! skipping for', name)
 
         return dat
     else:
@@ -672,7 +679,6 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
                                        , 'mass_melt_min', 'n_pressures'], index=range(len(names)))
     for row, sub in enumerate(names):
         dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
-        dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
         if dat:  # existing runs
             dat.find_common_T_final_from_results()
             df.at[row, 'name'] = dat.name
@@ -698,6 +704,66 @@ def fo2_from_local(output_parent_path, num=-1, **kwargs):
         if (dat is None) or (not okay):
             bad.append(name)
     return bad
+
+
+def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True, **kwargs):
+    """ create summary of this case , T in K, P in GPa """
+    pd.set_option("display.max_columns", 99)
+
+    # get all runs in directory
+    subfolders = [f.name for f in os.scandir(output_parent_path) if f.is_dir()]
+
+    n = len(subfolders)
+    dfout = pd.DataFrame(index=range(n), columns=['star', 'T(K)', 'P(GPa)',
+                                                  'logfO2', 'deltaQFM', 'Fe3/Fe', 'Fe_c/Fe_T',
+                                                  'X_Ol', 'X_Opx', 'X_Cpx', 'X_Sp', 'X_Gt',
+                                                  'X_Fe3_Opx', 'X_Fe3_Cpx', 'X_Fe3_Sp', 'X_Fe3_Gt',
+                                                  'Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si'])
+
+    # add constant cols
+    dfout['T(K)'] = T
+    dfout['P(GPa)'] = P
+    dfout['Fe3/Fe'] = Xfer
+    dfout['Fe_c/Fe_T'] = coreeff
+
+    for row, name in enumerate(subfolders):
+        # ensure name is there
+        parts = name.split('_')
+        star = parts[2]
+        dfout.at[row, 'star'] = star
+
+        dat = init_from_results(name, output_parent_path=output_parent_path, load_results_csv=True, **kwargs)
+        if dat is not None:
+            # get run data at T, p
+            df = dat.data.loc[(dat.data['T(K)'] == T) & (dat.data['P(bar)'] == P * 1e4)]
+            if len(df.index) > 0:  # maybe melts crashed or didn't run for some reason
+                # if verbose:
+                #     print('retrieved\n', df)
+
+                # add to output csv
+                dfout.at[row, 'logfO2'] = df['logfo2'].values[0]
+                if not np.isnan(df['logfo2'].values[0]):
+                    dfout.at[row, 'deltaQFM'] = df['delta_qfm'].values[0]
+                else:
+                    dfout.at[row, 'deltaQFM'] = np.nan
+
+                for s in ['X_Ol', 'X_Opx', 'X_Cpx', 'X_Sp', 'X_Gt', 'X_Fe3_Opx', 'X_Fe3_Cpx', 'X_Fe3_Sp', 'X_Fe3_Gt']:
+                    try:
+                        dfout.at[row, s] = df[s].values[0]
+                    except KeyError as e:
+                        # if verbose:
+                        #     print(e)
+                        pass # this phase not stable at T,p
+
+                for s in ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']:
+                    dfout.at[row, s] = bulk.get_element_ratio(s, dat.wt_oxides)
+
+    dfout.to_csv(output_parent_path + 'summary_melts_' + str(T).replace('.', ',') + 'K_' + str(P).replace('.', ',') + 'GPa_' + str(Xfer*100).replace('.', ',') + 'fer_' + str(coreeff*100).replace('.', ',') + 'core' + '.csv', sep="\t", na_rep='NaN')
+    if verbose:
+        print(dfout.head(10))
+    pd.reset_option("max_columns")
+    print('Done!')
+    return None
 
 
 

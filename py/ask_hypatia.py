@@ -7,7 +7,7 @@ import os
 import simplejson
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = 'e66851d6aee9e3cfb79368a3fa2d4952'
+key = 'e29c9d52ca17e4863773862d08df4260'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -153,8 +153,6 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         els.append(ox[:2].lower())
 
     def do_local(tried_once=False):
-        if tried_once:
-            return None
         try:
             path = find_existing_directory(star, existing_output_parent=existing_output_parent, **kwargs)
             print('found existing star at', path)
@@ -163,11 +161,18 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                 print('loaded nH_star', nH_star)
                 try:  # check for empty
                     tmp = nH_star[1]
+                    print('tmp')
                 except IndexError:
+                    print('caught indexerror')
+                    if tried_once:
+                        return None
+                    print('trying remote...')
                     nH_star = do_remote(tried_once=True)
             except OSError as e:
                 # no data?
-                print(e)
+                print('os error', e)
+                if tried_once:
+                    return None
                 print('trying remote...')
                 nH_star = do_remote(tried_once=True)
                 return nH_star
@@ -177,6 +182,8 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                 nH_star = dat.nH_star
         except FileNotFoundError as e:
             print(e)
+            if tried_once:
+                return None
             print('trying remote...')
             nH_star = do_remote(tried_once=True)  # try remote
             return nH_star
@@ -184,14 +191,13 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
 
 
     def do_remote(tried_once=False):
-        if tried_once:
-            return None
         import py.parameters as p
         params = {"name": [star] * len(els), "element": els, "solarnorm": ["lod09"] * len(els)}
         try:
+            print('calling requests.get')
             entry = requests.get("https://hypatiacatalog.com/hypatia/api/v2/composition", auth=(API_KEY, "api_token"),
                                  params=params)
-            # print('retrieved from catalogue:', entry.json())
+            print('retrieved from catalogue:', entry.json())
 
             if np.size(entry.json()) == 0:
                 raise Exception('No entry found in Hypatia Catalogue:', star)
@@ -223,6 +229,8 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         except (ConnectionError, requests.exceptions.ConnectionError) as e:
             # try loading from file
             print('CONNECTION TIMEOUT\nERROR MESSAGE:', e)
+            if tried_once:
+                return None
             print('    trying to load from file...')
             nH_star = do_local(tried_once=True)
         except simplejson.JSONDecodeError as e:

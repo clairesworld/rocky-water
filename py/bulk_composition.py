@@ -169,7 +169,7 @@ def insert_o2_from_wt_comp(wt_oxides_dict, **kwargs):
     return new_wt_dict
 
 
-def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100):
+def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100, verbose=True):
     m_FeOstar = wt_oxides_dict['FeO']
     m_FeO, m_Fe2O3 = partition_FeOstar(m_FeOstar, X_ferric)
 
@@ -177,11 +177,13 @@ def insert_fe2o3(wt_oxides_dict, X_ferric, mass_tot=100):
     wt_oxides_dict['FeO'] = m_FeO
     wt_oxides_dict['Fe2O3'] = m_Fe2O3
 
-    print('wt.% oxides with Fe2O3 added\n-----------')
+    if verbose:
+        print('wt.% oxides with Fe2O3 added\n-----------')
     factor = mass_tot / sum(wt_oxides_dict.values())
     for k in wt_oxides_dict:
         wt_oxides_dict[k] = wt_oxides_dict[k] * factor
-        print("{0:<7}".format(k), "{:5.2f}%".format(wt_oxides_dict[k]))
+        if verbose:
+            print("{0:<7}".format(k), "{:5.2f}%".format(wt_oxides_dict[k]))
 
     return wt_oxides_dict
 

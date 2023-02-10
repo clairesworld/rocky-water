@@ -22,7 +22,7 @@ gs = fig.add_gridspec(2, ncols + 1, width_ratios=[10] * ncols + [1], height_rati
 for jj, p_of_interest in enumerate((1, 4)):
     if model == 'melts':
         source = fo2plt.output_parent_mlt_earth
-        ylims = [(-11, -8.5), (-8, -5.7)]  # 1 GPa, 4 GPa
+        ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa
         c = 'xkcd:midnight blue'
         title = 'pMELTS'
     elif model == 'perplex':
@@ -40,7 +40,7 @@ for jj, p_of_interest in enumerate((1, 4)):
                                     xlim=[(0.8, 1.65), (0.05, 0.2), (0, 0.18), (0.025, 0.13)],
                                     ylim=ylims[jj], c=c, s=30, alpha=0.4, labelsize=labelsize, save=False, fig=fig, axes=axes,
                                     model=model, verbose=False,
-                                    # z_name = 'X_Fe3_Opx',
+                                    z_name = 'X_Fe3_Opx', vmin=0, vmax=0.6, cmap='viridis',
                                     exclude_silica=exclude_silica)
 
     axs[0] = cornertext(axs[0], str(p_of_interest) + ' GPa', size=labelsize, pos='top left')
