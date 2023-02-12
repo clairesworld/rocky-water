@@ -349,11 +349,12 @@ class MeltsFugacityData:
             if run_alphamelts:
                 self.run_alphamelts_all_p(**kwargs)
 
-            # retrieve fo2
-            self.read_melts_fo2(**kwargs)
+            if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):
+                # retrieve fo2
+                self.read_melts_fo2(**kwargs)
 
-            # retrieve phases
-            self.read_melts_phases(which='mass', **kwargs)
+                # retrieve phases
+                self.read_melts_phases(which='mass', **kwargs)
 
             if compare_buffer == 'qfm':
                 try:
