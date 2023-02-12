@@ -356,17 +356,19 @@ class MeltsFugacityData:
                 # retrieve phases
                 self.read_melts_phases(which='mass', **kwargs)
 
-            if compare_buffer == 'qfm':
-                try:
-                    logfo2_buffer = pf.read_qfm_os(self.data['T(K)'].to_numpy(), self.data['P(bar)'].to_numpy(),
-                                                   verbose=False, perplex_path=perplex_path)
-                    # print('logfo2_qfm', logfo2_buffer)
-                    # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-                    self.data['logfo2_qfm'] = logfo2_buffer
-                    self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
-                except NotImplementedError:
-                    # probably didn't get to 1100 C
-                    pass
+                if compare_buffer == 'qfm':
+                    try:
+                        logfo2_buffer = pf.read_qfm_os(self.data['T(K)'].to_numpy(), self.data['P(bar)'].to_numpy(),
+                                                       verbose=False, perplex_path=perplex_path)
+                        # print('logfo2_qfm', logfo2_buffer)
+                        # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
+                        self.data['logfo2_qfm'] = logfo2_buffer
+                        self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
+                    except NotImplementedError:
+                        # probably didn't get to 1100 C
+                        pass
+            else:
+                save = False
             okay = True
         except FileNotFoundError as e:
             if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):
