@@ -59,7 +59,7 @@ for ce in core_eff:
                             names_file=names_file,
                             # use_local_composition=False,
                             # use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
-                            use_local_composition=True, existing_dir=output_parent_path,
+                            use_local_composition=True, existing_dir=output_sub,
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
                             skip_names=skip_stars,  # []
