@@ -23,7 +23,7 @@ px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
 X_ferric = 0.03
 # core_eff = [0.7, 0.65]  #, 0.85,  0.8, 0.7, 0.95, 0.99, 0.75, 0.9,  0.65]
-core_eff = [0.99, 0.95, 0.97]
+core_eff = [0.88]
 
 for ce in core_eff:
     output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(X_ferric * 100)) + 'ferric_ext/'
@@ -34,13 +34,16 @@ for ce in core_eff:
     pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
                         X_ferric=X_ferric, core_efficiency=ce,
                         planet_kwargs={'Tp': 999, 'oxides': oxide_list, 'excluded_phases': px_melt_phases},
+                        skip_existing=True,  # do not do anything if directory exists with *_results.csv
                         #solve_interior=False, --> already a parameter
-                        check_comp=True, suppress_output=False, run=True, verbose=True,
+                        check_comp=True,  # uses werami_command_comp after fo2 calc
+                        suppress_output=False, run=True, verbose=True,
                         output_parent_path=output_parent_path, perplex_path=perplex_path,
                         mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                         # use_local_compositon=False,
-                        # use_local_composition=True, existing_dir='hypatia_88coreeff_5ferric_ext/',  # try local first
+                        use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
+                        existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
                         # existing_output_parent=pfug.output_parent_apollo,  # <== existing kwarg
                         # restart='2MASS 23155829+3127462'
                         run_vertex='auto',  # overwrite existing vertex files if exist

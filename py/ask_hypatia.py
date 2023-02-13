@@ -253,9 +253,9 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     return nH_star  # will always be in same order as oxides list
 
 
-star_composition(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O'], star='HIP 13291', API_KEY=key, use_local_composition=False,
-                     output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, existing_output_parent=None,
-                     )
+# star_composition(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O'], star='HIP 13291', API_KEY=key, use_local_composition=False,
+#                      output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, existing_output_parent=None,
+#                      )
 
 
 

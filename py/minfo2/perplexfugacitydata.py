@@ -846,7 +846,7 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
 
 def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
-                     output_parent_path=output_parent_default, **kwargs):
+                     output_parent_path=output_parent_default, skip_existing=True, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
     pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
                                       get_saturation=False,
@@ -855,10 +855,13 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwar
     print('\nfinished generating compositions\n')
     bad = []
     for pl in pl_list:
-        print(pl.wt_oxides)
-        okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
-        if not okay:
-            bad.append(pl.name)
+        if skip_existing and os.path.exists(pl.output_path + pl.name + '_results.csv'):
+            print('skipping', pl.name, ': results.csv file exists')
+        else:
+            print('running\n', pl.wt_oxides)
+            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
+            if not okay:
+                bad.append(pl.name)
     print('bad cases:', bad)
     return pl_list
 
