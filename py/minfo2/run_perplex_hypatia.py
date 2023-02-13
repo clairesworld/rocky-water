@@ -42,7 +42,7 @@ for ce in core_eff:
                         mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                         # use_local_compositon=False,
-                        use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
+                        use_local_composition=True, existing_dir='hypatia_88coreeff_1ferric_ext/',  # try local first
                         existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
                         # existing_output_parent=pfug.output_parent_apollo,  # <== existing kwarg
                         # restart='2MASS 23155829+3127462'
