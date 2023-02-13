@@ -253,6 +253,12 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     return nH_star  # will always be in same order as oxides list
 
 
+star_composition(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O'], star='HIP 13291', API_KEY=key, use_local_composition=False,
+                     output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, existing_output_parent=None,
+                     )
+
+
+
 def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', existing_output_parent=None, **kwargs):
     """
     Retrieve directory of already-existing run for a given star. Best with default use of paths as given in
