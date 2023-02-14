@@ -343,20 +343,20 @@ class MeltsFugacityData:
                 print('             ...done loading fO2!')
 
     def fo2_calc(self, compare_buffer=None, save=True, perplex_path=px.perplex_path_default, run_alphamelts=True,
-                 verbose=False, **kwargs):
+                 verbose=False, T_of_interest=1373.15, **kwargs):
 
         try:
             # run alphamelts -- note will check if run exists at run_alphamelts_at_p()
 
             if run_alphamelts:
-                self.run_alphamelts_all_p(**kwargs)
+                self.run_alphamelts_all_p(T_of_interest=T_of_interest, **kwargs)
 
             if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):
                 # retrieve fo2
-                self.read_melts_fo2(**kwargs)
+                self.read_melts_fo2(T_of_interest=T_of_interest, **kwargs)
 
                 # retrieve phases
-                self.read_melts_phases(which='mass', **kwargs)
+                self.read_melts_phases(which='mass', T_of_interest=T_of_interest, **kwargs)
 
                 if compare_buffer == 'qfm':
                     try:
@@ -385,9 +385,9 @@ class MeltsFugacityData:
         df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
         # print('df saved\n', df_save.head())
         if save:
-            df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
+            df_save.to_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep="\t")
             if verbose:
-                print('saved to', self.output_path + self.name + '_results.csv')
+                print('saved to', self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv')
         return okay
 
     def find_common_T_final_from_results(self, include_p=None, **kwargs):
@@ -422,15 +422,15 @@ class MeltsFugacityData:
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
 
-    def read_fo2_results(self, verbose=True):
+    def read_fo2_results(self, T_of_interest=1373.15, verbose=True):
 
         if np.isnan(self.data['P(bar)'].to_numpy().all()):
             try:
-                self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+                self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
                 if verbose:
                     print('loaded df\n', self.data.head())
             except FileNotFoundError:
-                print('...results.csv file not found! skipping')
+                print('...results csv file not found at', int(T_of_interest), 'K! skipping')
                 return None
 
         self.logfo2 = self.data['logfo2'].to_numpy()
@@ -522,7 +522,7 @@ class MeltsFugacityData:
 
         """
         if absolute_abundance and (not hasattr(self, 'data')):
-            self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+            self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
 
         if p_index:
             idx = p_index
@@ -567,7 +567,7 @@ class MeltsFugacityData:
                         wt_pt_dict[map_to_px_phase[phase]] = np.nan
         except FileNotFoundError as e:
             print(e, self.name)
-            print('...results.csv file not found! skipping')
+            print('...results.csv file not found at', int(T_of_interest), 'K! skipping')
             return None
         return wt_pt_dict
 
@@ -618,13 +618,13 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         # load results csv
         if load_results_csv:
             try:
-                dat.data = pd.read_csv(dat.output_path + name + '_results.csv', sep='\t')
-                dat.read_fo2_results(verbose=verbose)
+                dat.data = pd.read_csv(dat.output_path + name + '_results' + str(int(T_final)) + '.csv', sep='\t')
+                dat.read_fo2_results(verbose=verbose, **kwargs)
 
                 if verbose:
                     print('loaded df\n', dat.data.head())
             except FileNotFoundError:
-                print('...results.csv file not found! skipping for', name)
+                print('...results.csv file not found at', T_final, 'K! skipping for', name)
 
         return dat
     else:

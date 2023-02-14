@@ -11,6 +11,8 @@ import py.minfo2.meltsfugacitydata as mfug
 """
 source /raid1/cmg76/venv/bin/activate
 cd ~/Works/rocky-water/
+git pull
+python3 py/minfo2/process_melts_hypatia.py
 """
 
 # set paths
@@ -48,11 +50,11 @@ for ce in core_eff:
 
         mfug.common_Tmin(output_parent_path, include_p=[1e4, 4e4])
 
-        # # calculate mantle fo2 only
-        # mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=Xf, alphamelts_path=alphamelts_path,
-        #                     compare_buffer='qfm', perplex_path=perplex_path,
-        #                     T_of_interest=T_of_interest,  # reload_TP=True,
-        #                     verbose=False)
+        # calculate mantle fo2 only
+        mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=Xf, alphamelts_path=alphamelts_path,
+                            compare_buffer='qfm', perplex_path=perplex_path,
+                            T_of_interest=T_of_interest,  # reload_TP=True,
+                            verbose=False)
 
 """ ^^^ UNCOMMENT TO RUN ^^^ """
 
