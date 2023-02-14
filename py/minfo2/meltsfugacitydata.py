@@ -23,7 +23,9 @@ class MeltsFugacityData:
     def __init__(self, name='test', star=None,  # solution_phases=solution_phases_default,
                  output_parent_path=output_parent_default, wt_oxides=pf.wt_oxides_DMM, X_ferric=0.03, core_eff=None,
                  alphamelts_path=alphamelts_path_default,
-                 T_final=None, pressures_of_interest=None, verbose=False,
+                 T_final=None,
+                 pressures_of_interest=None, # in bar
+                 verbose=False,
                  **kwargs):
 
         """
@@ -388,33 +390,34 @@ class MeltsFugacityData:
                 print('saved to', self.output_path + self.name + '_results.csv')
         return okay
 
-    def find_common_T_final_from_results(self):
+    def find_common_T_final_from_results(self, include_p=None, **kwargs):
         # for already-ran melts data, get the last temperature that all pressures cooled to
         fname = 'Phase_mass_tbl.txt'
         T_min = self.T_final
         mass_melt_min = 0
         p_count = 0
         for ii, path in enumerate(self.output_p_paths):
-            # load output csv from pMELTS
-            output_file = path + fname
+            if (not include_p) or (include_p and (self.pressures_of_interest[ii] in include_p)):
+                # load output csv from pMELTS
+                output_file = path + fname
 
-            try:
-                df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                                 dtype=np.float64).tail(1)
-            except FileNotFoundError:
-                # this run didn't complete
-                print(self.name, 'did not complete, no alphamelts results found')
-                self.T_min = np.nan
-                self.mass_melt_min = np.nan
-                self.n_pressures = 0
-                return None
+                try:
+                    df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                                     dtype=np.float64).tail(1)
+                except FileNotFoundError:
+                    # this run didn't complete
+                    print(self.name, 'did not complete, no alphamelts results found')
+                    self.T_min = np.nan
+                    self.mass_melt_min = np.nan
+                    self.n_pressures = 0
+                    return None
 
-            p_count += 1
-            T_last = df['Temperature'].item()
-            # print('T_last', T_last, '(type =', type(T_last), ') at', path)
-            if T_last >= T_min:
-                T_min = T_last  # want highest value of min T
-                mass_melt_min = df['liquid_0'].item()  # also retrieve final melt mass fraction
+                p_count += 1
+                T_last = df['Temperature'].item()
+                # print('T_last', T_last, '(type =', type(T_last), ') at', path)
+                if T_last >= T_min:
+                    T_min = T_last  # want highest value of min T
+                    mass_melt_min = df['liquid_0'].item()  # also retrieve final melt mass fraction
         self.T_min = T_min
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
@@ -683,7 +686,7 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
     for row, sub in enumerate(names):
         dat = init_from_results(sub, output_parent_path=output_parent_path, verbose=False, **kwargs)
         if dat:  # existing runs
-            dat.find_common_T_final_from_results()
+            dat.find_common_T_final_from_results(**kwargs)
             df.at[row, 'name'] = dat.name
             df.at[row, 'T_min'] = dat.T_min
             df.at[row, 'mass_melt_min'] = dat.mass_melt_min
