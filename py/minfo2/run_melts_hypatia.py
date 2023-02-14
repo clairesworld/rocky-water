@@ -44,7 +44,6 @@ elif location == 'starlite':
     names_file = '/home/claire/Works/rocky-water/py/host_names.txt'
 for ce in core_eff:
     for Xf in X_ferric:
-        source = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
         output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
         output_parent_path = source + output_sub
 
