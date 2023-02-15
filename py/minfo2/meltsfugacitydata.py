@@ -68,7 +68,7 @@ class MeltsFugacityData:
 
         # set main output path for this composition and subpaths for pressure runs
         self.output_path = output_parent_path + self.name + '/'
-        self.output_p_paths = [self.output_path + str(pp).replace('.', ',') + 'bar/' for pp in pressures_of_interest]
+        self.output_p_paths = [self.output_path + str(int(pp)) + 'bar/' for pp in pressures_of_interest]
         self.pressures_of_interest = pressures_of_interest
         self.T_final = T_final
 
@@ -160,7 +160,7 @@ class MeltsFugacityData:
                             melts_kwargs=None, overwrite=False, verify_on_path=False, **kwargs):
 
         if output_p_path is None:
-            output_p_path = self.output_path + str(p_of_interest).replace('.', ',') + 'GPa/'
+            output_p_path = self.output_path + str(int(p_of_interest)) + 'GPa/'
         if melts_kwargs is None:
             melts_kwargs = {}
         if env_file is None:
@@ -471,7 +471,7 @@ class MeltsFugacityData:
             pass
 
     def read_phase_main(self, phase, p_of_interest, T_of_interest, verbose=False):
-        filename = self.output_path + str(float(p_of_interest * 1e4)).replace('.', ',') + 'bar/Phase_main_tbl.txt'
+        filename = self.output_path + str(int(p_of_interest * 1e4)) + 'bar/Phase_main_tbl.txt'
         tmp = []
         with open(filename) as file:
             start = False
