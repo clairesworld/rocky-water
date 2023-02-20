@@ -298,7 +298,7 @@ class MeltsFugacityData:
                                         label = 'X_' + map_to_px_phase[ph3]
                                         addition = self.data.loc[row, label] + df.loc[idx, ph]
                                         self.data.loc[row, label] = addition / m_tot * 100  # renormalise to 100 g total mass
-                                        raise Exception(self.name, 'repeated phase', ph2, '(nonzero):', path)
+                                        # raise Exception(self.name, 'repeated phase', ph2, '(nonzero):', path)
                                     else:
                                         continue
                                 print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
