@@ -319,7 +319,7 @@ class MeltsFugacityData:
         # print('(checking indices of self.data')
         # print(self.data)
         for row, pp in enumerate(self.pressures_of_interest):
-            d_Fe3 = self.read_phase_comp(pp/1e4, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+            d_Fe3 = self.read_phase_comp(pp, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
                         absolute_abundance=False, verbose=False, p_index=row)
             # print('row', row, 'pp', pp)
             if d_Fe3:
@@ -493,7 +493,7 @@ class MeltsFugacityData:
             pass
 
     def read_phase_main(self, phase, p_of_interest, T_of_interest, verbose=False):
-        filename = self.output_path + str(int(p_of_interest * 1e4)) + 'bar/Phase_main_tbl.txt'
+        filename = self.output_path + str(int(p_of_interest)) + 'bar/Phase_main_tbl.txt'
         print('filename l. 496', filename)
         print('    p_of_interest', p_of_interest)
         tmp = []
@@ -540,7 +540,7 @@ class MeltsFugacityData:
         phases :
         T_of_interest :
         component :
-        p_of_interest : GPa
+        p_of_interest : bar
         verbose :
 
         Returns
@@ -554,10 +554,10 @@ class MeltsFugacityData:
             idx = p_index
         else:
             try:
-                idx = self.pressures_of_interest.index(p_of_interest*1e4)
+                idx = self.pressures_of_interest.index(p_of_interest)
             except ValueError as e:
                 # pressure not found
-                print(p_of_interest, 'GPa not found')
+                print(p_of_interest, 'bar not found')
                 raise e
 
         wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
@@ -575,7 +575,7 @@ class MeltsFugacityData:
                     if absolute_abundance:
                         # normalise to total quantity of phase
                         try:
-                            mass_ph = self.data['X_' + map_to_px_phase[phase]].iloc[idx] / 100  # these are wt%
+                            mass_ph = self.data.loc[idx, 'X_' + map_to_px_phase[phase]] / 100  # these are wt%
                             print('mass', phase, mass_ph)
                         except KeyError as e:
                             # this is probably because T_of_interest not found - won't fill in _results.csv
@@ -588,14 +588,14 @@ class MeltsFugacityData:
                         mass_ph = 1
 
                     try:
-                        wt_pt_dict[map_to_px_phase[phase]] = df[component].iloc[0] * mass_ph
+                        wt_pt_dict[map_to_px_phase[phase]] = df.loc[0, component] * mass_ph
                     except KeyError:
                         if verbose:
                             print(component, 'not found in', phase)
                         wt_pt_dict[map_to_px_phase[phase]] = np.nan
         except FileNotFoundError as e:
             print(e)
-            print('             ...file not found at', p_of_interest, int(T_of_interest), 'K! skipping', self.name, '\n')
+            print('             ...file not found at', p_of_interest, 'bar, ', int(T_of_interest), 'K! skipping:', self.name, '\n')
             return None
         return wt_pt_dict
 
