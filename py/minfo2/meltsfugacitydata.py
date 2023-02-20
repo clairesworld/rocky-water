@@ -243,7 +243,7 @@ class MeltsFugacityData:
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
             except IndexError as e:
-                print('             T_of_interest', T_of_interest,'K not found, min:', df.Temperature.iloc[-1], '--- in System_main', self.name)
+                print('             T_of_interest', T_of_interest, 'K not found, min:', df.Temperature.iloc[-1], '--- in System_main', self.name)
                 return False
 
             # append P and T
@@ -299,13 +299,11 @@ class MeltsFugacityData:
                                 print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
                                 raise e
                             try:
-                                self.data.loc[row, label] = df[ph].loc[
-                                                               idx] / m_tot * 100  # renormalise to 100 g total mass
+                                self.data.loc[row, label] = df.loc[idx, ph] / m_tot * 100  # renormalise to 100 g total mass
                             except KeyError:
                                 self.data[label] = np.nan  # add column
                                 # print('cols', self.data.columns)
-                                self.data.loc[row, label] = df[ph].loc[
-                                                               idx] / m_tot * 100  # renormalise to 100 g total mass
+                                self.data.loc[row, label] = df.loc[idx, ph] / m_tot * 100  # renormalise to 100 g total mass
                 except SettingWithCopyError:
                     print('handling..')
                     frameinfo = getframeinfo(currentframe())
