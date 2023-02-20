@@ -8,6 +8,10 @@ import py.main as rw
 import py.minfo2.perplexfugacitydata as pf
 import py.parameters as p
 from py.useful_and_bespoke import find_nearest_idx
+from inspect import currentframe, getframeinfo
+from pandas.core.common import SettingWithCopyError
+
+pd.options.mode.chained_assignment = 'raise'
 
 output_parent_default = '/home/claire/Works/min-fo2/alphamelts_output/'
 alphamelts_path_default = '/home/claire/Works/alphamelts/'
