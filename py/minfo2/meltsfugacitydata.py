@@ -508,6 +508,7 @@ class MeltsFugacityData:
                     bits = line.split()
                     if (bits[1] == 'Temperature') or (bits[1] == str(T_of_interest)):
                         tmp.append(line)
+        print('tmp', tmp)
         if not start:
             # never found this phase
             if verbose:
