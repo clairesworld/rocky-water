@@ -248,16 +248,16 @@ class MeltsFugacityData:
 
             # append P and T
             if np.isnan(self.data.loc[row, 'P(bar)']):
-                self.data.loc[row, 'P(bar)'] = df['Pressure'].loc[idx]
-            elif self.data.loc[row, 'P(bar)'] != df['Pressure'].loc[idx]:
+                self.data.loc[row, 'P(bar)'] = int(df.loc[idx, 'Pressure'])
+            elif int(self.data.loc[row, 'P(bar)']) != int(df.loc[idx, 'Pressure']):
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df['Pressure'].loc[idx], output_file, self.data['P(bar)'].iloc[row])
+                    df.loc[idx, 'Pressure'], output_file, self.data.loc[row, 'P(bar)'])
                 raise RuntimeError(error_str)
-            if np.isnan(self.data['T(K)'].iloc[row]):
-                self.data.loc[row, 'T(K)'] = df['Temperature'].iloc[idx]  # K
-            elif self.data.loc[row, 'T(K)'] != df['Temperature'].iloc[idx]:
+            if np.isnan(self.data.loc[row, 'T(K)']):
+                self.data.loc[row, 'T(K)'] = df.loc[idx, 'Temperature']  # K
+            elif self.data.loc[row, 'T(K)'] != df.loc[idx, 'Temperature']:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df['Temperature'].loc[idx], output_file, self.data['T(K)'].iloc[row])
+                    df.loc[idx, 'Temperature'], output_file, self.data.loc[row, 'T(K)'])
                 raise RuntimeError(error_str)
         return True
 
@@ -299,12 +299,12 @@ class MeltsFugacityData:
                                 print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
                                 raise e
                             try:
-                                self.data[label].iloc[row] = df[ph].loc[
+                                self.data.loc[row, label] = df[ph].loc[
                                                                idx] / m_tot * 100  # renormalise to 100 g total mass
                             except KeyError:
                                 self.data[label] = np.nan  # add column
                                 # print('cols', self.data.columns)
-                                self.data[label].iloc[row] = df[ph].loc[
+                                self.data.loc[row, label] = df[ph].loc[
                                                                idx] / m_tot * 100  # renormalise to 100 g total mass
                 except SettingWithCopyError:
                     print('handling..')
@@ -316,12 +316,12 @@ class MeltsFugacityData:
             # print(self.data.head())
 
         # also load Fe2O3 content
-        print('(checking indices of self.data')
-        print(self.data)
+        # print('(checking indices of self.data')
+        # print(self.data)
         for row, pp in enumerate(self.pressures_of_interest):
             d_Fe3 = self.read_phase_comp(pp/1e4, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
                         absolute_abundance=False, verbose=False, p_index=row)
-            print('row', row, 'pp', pp)
+            # print('row', row, 'pp', pp)
             if d_Fe3:
                 for key in d_Fe3:
                     label = 'X_Fe3_' + key
@@ -350,12 +350,12 @@ class MeltsFugacityData:
                     idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
                     # append fo2
-                    self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
+                    self.data.loc[row, 'logfo2'] = df['logfO2(absolute)'].loc[idx]
                     # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
                 except SettingWithCopyError:
                     print('handling..')
                     frameinfo = getframeinfo(currentframe())
-                    print(frameinfo.lineno)
+                    print('line', frameinfo.lineno)
 
             if verbose:
                 print('             ...done loading fO2!')
