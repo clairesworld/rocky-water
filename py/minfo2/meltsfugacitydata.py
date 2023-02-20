@@ -494,6 +494,8 @@ class MeltsFugacityData:
 
     def read_phase_main(self, phase, p_of_interest, T_of_interest, verbose=False):
         filename = self.output_path + str(int(p_of_interest * 1e4)) + 'bar/Phase_main_tbl.txt'
+        print('filename l. 496', filename)
+        print('    p_of_interest', p_of_interest)
         tmp = []
         with open(filename) as file:
             start = False
