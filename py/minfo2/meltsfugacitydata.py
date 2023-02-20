@@ -409,7 +409,7 @@ class MeltsFugacityData:
         # print('df saved\n', df_save.head())
         if save:
             df_save.to_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep="\t")
-            print('                        saved to', self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv')
+            print('>>> saved to', self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv')
         return okay
 
     def find_common_T_final_from_results(self, include_p=None, **kwargs):
@@ -494,8 +494,8 @@ class MeltsFugacityData:
 
     def read_phase_main(self, phase, p_of_interest, T_of_interest, verbose=False):
         filename = self.output_path + str(int(p_of_interest)) + 'bar/Phase_main_tbl.txt'
-        print('filename l. 496', filename)
-        print('    p_of_interest', p_of_interest)
+        # print('filename l. 496', filename)
+        # print('    p_of_interest', p_of_interest)
         tmp = []
         with open(filename) as file:
             start = False
@@ -563,7 +563,7 @@ class MeltsFugacityData:
         wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
         try:
             for phase in phases:
-                print('l. 564 calling read_phase_main with', p_of_interest)
+                # print('l. 564 calling read_phase_main with', p_of_interest)
                 df = self.read_phase_main(phase, p_of_interest, T_of_interest, verbose=verbose)
 
                 if df is None:  # phase not found
@@ -595,7 +595,7 @@ class MeltsFugacityData:
                         wt_pt_dict[map_to_px_phase[phase]] = np.nan
         except FileNotFoundError as e:
             print(e)
-            print('             ...file not found at', p_of_interest, 'bar, ', int(T_of_interest), 'K! skipping:', self.name, '\n')
+            print('...file not found at', p_of_interest, 'bar, ', int(T_of_interest), 'K! skipping:', self.name, '\n')
             return None
         return wt_pt_dict
 
@@ -625,7 +625,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         # sort ascending (alphabetical order might be different in os.scandir
         pressures_of_interest.sort()
 
-        print('initiating pressures of interest', pressures_of_interest)
+        # print('initiating pressures of interest', pressures_of_interest)
 
         # parse melts file
         try:
