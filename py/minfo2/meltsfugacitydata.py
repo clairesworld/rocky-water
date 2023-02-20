@@ -215,7 +215,7 @@ class MeltsFugacityData:
                         else:
                             print('cannot find file: ', output_p_path + fend)
                             raise FileNotFoundError(
-                                'ERROR: alphamelts did not complete, try running again with suppress_output=False')
+                                'ERROR: alphamelts did not complete, try running again with suppress_output=False:', self.name)
 
             # return to original dir
             os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -425,7 +425,7 @@ class MeltsFugacityData:
                                      dtype=np.float64).tail(1)
                 except FileNotFoundError:
                     # this run didn't complete
-                    print(self.name, 'did not complete, no alphamelts results found')
+                    print(self.name, 'did not complete, no Phase_mass_tbl.txt found in', path)
                     self.T_min = np.nan
                     self.mass_melt_min = np.nan
                     self.n_pressures = 0
@@ -725,7 +725,7 @@ def fo2_from_local(output_parent_path, num=-1, **kwargs):
     for name in subfolders[:num]:
         dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
         if dat is not None:
-            okay = dat.fo2_calc(save=True, run_alphamelts=False, **kwargs)
+            okay = dat.fo2_calc(run_alphamelts=False, **kwargs)
         if (dat is None) or (not okay):
             bad.append(name)
     return bad
