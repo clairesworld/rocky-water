@@ -316,15 +316,18 @@ class MeltsFugacityData:
             # print(self.data.head())
 
         # also load Fe2O3 content
+        print('(checking indices of self.data')
+        print(self.data)
         for row, pp in enumerate(self.pressures_of_interest):
             d_Fe3 = self.read_phase_comp(pp/1e4, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
                         absolute_abundance=False, verbose=False, p_index=row)
+            print('row', row, 'pp', pp)
             if d_Fe3:
                 for key in d_Fe3:
                     label = 'X_Fe3_' + key
                     if d_Fe3[key] > 0:
                         try:
-                            self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
+                            self.data.loc[row, label] = d_Fe3[key]  # Fe3 composition of phase
                         except KeyError:
                             try:
                                 self.data[label] = np.nan  # add column
@@ -332,7 +335,7 @@ class MeltsFugacityData:
                                 print('handling..')
                                 frameinfo = getframeinfo(currentframe())
                                 print(frameinfo.lineno)
-                            self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
+                            self.data.loc[row, label] = d_Fe3[key]  # Fe3 composition of phase
 
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
@@ -711,7 +714,7 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
             df.at[row, 'mass_melt_min'] = dat.mass_melt_min
             df.at[row, 'n_pressures'] = dat.n_pressures
 
-    print(df)
+    print('\ncompletion_analysis.csv\n', df)
     if store:
         df.to_csv(output_parent_path + 'completion_analysis.csv', sep="\t")
 

@@ -48,10 +48,10 @@ for ce in core_eff:
         output_parent_path = source + output_sub
         # output_parent_path = '/raid1/cmg76/alphamelts/output/rocky-fo2/hypatia_88coreeff_3ferric_ext_Cr/'
 
-        print('\n\n\nfinding common T min\n----------------------\n')
+        print('\n\n\nfinding common T min\n--------------------\n')
         mfug.common_Tmin(output_parent_path, include_p=[1e4, 4e4])
 
-        print('\n\n\nstarting fO2 calculation\n-----------------------\n')
+        print('\n\n\nstarting fO2 calculation\n------------------------\n')
 
         # calculate mantle fo2 only
         mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=Xf, alphamelts_path=alphamelts_path,
