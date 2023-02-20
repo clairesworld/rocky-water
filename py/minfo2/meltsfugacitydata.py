@@ -223,12 +223,13 @@ class MeltsFugacityData:
             print('Run', self.name, 'at p =', p_of_interest,
                   'bar already exists! To execute, delete files or set overwrite=True\n---------------------------------------------')
 
-    def read_melts_TP(self, T_of_interest=1373.15, reload_TP=False, **kwargs):
+    def read_melts_TP(self, T_of_interest=1373.15, reload_TP=False, verbose=False, **kwargs):
 
         # check if already loaded
         if (not self.data['P(bar)'].isnull().values.any()) or (not self.data['T(K)'].isnull().values.any()):
             if not reload_TP:
-                print('                already loaded T,P from alphaMELTS! to overwrite, use reload_TP=True')
+                if verbose:
+                    print('                already loaded T,P from alphaMELTS! to overwrite, use reload_TP=True')
                 return True
 
         fname = 'System_main_tbl.txt'
@@ -272,38 +273,43 @@ class MeltsFugacityData:
         okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
         if okay:
             for row, path in enumerate(self.output_p_paths):
-                # load output csv from pMELTS
-                output_file = path + fname
-                df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                                 dtype=np.float64)
-                # print('loaded\n', df.head())
+                try:
+                    # load output csv from pMELTS
+                    output_file = path + fname
+                    df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                                     dtype=np.float64)
+                    # print('loaded\n', df.head())
 
-                # find idx of T of interest
-                idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                    # find idx of T of interest
+                    idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
-                # append phases to self df
-                m_tot = df['mass'].loc[idx]
-                for ph in [col for col in df.columns if col not in ['Pressure', 'Temperature', 'mass', 'volume']]:
-                    if ph != 'liquid_0':
-                        ph2 = re.sub('_0', '', ph)
-                        try:
-                            label = 'X_' + map_to_px_phase[ph2]
-                        except KeyError as e:
-                            if ph2.endswith('_1'):
-                                if df[ph].loc[idx] != 0:
-                                    raise Exception(self.name, 'repeated phase', ph2, '(nonzero)')
-                                else:
-                                    continue
-                            print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
-                            raise e
-                        try:
-                            self.data[label].iloc[row] = df[ph].loc[
-                                                           idx] / m_tot * 100  # renormalise to 100 g total mass
-                        except KeyError:
-                            self.data[label] = np.nan  # add column
-                            # print('cols', self.data.columns)
-                            self.data[label].iloc[row] = df[ph].loc[
-                                                           idx] / m_tot * 100  # renormalise to 100 g total mass
+                    # append phases to self df
+                    m_tot = df['mass'].loc[idx]
+                    for ph in [col for col in df.columns if col not in ['Pressure', 'Temperature', 'mass', 'volume']]:
+                        if ph != 'liquid_0':
+                            ph2 = re.sub('_0', '', ph)
+                            try:
+                                label = 'X_' + map_to_px_phase[ph2]
+                            except KeyError as e:
+                                if ph2.endswith('_1'):
+                                    if df[ph].loc[idx] != 0:
+                                        raise Exception(self.name, 'repeated phase', ph2, '(nonzero)')
+                                    else:
+                                        continue
+                                print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
+                                raise e
+                            try:
+                                self.data[label].iloc[row] = df[ph].loc[
+                                                               idx] / m_tot * 100  # renormalise to 100 g total mass
+                            except KeyError:
+                                self.data[label] = np.nan  # add column
+                                # print('cols', self.data.columns)
+                                self.data[label].iloc[row] = df[ph].loc[
+                                                               idx] / m_tot * 100  # renormalise to 100 g total mass
+                except SettingWithCopyError:
+                    print('handling..')
+                    frameinfo = getframeinfo(currentframe())
+                    print(frameinfo.lineno)
 
             if verbose:
                 print('             ...done loading phases!')
@@ -320,7 +326,12 @@ class MeltsFugacityData:
                         try:
                             self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
                         except KeyError:
-                            self.data[label] = np.nan  # add column
+                            try:
+                                self.data[label] = np.nan  # add column
+                            except SettingWithCopyError:
+                                print('handling..')
+                                frameinfo = getframeinfo(currentframe())
+                                print(frameinfo.lineno)
                             self.data[label].iloc[row] = d_Fe3[key]  # Fe3 composition of phase
 
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
@@ -330,18 +341,23 @@ class MeltsFugacityData:
         if okay:
             fname = 'System_main_tbl.txt'
             for row, path in enumerate(self.output_p_paths):
-                # load output csv from pMELTS
-                output_file = path + fname
-                df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
-                                 dtype=np.float64)
-                # print('loaded\n', df.head())
+                try:
+                    # load output csv from pMELTS
+                    output_file = path + fname
+                    df = pd.read_csv(output_file, skiprows=3, index_col=None, sep=r"\s+",
+                                     dtype=np.float64)
+                    # print('loaded\n', df.head())
 
-                # find idx of T of interest
-                idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                    # find idx of T of interest
+                    idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
-                # append fo2
-                self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
-                # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
+                    # append fo2
+                    self.data['logfo2'].iloc[row] = df['logfO2(absolute)'].loc[idx]
+                    # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
+                except SettingWithCopyError:
+                    print('handling..')
+                    frameinfo = getframeinfo(currentframe())
+                    print(frameinfo.lineno)
 
             if verbose:
                 print('             ...done loading fO2!')
@@ -496,7 +512,7 @@ class MeltsFugacityData:
                 print(phase, 'not found')
             return None
         if len(tmp) < 2:
-            print(T_of_interest, 'K not found')
+            print(T_of_interest, 'K not found in Phase_main_tbl.txt: ', self.name)
             return None
 
         # write temp file (not sure how to make df otherwise)
@@ -570,8 +586,8 @@ class MeltsFugacityData:
                         print(component, 'not found in', phase)
                         wt_pt_dict[map_to_px_phase[phase]] = np.nan
         except FileNotFoundError as e:
-            print(e, self.name)
-            print('...results.csv file not found at', int(T_of_interest), 'K! skipping')
+            print(e)
+            print('             ...results.csv file not found at', int(T_of_interest), 'K! skipping', self.name, '\n')
             return None
         return wt_pt_dict
 
