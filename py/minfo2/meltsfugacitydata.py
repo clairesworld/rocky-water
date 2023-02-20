@@ -243,7 +243,7 @@ class MeltsFugacityData:
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
             except IndexError as e:
-                print('             T_of_interest not found, min:', df.Temperature.iloc[-1], '--- in System_main', self.name)
+                print('             T_of_interest', T_of_interest,'K not found, min:', df.Temperature.iloc[-1], '--- in System_main', self.name)
                 return False
 
             # append P and T
@@ -516,7 +516,9 @@ class MeltsFugacityData:
                 print(phase, 'not found')
             return None
         if len(tmp) < 2:
-            print(T_of_interest, 'K not found in Phase_main_tbl.txt: ', self.name)
+            if verbose:
+                # already print out missing T in read_melts_TP()
+                print(T_of_interest, 'K not found at', p_of_interest, 'bar in Phase_main_tbl.txt: ', self.name)
             return None
 
         # write temp file (not sure how to make df otherwise)
@@ -563,7 +565,6 @@ class MeltsFugacityData:
         wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
         try:
             for phase in phases:
-                # print('l. 564 calling read_phase_main with', p_of_interest)
                 df = self.read_phase_main(phase, p_of_interest, T_of_interest, verbose=verbose)
 
                 if df is None:  # phase not found
