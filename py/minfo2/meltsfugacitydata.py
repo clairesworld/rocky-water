@@ -329,12 +329,7 @@ class MeltsFugacityData:
                         try:
                             self.data.loc[row, label] = d_Fe3[key]  # Fe3 composition of phase
                         except KeyError:
-                            try:
-                                self.data[label] = np.nan  # add column
-                            except SettingWithCopyError:
-                                print('handling..')
-                                frameinfo = getframeinfo(currentframe())
-                                print(frameinfo.lineno)
+                            self.data[label] = np.nan  # add column
                             self.data.loc[row, label] = d_Fe3[key]  # Fe3 composition of phase
 
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
@@ -379,7 +374,12 @@ class MeltsFugacityData:
                 self.read_melts_fo2(T_of_interest=T_of_interest, **kwargs)
 
                 # retrieve phases
-                self.read_melts_phases(which='mass', T_of_interest=T_of_interest, **kwargs)
+                try:
+                    self.read_melts_phases(which='mass', T_of_interest=T_of_interest, **kwargs)
+                except SettingWithCopyError:
+                    print('handling..')
+                    frameinfo = getframeinfo(currentframe())
+                    print(frameinfo.lineno)
 
                 if compare_buffer == 'qfm':
                     try:
