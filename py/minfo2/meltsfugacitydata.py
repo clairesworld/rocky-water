@@ -406,8 +406,7 @@ class MeltsFugacityData:
         # print('df saved\n', df_save.head())
         if save:
             df_save.to_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep="\t")
-            if verbose:
-                print('saved to', self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv')
+            print('                        saved to', self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv')
         return okay
 
     def find_common_T_final_from_results(self, include_p=None, **kwargs):
