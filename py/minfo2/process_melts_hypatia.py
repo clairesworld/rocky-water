@@ -56,7 +56,9 @@ for ce in core_eff:
         # calculate mantle fo2 only
         mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=Xf, alphamelts_path=alphamelts_path,
                             compare_buffer='qfm', perplex_path=perplex_path, T_of_interest=T_of_interest, save=True,
-                            verbose=False, restart='1M_88Ceff_2MASS19191922+5035104_999K_9,0fer')
+                            verbose=False,
+                            #restart='1M_88Ceff_2MASS19191922+5035104_999K_9,0fer'
+                            )
 
 """ ^^^ UNCOMMENT TO RUN ^^^ """
 
