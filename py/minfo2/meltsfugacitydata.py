@@ -301,8 +301,9 @@ class MeltsFugacityData:
                                         # raise Exception(self.name, 'repeated phase', ph2, '(nonzero):', path)
                                     else:
                                         continue
-                                print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
-                                raise e
+                                else:
+                                    print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
+                                    raise e
                             try:
                                 self.data.loc[row, label] = df.loc[idx, ph] / m_tot * 100  # renormalise to 100 g total mass
                             except KeyError:
