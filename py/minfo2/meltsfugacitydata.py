@@ -370,11 +370,11 @@ class MeltsFugacityData:
                 self.run_alphamelts_all_p(T_of_interest=T_of_interest, **kwargs)
 
             if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):
-                # retrieve fo2
-                self.read_melts_fo2(T_of_interest=T_of_interest, **kwargs)
-
-                # retrieve phases
                 try:
+                    # retrieve fo2
+                    self.read_melts_fo2(T_of_interest=T_of_interest, **kwargs)
+
+                    # retrieve phases
                     self.read_melts_phases(which='mass', T_of_interest=T_of_interest, **kwargs)
                 except SettingWithCopyError:
                     print('handling..')
@@ -533,6 +533,8 @@ class MeltsFugacityData:
         """
         Parameters
         ----------
+        p_index :
+        absolute_abundance :
         phases :
         T_of_interest :
         component :
@@ -559,6 +561,7 @@ class MeltsFugacityData:
         wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
         try:
             for phase in phases:
+                print('l. 564 calling read_phase_main with', p_of_interest)
                 df = self.read_phase_main(phase, p_of_interest, T_of_interest, verbose=verbose)
 
                 if df is None:  # phase not found
@@ -585,11 +588,12 @@ class MeltsFugacityData:
                     try:
                         wt_pt_dict[map_to_px_phase[phase]] = df[component].iloc[0] * mass_ph
                     except KeyError:
-                        print(component, 'not found in', phase)
+                        if verbose:
+                            print(component, 'not found in', phase)
                         wt_pt_dict[map_to_px_phase[phase]] = np.nan
         except FileNotFoundError as e:
             print(e)
-            print('             ...results.csv file not found at', int(T_of_interest), 'K! skipping', self.name, '\n')
+            print('             ...file not found at', p_of_interest, int(T_of_interest), 'K! skipping', self.name, '\n')
             return None
         return wt_pt_dict
 
@@ -619,6 +623,8 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         # sort ascending (alphabetical order might be different in os.scandir
         pressures_of_interest.sort()
 
+        print('initiating pressures of interest', pressures_of_interest)
+
         # parse melts file
         try:
             melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/pl.melts').readlines()
@@ -626,7 +632,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
             try:
                 melts_file_contents = open(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts').readlines()
             except FileNotFoundError:
-                print(e, 'skipping...')
+                print(e, 'pl.melts not found in', subfolders[0], 'skipping', name)
                 return None
 
         for line in melts_file_contents:
@@ -646,7 +652,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 if verbose:
                     print('loaded df\n', dat.data.head())
             except FileNotFoundError:
-                print('...results.csv file not found at', T_final, 'K! skipping for', name)
+                print('...results.csv file not found at', T_final, 'K! skipping', name)
 
         return dat
     else:
