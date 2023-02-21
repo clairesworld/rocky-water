@@ -242,22 +242,25 @@ class MeltsFugacityData:
             # find idx of T of interest
             try:
                 idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                new_T = df.loc[idx, 'Temperature']
+                new_P = int(df.loc[idx, 'Pressure'])  # floor to integer bar to avoid fp errors
             except IndexError as e:
-                print('             T_of_interest', T_of_interest, 'K not found, min:', df.Temperature.iloc[-1], '--- in System_main', self.name)
-                return False
+                print('    System_main_tbl: T_of_interest', T_of_interest, 'K not found at',  self.pressures_of_interest[row], 'bar (min:', df.Temperature.iloc[-1], self.name)
+                new_T = np.nan
+                new_P = np.nan
 
             # append P and T
             if np.isnan(self.data.loc[row, 'P(bar)']):
-                self.data.loc[row, 'P(bar)'] = int(df.loc[idx, 'Pressure'])
-            elif int(self.data.loc[row, 'P(bar)']) != int(df.loc[idx, 'Pressure']):
+                self.data.loc[row, 'P(bar)'] = new_P
+            elif int(self.data.loc[row, 'P(bar)']) != new_P:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df.loc[idx, 'Pressure'], output_file, self.data.loc[row, 'P(bar)'])
+                    new_P, output_file, self.data.loc[row, 'P(bar)'])
                 raise RuntimeError(error_str)
             if np.isnan(self.data.loc[row, 'T(K)']):
-                self.data.loc[row, 'T(K)'] = df.loc[idx, 'Temperature']  # K
-            elif self.data.loc[row, 'T(K)'] != df.loc[idx, 'Temperature']:
+                self.data.loc[row, 'T(K)'] = new_T  # K
+            elif self.data.loc[row, 'T(K)'] != new_T:
                 error_str = 'Error: pressure mismatch!\nLoaded {} from {}\nHave {} in self.data'.format(
-                    df.loc[idx, 'Temperature'], output_file, self.data.loc[row, 'T(K)'])
+                    new_T, output_file, self.data.loc[row, 'T(K)'])
                 raise RuntimeError(error_str)
         return True
 
@@ -280,8 +283,12 @@ class MeltsFugacityData:
                                      dtype=np.float64)
                     # print('loaded\n', df.head())
 
-                    # find idx of T of interest
-                    idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                    try:
+                        # find idx of T of interest
+                        idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                    except IndexError:
+                        # T_of_interest not found at pressure_of_interest
+                        continue  # skip to next pressure
 
                     # append phases to self df
                     m_tot = df['mass'].loc[idx]
@@ -351,11 +358,17 @@ class MeltsFugacityData:
                     # print('loaded\n', df.head())
 
                     # find idx of T of interest
-                    idx = df.loc[df['Temperature'] == T_of_interest].index[0]
+                    try:
+                        idx = df.loc[df['Temperature'] == T_of_interest].index[0]
 
-                    # append fo2
-                    self.data.loc[row, 'logfo2'] = df['logfO2(absolute)'].loc[idx]
-                    # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
+                        # append fo2
+                        self.data.loc[row, 'logfo2'] = df['logfO2(absolute)'].loc[idx]
+                        # print('idx', idx, 'T', df.Temperature.loc[idx], self.data['T(K)'].iloc[row])
+
+                    except IndexError:
+                        # T_of_interest not found
+                        self.data.loc[row, 'logfo2'] = np.nan
+
                 except SettingWithCopyError:
                     print('handling..')
                     frameinfo = getframeinfo(currentframe())
@@ -417,7 +430,7 @@ class MeltsFugacityData:
         return okay
 
     def find_common_T_final_from_results(self, include_p=None, **kwargs):
-        # for already-ran melts data, get the last temperature that all pressures cooled to
+        # for already-ran melts data, get the last temperature that *all* pressures cooled to
         fname = 'Phase_mass_tbl.txt'
         T_min = self.T_final
         mass_melt_min = 0
@@ -432,7 +445,7 @@ class MeltsFugacityData:
                                      dtype=np.float64).tail(1)
                 except FileNotFoundError:
                     # this run didn't complete
-                    print(self.name, 'did not complete, no Phase_mass_tbl.txt found in', path)
+                    print(self.name, 'did not complete at', self.pressures_of_interest[ii], 'bar: no Phase_mass_tbl.txt found in', path)
                     self.T_min = np.nan
                     self.mass_melt_min = np.nan
                     self.n_pressures = 0
