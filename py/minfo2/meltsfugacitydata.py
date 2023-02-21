@@ -741,11 +741,11 @@ def fo2_from_local(output_parent_path, num=-1, restart=None, **kwargs):
     bad = []
 
     if restart:
-        print('subfolders', subfolders)
-        star = restart.split('_')[2]
-        print('star', star)
-        print('[x.split("_")[2] for x in subfolders]', [x.split('_')[2] for x in subfolders])
-        idx0 = [x.split('_')[2] for x in subfolders].index(star)  # find directory matching star name only
+        # print('subfolders', subfolders)
+        # star = restart.split('_')[2]
+        # print('star', star)
+        # print('[x.split("_")[2] for x in subfolders]', [x.split('_')[2] for x in subfolders])
+        idx0 = [x.split('_')[2] for x in subfolders].index(restart)  # find directory matching star name only
         # idx0 = subfolders.index(restart)
     else:
         idx0 = 0
