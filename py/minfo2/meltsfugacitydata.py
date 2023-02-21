@@ -245,7 +245,7 @@ class MeltsFugacityData:
                 new_T = df.loc[idx, 'Temperature']
                 new_P = int(df.loc[idx, 'Pressure'])  # floor to integer bar to avoid fp errors
             except IndexError as e:
-                print('    System_main_tbl: T_of_interest', T_of_interest, 'K not found at',  self.pressures_of_interest[row], 'bar (min:', df.Temperature.iloc[-1], self.name)
+                print('    System_main_tbl: T_of_interest', T_of_interest, 'K not found at',  self.pressures_of_interest[row], 'bar ( min:', df.Temperature.iloc[-1], ')', self.name)
                 new_T = np.nan
                 new_P = np.nan
 
