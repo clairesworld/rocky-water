@@ -101,7 +101,7 @@ class PerplexFugacityData(px.PerplexData):
 
     def command_werami_composition_grid(self, points_file=px.perplex_path_default + 'Earth_1600K_adiabat.dat',
                                         build_file_end='', **kwargs):
-        """ string for werami command file to get chemical potentials """
+        """ string for werami command file to get phase proportions """
 
         s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
         s = s + '4\n'  # Select operational mode: 4 - as in 3 [properties along a 1d path], but input from file
@@ -867,8 +867,52 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwar
     return pl_list
 
 
-def fo2_from_local(output_parent_path=output_parent_default, **kwargs):
+def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
+                     output_parent_path=output_parent_default, skip_existing=True, **kwargs):
+    """
+    Go through cases which haven't finished, start in 1D - TODO
+
+    Parameters
+    ----------
+    p_min :
+    p_max :
+    n_sample :
+    core_efficiency :
+    planet_kwargs :
+    output_parent_path :
+    skip_existing :
+    kwargs :
+
+    Returns
+    -------
+
+    """
+    planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
+    pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
+                                      get_saturation=False,
+                                      stopafter=None, output_parent_path=output_parent_path,
+                                      **planet_kwargs, **kwargs)
+    print('\nfinished generating compositions\n')
+    bad = []
+    for pl in pl_list:
+        if skip_existing and os.path.exists(pl.output_path + pl.name + '_results.csv'):
+            print('skipping', pl.name, ': results.csv file exists')
+        else:
+            # print('not found', pl.output_path + pl.name + '_results.csv')
+            print('running\n', pl.wt_oxides)
+            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
+            if not okay:
+                bad.append(pl.name)
+    print('bad cases:', bad)
+    return pl_list
+
+
+def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, rewrite_options=True, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
+    if run_werami:
+        run = True  # note this also re-writes build file (e.g. if options updated)
+    else:
+        run = False  # don't need to rerun any perplex stuff, just re-calc fo2.
     subfolders = rw.get_run_dirs(output_path=output_parent_path)
     if subfolders:
         for sub in subfolders:
@@ -877,7 +921,8 @@ def fo2_from_local(output_parent_path=output_parent_default, **kwargs):
 
             d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
             dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
-            logfo2 = dat.fo2_calc(run=False, **d, **kwargs)
+            logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
+                                  **d, **kwargs)
             # print('log fo2 of system:', logfo2)
     else:
         print('no local output found in', output_parent_path)
