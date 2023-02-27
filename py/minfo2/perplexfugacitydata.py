@@ -126,7 +126,7 @@ class PerplexFugacityData(px.PerplexData):
         s = s + '1\n'  # every nth plot will be plotted, enter n:
         for ph in self.solution_phases:
             for i_ox in [self.oxide_list.index('FeO') + 1, self.oxide_list.index('O2') + 1]:
-                print('i_ox', i_ox, 'oxide_list', self.oxide_list)
+                # print('i_ox', i_ox, 'oxide_list', self.oxide_list)
                 s = s + '8\n'  # Select a property: Composition (Mol, Mass, or Wt%) of a solution phase
                 s = s + ph + '\n'  # Enter solution (left justified):
                 s = s + 'n\n'  # Define the composition in terms of the species/endmembers of Opx(JH)    (y/n)?
