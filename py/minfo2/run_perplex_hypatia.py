@@ -11,6 +11,7 @@ import perplexfugacitydata as pf
 """
 source /raid1/cmg76/venv/bin/activate
 cd ~/Works/rocky-water/
+python3 py/minfo2/run_perplex_hypatia.py
 """
 
 perplex_path = '/raid1/cmg76/perple_x/'
@@ -52,8 +53,9 @@ for ce in core_eff:
     #                     suffix=str(X_ferric*100).replace('.', ',') + 'fer',
     #                     )
 
-    pf.fo2_from_local(n_sample=-1, output_parent_path=output_parent_path, perplex_path=perplex_path,
-                      run_werami=True, check_comp=True,
+    pf.fo2_from_local(n_sample=2, T_iso=T_iso, p_min=p_min, p_max=p_max,
+                      output_parent_path=output_parent_path, perplex_path=perplex_path,
+                      run_werami=True, check_comp=True, ferric_comp=True,
                       mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                       suppress_output=False)
 

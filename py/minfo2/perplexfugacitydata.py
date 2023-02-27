@@ -907,12 +907,16 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_k
     return pl_list
 
 
-def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, rewrite_options=True, **kwargs):
+def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, ferric_comp=True, T_iso=1373,
+                   p_min=10000, p_max=40000,
+                   rewrite_options=True, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
     if run_werami:
         run = True  # note this also re-writes build file (e.g. if options updated)
     else:
         run = False  # don't need to rerun any perplex stuff, just re-calc fo2.
+    points_file = 'points_files/' + str(int(T_iso)) + 'K_isotherm.xy'
+
     subfolders = rw.get_run_dirs(output_path=output_parent_path)
     if subfolders:
         for sub in subfolders:
@@ -921,9 +925,15 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, re
 
             d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
             dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
+            print('pressures', dat.pressure)
             logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
+                                  points_file=points_file,T_iso=None, p_min=p_min, p_max=p_max,
                                   **d, **kwargs)
-            # print('log fo2 of system:', logfo2)
+            print(dat.name, ': log fo2 of system:', logfo2)
+
+            if ferric_comp:
+                dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max, verbose=True)
+                print('done Fe3+ composition for', dat.name)
     else:
         print('no local output found in', output_parent_path)
 
