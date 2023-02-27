@@ -908,7 +908,7 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_k
 
 
 def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, ferric_comp=True, T_iso=1373,
-                   p_min=10000, p_max=40000, skip_names=[],
+                   p_min=10000, p_max=40000, skip_names=[], start_from=None,
                    rewrite_options=True, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
     if run_werami:
@@ -918,28 +918,36 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
     points_file = 'points_files/' + str(int(T_iso)) + 'K_isotherm.xy'
 
     subfolders = rw.get_run_dirs(output_path=output_parent_path)
-    if subfolders:
-        for sub in subfolders:
-            name = os.path.basename(sub)
-            # star = name.split('_')[2]
-
-            if name in skip_names:
-                continue
-
-            d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
-            dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
-            print('pressures', dat.pressure)
-            print('d', d)
-            logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
-                                  points_file=points_file, T_iso=None, #p_min=p_min, p_max=p_max,
-                                  **d, **kwargs)
-            print(dat.name, ': log fo2 of system:', logfo2)
-
-            if ferric_comp:
-                dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max, verbose=True)
-                print('done Fe3+ composition for', dat.name)
-    else:
+    if not subfolders:
         print('no local output found in', output_parent_path)
+        return None
+
+    if start_from is None:
+        idx0 = 0
+    else:
+        idx0 = [os.path.basename(sub) for sub in subfolders].index(start_from)
+
+    for sub in subfolders[idx0:]:
+        name = os.path.basename(sub)
+        # star = name.split('_')[2]
+
+        if name in skip_names:
+            continue
+
+        d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
+        dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
+        print('pressures', dat.pressure)
+        print('d', d)
+        logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
+                              points_file=points_file, T_iso=None, #p_min=p_min, p_max=p_max,
+                              **d, **kwargs)
+        print(dat.name, ': log fo2 of system:', logfo2)
+
+        if ferric_comp:
+            dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max, verbose=True)
+            print('done Fe3+ composition for', dat.name)
+
+
 
 
 def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
