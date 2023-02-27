@@ -642,7 +642,7 @@ def read_dict_from_build(name=None, output_parent_path=output_parent_default, ve
     build_file = open(fin).readlines()
 
     # read thermodynamic data (always 1st line?)
-    vertex_data = build_file[0].split()[0]
+    vertex_data = build_file[0].split()[0].replace(".dat", "")
 
     # read thermodynamic components
     wt_oxides = {}
