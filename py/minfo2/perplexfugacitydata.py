@@ -908,7 +908,7 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_k
 
 
 def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, ferric_comp=True, T_iso=1373,
-                   p_min=10000, p_max=40000,
+                   p_min=10000, p_max=40000, skip_names=[],
                    rewrite_options=True, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
     if run_werami:
@@ -922,6 +922,9 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
         for sub in subfolders:
             name = os.path.basename(sub)
             # star = name.split('_')[2]
+
+            if name in skip_names:
+                continue
 
             d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
             dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
