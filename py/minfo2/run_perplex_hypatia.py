@@ -59,7 +59,7 @@ for ce in core_eff:
                       run_werami=True, check_comp=True, ferric_comp=True,  # do all calculations except vertex
                       mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                       suppress_output=True,
-        start_after='1M_88Ceff_HIP52733_999K_3,0fer'
+        start_after='1M_88Ceff_HIP13291_999K_3,0fer'
     )
 
     # pf.fo2_from_hypatia_1D(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
