@@ -293,7 +293,7 @@ class MeltsFugacityData:
                     # append phases to self df
                     m_tot = df['mass'].loc[idx]
                     for ph in [col for col in df.columns if col not in ['Pressure', 'Temperature', 'mass', 'volume']]:
-                        if ph != 'liquid_0':
+                        if ph not in ['liquid_0', 'alloy-liquid_0']:  # ignoring melt phases
                             ph2 = re.sub('_0', '', ph)
                             try:
                                 label = 'X_' + map_to_px_phase[ph2]
@@ -309,7 +309,7 @@ class MeltsFugacityData:
                                     else:
                                         continue
                                 else:
-                                    print('missing', ph2, 'in map_to_px_phase dictionary', self.name)
+                                    print('missing', ph2, 'in map_to_px_phase dictionary:', path)
                                     raise e
                             try:
                                 self.data.loc[row, label] = df.loc[idx, ph] / m_tot * 100  # renormalise to 100 g total mass
