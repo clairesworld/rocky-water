@@ -927,7 +927,7 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
             dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
             print('pressures', dat.pressure)
             logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
-                                  points_file=points_file,T_iso=None, p_min=p_min, p_max=p_max,
+                                  points_file=points_file, T_iso=None, #p_min=p_min, p_max=p_max,
                                   **d, **kwargs)
             print(dat.name, ': log fo2 of system:', logfo2)
 
