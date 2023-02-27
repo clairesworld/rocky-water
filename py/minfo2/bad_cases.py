@@ -9,8 +9,15 @@ MELTS
 
 88Ceff 3fer
 alphamelts infinite loop: HIP 102409 - also at 5fer
-has kyanite: 1M_88Ceff_2MASS19141179+3833548_999K_3,0fer (also quartz so fucked) --> removing (also 7, 1, 5 fer)
-has alloy-liquid:
+has kyanite: 1M_88Ceff_2MASS19141179+3833548_999K_3,0fer (also quartz so fucked) --> removing (also 7, 1, 5 fer) (also 70ceff)
+
+others:
+1M_88Ceff_2MASS19211746+4402089_999K_3,0fer did not complete, no Phase_mass_tbl.txt found in /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_88coreeff_3ferric_ext/1M_88Ceff_2MASS19211746+4402089_999K_3,0fer/10000bar/
+1M_88Ceff_2MASS19490218+4650354_999K_3,0fer did not complete, no Phase_mass_tbl.txt found in /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_88coreeff_3ferric_ext/1M_88Ceff_2MASS19490218+4650354_999K_3,0fer/10000bar/
+1M_88Ceff_2MASS14474655+0103538_999K_3,0fer did not complete, no Phase_mass_tbl.txt found in /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_88coreeff_3ferric_ext/1M_88Ceff_2MASS14474655+0103538_999K_3,0fer/10000bar/
+1M_88Ceff_2MASS19213437+4321500_999K_3,0fer did not complete, no Phase_mass_tbl.txt found in /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_88coreeff_3ferric_ext/1M_88Ceff_2MASS19213437+4321500_999K_3,0fer/10000bar/
+1M_88Ceff_2MASS19125618+4031152_999K_3,0fer did not complete, no Phase_mass_tbl.txt found in /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_88coreeff_3ferric_ext/1M_88Ceff_2MASS19125618+4031152_999K_3,0fer/10000bar/
+1M_88Ceff_HD89484_999K_3,0fer did not complete, no Phase_mass_tbl.txt found in /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_88coreeff_3ferric_ext/1M_88Ceff_HD89484_999K_3,0fer/10000bar/
 
 70Ceff 3fer
 alphamelts infinite loop: HIP 15578, HIP 17054, HIP 69888
