@@ -53,11 +53,12 @@ for ce in core_eff:
     #                     suffix=str(X_ferric*100).replace('.', ',') + 'fer',
     #                     )
 
-    pf.fo2_from_local(n_sample=2, X_ferric=X_ferric, T_iso=T_iso, p_min=p_min, p_max=p_max,
+    pf.fo2_from_local(#n_sample=2, not implemented
+                      X_ferric=X_ferric, T_iso=T_iso, p_min=p_min, p_max=p_max,
                       output_parent_path=output_parent_path, perplex_path=perplex_path,
                       run_werami=True, check_comp=True, ferric_comp=True,
                       mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
-                      suppress_output=False)
+                      suppress_output=True)
 
     # pf.fo2_from_hypatia_1D(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
     #                     X_ferric=X_ferric, core_efficiency=ce,
