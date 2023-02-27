@@ -682,7 +682,7 @@ def read_dict_from_build(name=None, output_parent_path=output_parent_default, ve
 
     # compile in args dict
     d = {'vertex_data': vertex_data, 'wt_oxides': wt_oxides, 'excluded_phases': excluded_phases,
-         'solution_phases': solution_phases, 'p_min': p_min, 'p_max': p_max, 'T_min': T_min, 'T_max': T_max}
+         'solution_phases': solution_phases, 'p_min': float(p_min), 'p_max': float(p_max), 'T_min': float(T_min), 'T_max': float(T_max)}
 
     if verbose:
         print('d', d)
