@@ -908,7 +908,7 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_k
 
 
 def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, ferric_comp=True, T_iso=1373,
-                   p_min=10000, p_max=40000, skip_names=[], start_from=None,
+                   p_min=10000, p_max=40000, skip_names=[], start_after=None,
                    rewrite_options=True, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
     if run_werami:
@@ -922,10 +922,10 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
         print('no local output found in', output_parent_path)
         return None
 
-    if start_from is None:
+    if start_after is None:
         idx0 = 0
     else:
-        idx0 = [os.path.basename(sub) for sub in subfolders].index(start_from)
+        idx0 = [os.path.basename(sub) for sub in subfolders].index(start_after) + 1
 
     for sub in subfolders[idx0:]:
         name = os.path.basename(sub)
