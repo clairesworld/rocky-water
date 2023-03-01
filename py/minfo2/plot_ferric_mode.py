@@ -135,7 +135,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         xyz = []
         for k in phases_px:  # preserve order
             try:
-                if np.isnan(d2[k]):
+                xyz.append(d2[k])
+                if d2[k] == 0:
                     if k == 'Sp':
                         missing_Sp += 1
                     elif k == 'Opx':
@@ -144,17 +145,19 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                         missing_Cpx += 1
                     elif k == 'Gt':
                         missing_Gt += 1
-
-                xyz.append(d2[k])
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
 
-        print('xyz', xyz, dat.name)
+
+
+        if (np.nan in xyz):
+            print('xyz', xyz, dat.name)
         # add point to axes
         xyz = tuple(xyz)
         tax.scatter([xyz], marker=marker, edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.4,
                     cmap=cmap, vmin=vmin, vmax=vmax, zorder=100)
         tracker = missing_Sp, missing_Opx, missing_Cpx, missing_Gt
+        # print('missing counts (Sp, Opx, Cpx, Gt):', tracker )
         return 1, tracker
 
     if name is not None:
@@ -211,7 +214,7 @@ _, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf
 #                          ax=axes[1][1], save=False)
 
 fig.suptitle("Fe$^{3+}$ modality", fontsize=16)
-fig.savefig(fig_path + 'ternary_subplots' + date + ftype)
+fig.savefig(fig_path + 'ternary_subplots' + str(date) + ftype)
 plt.show()
 
 

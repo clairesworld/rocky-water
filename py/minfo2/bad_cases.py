@@ -22,13 +22,11 @@ others:
 70Ceff 3fer
 alphamelts infinite loop: HIP 15578, HIP 17054, HIP 69888
 
-
 HIP 13291 no Ti
 
 2MASS19064452+4705535_999K_3,0fer/14285bar/ has rhm-oxide but not 10 kbar, 40 kbar
 
-
-sometimes Spinel doesn't appear (Al is in cpx) - about 12 cases 88/3
+Spinel missing (Al is in cpx) - 480 cases 88/3 ?!?!?
 
 -----------------------------------------------------------------------------------------------
 PERPLE_X
@@ -42,6 +40,10 @@ PERPLE_X
 88/3%: have run but missing vertex files:
 HIP52733
 HIP13291
+
+
+Cr
+2MASS19190557+4048026 crashed unknown reason
 
 
 
