@@ -513,11 +513,13 @@ class PerplexData:
             for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof']:
                 if not os.path.isfile(self.output_path + self.name + build_file_end + fend):
                     run_vertex = True  # if any of these files are missing, need to run
+                    print('could not find', self.output_path + self.name + build_file_end + fend)
                     break
                 else:
                     # temporarily move vertex output files to perple_x working directoy
                     vertex_copy_flag = True
-                    # print('copying to', self.perplex_path + self.name + build_file_end + fend)
+                    print('found', self.output_path + self.name + build_file_end + fend)
+                    print('copying to', self.perplex_path + self.name + build_file_end + fend)
                     os.rename(self.output_path + self.name + build_file_end + fend,
                               self.perplex_path + self.name + build_file_end + fend)
             print('   vertex output files already exist for', self.name, ', skipping to werami')
