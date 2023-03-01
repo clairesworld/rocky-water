@@ -934,7 +934,12 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
         if name in skip_names:
             continue
 
-        d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
+        try:
+            d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
+        except FileNotFoundError as e:
+            print('FileNotFound:', e)
+            continue
+
         dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
         print('pressures', dat.pressure)
         print('d', d)

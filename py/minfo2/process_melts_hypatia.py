@@ -60,7 +60,7 @@ for ce in core_eff:
                             restart='2MASS19064452+4705535'
                             # names=['1M_88Ceff_2MASS19005780+4640057_999K_3,0fer']
                             )
-        restart = None
+        restart = None  # reset
 
 """ ^^^ UNCOMMENT TO RUN ^^^ """
 

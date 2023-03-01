@@ -745,7 +745,7 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
     if (len(subfolders) > 0) and ((os.path.isfile(output_parent_path + name + '/' + subfolders[0] + '/pl.melts')) or ((os.path.isfile(output_parent_path + name + '/' + subfolders[0] + '/' + name + '.melts')))):
 
         # load pressures
-        pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]  # TODO parse directories
+        pressures_of_interest = [float(s.replace(',', '.').replace('bar', '')) for s in subfolders]
 
         # sort ascending (alphabetical order might be different in os.scandir
         pressures_of_interest.sort()
@@ -775,6 +775,9 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
             try:
                 dat.data = pd.read_csv(dat.output_path + name + '_results' + str(int(T_final)) + '.csv', sep='\t')
                 dat.read_fo2_results(verbose=verbose, **kwargs)
+
+                # update (e.g. if local folders with only 10000 bar copied)
+                dat.pressures_of_interest = list(dat.data['P(bar)'].to_numpy())
 
                 if verbose:
                     print('loaded df\n', dat.data.head())
@@ -870,7 +873,7 @@ def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, **kwarg
         idx0 = 0
     for name in subfolders[idx0:num]:
         if ((names is not None) and (name in names)) or (names is None):
-            dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
+            dat = init_from_results(name, output_parent_path=output_parent_path, load_results_csv=True, **kwargs)
             if dat is not None:
                 okay = dat.fo2_calc(run_alphamelts=False, **kwargs)
             if (dat is None) or (not okay):

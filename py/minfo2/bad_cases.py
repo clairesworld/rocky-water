@@ -35,6 +35,8 @@ PERPLE_X
 
 88Ceff 3 fer
 ['1M_88Ceff_HIP13291_999K_3,0fer', '1M_88Ceff_HIP84607_999K_3,0fer', '1M_88Ceff_GaiaDR25242077854771196544_999K_3,0fer', '1M_88Ceff_BD+4602629_999K_3,0fer']
+1M_88Ceff_HIP84607_999K_3,0fer$ 
+
 
 
 88/3%: have run but missing vertex files:
