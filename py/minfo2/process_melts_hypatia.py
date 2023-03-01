@@ -57,7 +57,7 @@ for ce in core_eff:
         mfug.fo2_from_local(output_parent_path, core_efficiency=ce, X_ferric=Xf, alphamelts_path=alphamelts_path,
                             compare_buffer='qfm', perplex_path=perplex_path, T_of_interest=T_of_interest, save=True,
                             verbose=True,
-                            # restart='2MASS19155319+4437283'
+                            restart='2MASS19064452+4705535'
                             # names=['1M_88Ceff_2MASS19005780+4640057_999K_3,0fer']
                             )
         restart = None
