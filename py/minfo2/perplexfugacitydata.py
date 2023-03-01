@@ -247,7 +247,7 @@ class PerplexFugacityData(px.PerplexData):
                          vertex_command_text_fn=self.command_vertex_grid,
                          output_file_end='_ferric_comp.tab', build_file_end=build_file_end, verbose=verbose,
                          clean=True, werami_kwargs={'points_file': points_file}, run_vertex='auto',
-                         suppress_output=False,
+                         # suppress_output=False,
                          **kwargs)
 
     def read_ferric_phase_comp(self, phase=None, T_of_interest=None, p_of_interest=None, scale=100):
@@ -684,8 +684,8 @@ def read_dict_from_build(name=None, output_parent_path=output_parent_default, ve
     d = {'vertex_data': vertex_data, 'wt_oxides': wt_oxides, 'excluded_phases': excluded_phases,
          'solution_phases': solution_phases, 'p_min': float(p_min), 'p_max': float(p_max), 'T_min': float(T_min), 'T_max': float(T_max)}
 
-    if verbose:
-        print('d', d)
+    # if verbose:
+    #     print('d', d)
     return d
 
     # d = {}
@@ -941,8 +941,8 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
             continue
 
         dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
-        print('pressures', dat.pressure)
-        print('d', d)
+        # print('pressures', dat.pressure)
+        # print('d', d)
         logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
                               points_file=points_file, T_iso=None, #p_min=p_min, p_max=p_max,
                               **d, **kwargs)
