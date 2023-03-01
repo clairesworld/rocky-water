@@ -26,6 +26,8 @@ alphamelts infinite loop: HIP 15578, HIP 17054, HIP 69888
 HIP 13291 no Ti
 
 
+sometimes Spinel doesn't appear (Al is in cpx) - about 12 cases 88/3
+
 -----------------------------------------------------------------------------------------------
 PERPLE_X
 
@@ -36,6 +38,8 @@ PERPLE_X
 88/3%: have run but missing vertex files:
 HIP52733
 HIP13291
+
+
 
 
 

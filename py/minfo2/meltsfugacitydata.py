@@ -15,6 +15,7 @@ pd.options.mode.chained_assignment = 'raise'
 
 output_parent_default = '/home/claire/Works/min-fo2/alphamelts_output/'
 alphamelts_path_default = '/home/claire/Works/alphamelts/'
+output_parent_mlt_earth = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 
 map_to_px_phase = {'olivine': 'Ol', 'orthopyroxene': 'Opx', 'clinopyroxene': 'Cpx', 'spinel': 'Sp', 'garnet': 'Gt',
                    'feldspar': 'Plag', 'quartz': 'q', 'coesite': 'coe'}
@@ -274,6 +275,8 @@ class MeltsFugacityData:
             fname = 'Phase_vol_tbl.txt'
 
         okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        if not okay:
+            raise Exception(self.name, 'read_melts_TP crashed')
         if okay:
             for row, path in enumerate(self.output_p_paths):
                 try:
@@ -287,6 +290,8 @@ class MeltsFugacityData:
                         # find idx of T of interest
                         idx = df.loc[df['Temperature'] == T_of_interest].index[0]
                     except IndexError:
+                        if verbose:
+                            print(T_of_interest, 'K not found at', self.pressures_of_interest[row], 'bar')
                         # T_of_interest not found at pressure_of_interest
                         continue  # skip to next pressure
 
@@ -330,8 +335,8 @@ class MeltsFugacityData:
         # print('(checking indices of self.data')
         # print(self.data)
         for row, pp in enumerate(self.pressures_of_interest):
-            d_Fe3 = self.read_phase_comp(pp, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
-                        absolute_abundance=False, verbose=False, p_index=row)
+            d_Fe3 = self.read_phase_main_components(pp, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+                                                    absolute_abundance=False, verbose=False, p_index=row)
             # print('row', row, 'pp', pp)
             if d_Fe3:
                 for key in d_Fe3:
@@ -550,9 +555,30 @@ class MeltsFugacityData:
         os.remove('tmp.txt')
         return df
 
-    def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+    # def read_phase_comp(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
+    #                     absolute_abundance=True, verbose=False, p_index=None):
+    #     """
+    #     reads component composition from Phase_main_table (wt%), stores in results df
+    #
+    #     Parameters
+    #     ----------
+    #     p_index :
+    #     absolute_abundance :
+    #     phases :
+    #     T_of_interest :
+    #     component :
+    #     p_of_interest : bar
+    #     verbose :
+    #
+    #     Returns
+    #     -------
+    #
+    #     """
+    def read_phase_main_components(self, p_of_interest, T_of_interest, component='Fe2O3', phases=map_to_px_phase.keys(),
                         absolute_abundance=True, verbose=False, p_index=None):
         """
+        reads phase comp from Phase_main>table, returns dict of each phases' compositon of that component
+
         Parameters
         ----------
         p_index :
@@ -567,7 +593,7 @@ class MeltsFugacityData:
         -------
 
         """
-        if absolute_abundance and (not hasattr(self, 'data')):
+        if not hasattr(self, 'data'):
             self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
 
         if p_index:
@@ -599,9 +625,11 @@ class MeltsFugacityData:
                         except KeyError as e:
                             # this is probably because T_of_interest not found - won't fill in _results.csv
                             # for 1M_88Ceff_HIP84856_999K_3,0fer, other weird issue
-                            self.read_melts_phases(T_of_interest=T_of_interest, which='mass', verbose=True, reload_TP=True)
-                            print(self.data.head())
                             print(self.name, e)
+                            print('old', '\n', self.data.head())
+
+                            self.read_melts_phases(T_of_interest=T_of_interest, which='mass', verbose=True, reload_TP=True)
+                            print('new', '\n', self.data.head())
                             return None
                     else:
                         mass_ph = 1
@@ -616,6 +644,75 @@ class MeltsFugacityData:
             print(e)
             print('...file not found at', p_of_interest, 'bar, ', int(T_of_interest), 'K! skipping:', self.name, '\n')
             return None
+        return wt_pt_dict
+    
+    def get_phase_composition_dict(self, p_of_interest=None, T_of_interest=None, component='Fe2O3',
+                                   phases=map_to_px_phase.keys(),
+                                   to_absolute_abundance=True, verbose=False):
+        """ 
+        read results csv to create phase composition dict (think only for use with ternay diagrams so far)
+        phase component masses as stored in results.csv are relative to phase, not system!
+
+        
+        Parameters
+        ----------
+        p_of_interest :
+        T_of_interest :
+        phases :
+        component :
+        to_absolute_abundance : 
+
+        Returns
+        -------
+
+        """
+
+        # load results.csv dataframe
+        if not hasattr(self, 'data'):
+            self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
+
+        # find index in df of pressure of interest
+        try:
+            idx = self.pressures_of_interest.index(p_of_interest)
+        except ValueError as e:
+            # pressure not found
+            print(p_of_interest, 'bar not found in', self.pressures_of_interest, ':', self.name, '(probably melts crashed before cooling to', T_of_interest, 'K)')
+            return None
+
+        # initialise d
+        wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
+        for phase in phases:
+            if to_absolute_abundance:
+                # get phase mass as well so you can normalise to total quantity of phase
+                try:
+                    mass_ph = self.data.loc[idx, 'X_' + map_to_px_phase[phase]] / 100  # these are wt%
+                    if verbose:
+                        print('mass', phase, mass_ph)
+                except KeyError as e:
+                    # this is probably because T_of_interest not found - won't fill in _results.csv
+                    # for 1M_88Ceff_HIP84856_999K_3,0fer, other weird issue
+                    # HIP 80680: no spinel for some reason (but garnet)
+
+                    if verbose:
+                        print('\n', self.name, ': column', e, 'not found (p =', p_of_interest, ')')
+                        print('           ', list(self.data.columns)[3:])
+                    mass_ph = 0
+            else:
+                mass_ph = 1
+
+            # extract column of phase component mass
+            if component == 'Fe2O3':
+                col = 'X_Fe3_' + map_to_px_phase[phase]
+            else:
+                raise NotImplementedError('Not Implemented: component', component, 'in phase', phase, 'not processed in results csv')
+            try:
+                wt_pt_dict[map_to_px_phase[phase]] = self.data.loc[idx, col] * mass_ph
+            except KeyError as e:
+                if verbose and not to_absolute_abundance:
+                    print('\n', self.name, ': column', e, 'not found (p =', p_of_interest, ')')
+                    print('           ', list(self.data.columns)[3:])
+                wt_pt_dict[map_to_px_phase[phase]] = np.nan
+
         return wt_pt_dict
 
 
@@ -673,12 +770,12 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 if verbose:
                     print('loaded df\n', dat.data.head())
             except FileNotFoundError:
-                print('...results.csv file not found at', T_final, 'K! skipping', name)
+                print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped loading data...')
 
         return dat
     else:
         if verbose:
-            print('no melts files at', name)
+            print('no melts files at', output_parent_path + name)
         return None
 
 

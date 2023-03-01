@@ -32,8 +32,8 @@ pdat.print_comp()
 # df = pdat.read_ferric_phase_comp(phase='Opx', T_of_interest=1373, p_of_interest=1)
 # print(df.head())
 
-d = pdat.read_phase_comp(p_of_interest=1, T_of_interest=1373, component='Fe2O3', phases=pfug.solution_phases_default,
-                        absolute_abundance=True, verbose=False)
+d = pdat.read_phase_main_components(p_of_interest=1, T_of_interest=1373, component='Fe2O3',
+                                    phases=pfug.solution_phases_default, absolute_abundance=True, verbose=False)
 print(d)
 
 bulk.get_element_ratio('Mg/Si', pdat.wt_oxides)
