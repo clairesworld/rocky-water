@@ -315,7 +315,10 @@ class MeltsFugacityData:
                                         continue
                                 else:
                                     print('missing', ph2, 'in map_to_px_phase dictionary:', path)
-                                    raise e
+                                    if self.pressures_of_interest[row] not in (10e3, 40e3):
+                                        continue  # don't care
+                                    else:
+                                        raise e
                             try:
                                 self.data.loc[row, label] = df.loc[idx, ph] / m_tot * 100  # renormalise to 100 g total mass
                             except KeyError:

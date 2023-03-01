@@ -114,7 +114,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         # d = dat.read_phase_main_components(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
         #                                    component=component, absolute_abundance=absolute_abundance, verbose=False)
         d = dat.get_phase_composition_dict(p_of_interest=p_of_interest, T_of_interest=T_of_interest, component=component,
-                                           phases=phases, to_absolute_abundance=absolute_abundance, verbose=True)
+                                           phases=phases, to_absolute_abundance=absolute_abundance, verbose=False)
 
         if d is None:
             # general failure for this case and p of interest
@@ -149,6 +149,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
 
+        print('xyz', xyz, dat.name)
         # add point to axes
         xyz = tuple(xyz)
         tax.scatter([xyz], marker=marker, edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.4,
