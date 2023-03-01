@@ -114,7 +114,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         # d = dat.read_phase_main_components(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
         #                                    component=component, absolute_abundance=absolute_abundance, verbose=False)
         d = dat.get_phase_composition_dict(p_of_interest=p_of_interest, T_of_interest=T_of_interest, component=component,
-                                           phases=phases, to_absolute_abundance=absolute_abundance)
+                                           phases=phases, to_absolute_abundance=absolute_abundance, verbose=True)
 
         if d is None:
             # general failure for this case and p of interest
@@ -125,7 +125,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         if len(d2) > 3:
             raise NotImplementedError(name, 'more than 3 ferric hosts:', d2)
         if sum(d2.values()) == 0:
-            print('name', d2, 'sum = 0')
+            print(dat.name, d2, 'sum = 0')
             return None, tracker  # exit to outer function
         factor = 100 / sum(d2.values())
         for k in d2:

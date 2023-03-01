@@ -58,8 +58,7 @@ for ce in core_eff:
                             compare_buffer='qfm', perplex_path=perplex_path, T_of_interest=T_of_interest, save=True,
                             verbose=True,
                             # restart='2MASS19155319+4437283'
-                            names=['1M_88Ceff_2MASS19164790+4918205_999K_3,0fer', '1M_88Ceff_HIP93281_999K_3,0fer',
-                                   '1M_88Ceff_HIP93281_999K_3,0fer', '1M_88Ceff_HIP93281_999K_3,0fer']
+                            names=['1M_88Ceff_2MASS19005780+4640057_999K_3,0fer']
                             )
         restart = None
 
