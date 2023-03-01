@@ -525,7 +525,7 @@ class PerplexData:
             print('   vertex output files already exist for', self.name, ', skipping to werami')
 
         # print('run_vertex', run_vertex)
-        elif run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
+        if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
             # create vertex command file
             print('running vertex')
             vertex_command_file = self.name + build_file_end + '_vertex_command.txt'

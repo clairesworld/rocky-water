@@ -47,7 +47,7 @@ for ce in core_eff:
                         existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/',
                         # existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
                         # existing_output_parent=pfug.output_parent_apollo,  # <== existing kwarg
-                        restart='2MASS 19244681+4042097',
+                        restart='2MASS 19174668+4119039',
                         run_vertex='auto',  # overwrite existing vertex files if exist
                         skip_existing=True,  # do not do anything if directory exists with *_results.csv
                         suffix=str(X_ferric*100).replace('.', ',') + 'fer',
