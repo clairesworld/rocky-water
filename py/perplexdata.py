@@ -510,7 +510,7 @@ class PerplexData:
         vertex_copy_flag = False  # track if you moved vertex files
         if run_vertex == 'auto':
             run_vertex = False
-            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof', '.dat']:
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof']:
                 if not os.path.isfile(self.output_path + self.name + build_file_end + fend):
                     run_vertex = True  # if any of these files are missing, need to run
                     break
