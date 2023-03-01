@@ -274,7 +274,7 @@ class MeltsFugacityData:
         elif which == 'volume':
             fname = 'Phase_vol_tbl.txt'
 
-        okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        okay = self.read_melts_TP(T_of_interest=T_of_interest, verbose=verbose, **kwargs)
         if not okay:
             raise Exception(self.name, 'read_melts_TP crashed')
         if okay:
@@ -351,7 +351,7 @@ class MeltsFugacityData:
     def read_melts_fo2(self, T_of_interest=1373.15, verbose=False, **kwargs):
         """ make csv of logfo2 - isothermal x-section for several pressures """
 
-        okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        okay = self.read_melts_TP(T_of_interest=T_of_interest, verbose=verbose, **kwargs)
         if not okay:
             raise Exception(self.name, 'read_melts_TP crashed in read_melts_fo2()')
         if okay:
@@ -396,13 +396,14 @@ class MeltsFugacityData:
             if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):
                 try:
                     # retrieve fo2
-                    self.read_melts_fo2(T_of_interest=T_of_interest, **kwargs)
+                    self.read_melts_fo2(T_of_interest=T_of_interest, verbose=verbose, **kwargs)
 
                     # retrieve phases
-                    self.read_melts_phases(which='mass', T_of_interest=T_of_interest, **kwargs)
+                    self.read_melts_phases(which='mass', T_of_interest=T_of_interest, verbose=verbose, **kwargs)
 
-                    print(self.name, 'finished reading')
-                    print(self.data.head())
+                    if verbose:
+                        print(self.name, 'finished reading')
+                        print(self.data.head())
                 except SettingWithCopyError:
                     print('handling..')
                     frameinfo = getframeinfo(currentframe())
