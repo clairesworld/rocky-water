@@ -352,6 +352,8 @@ class MeltsFugacityData:
         """ make csv of logfo2 - isothermal x-section for several pressures """
 
         okay = self.read_melts_TP(T_of_interest=T_of_interest, **kwargs)
+        if not okay:
+            raise Exception(self.name, 'read_melts_TP crashed in read_melts_fo2()')
         if okay:
             fname = 'System_main_tbl.txt'
             for row, path in enumerate(self.output_p_paths):
@@ -398,6 +400,9 @@ class MeltsFugacityData:
 
                     # retrieve phases
                     self.read_melts_phases(which='mass', T_of_interest=T_of_interest, **kwargs)
+
+                    print(self.name, 'finished reading')
+                    print(self.data.head())
                 except SettingWithCopyError:
                     print('handling..')
                     frameinfo = getframeinfo(currentframe())
