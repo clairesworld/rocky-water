@@ -849,7 +849,7 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
         df.to_csv(output_parent_path + 'completion_analysis.csv', sep="\t")
 
 
-def fo2_from_local(output_parent_path, num=-1, restart=None, **kwargs):
+def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, **kwargs):
     """for existing melts runs (e.g. done remotely), do the same fo2 analysis"""
 
     # get all runs in directory
@@ -866,11 +866,12 @@ def fo2_from_local(output_parent_path, num=-1, restart=None, **kwargs):
     else:
         idx0 = 0
     for name in subfolders[idx0:num]:
-        dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
-        if dat is not None:
-            okay = dat.fo2_calc(run_alphamelts=False, **kwargs)
-        if (dat is None) or (not okay):
-            bad.append(name)
+        if ((names is not None) and (name in names)) or (names is None):
+            dat = init_from_results(name, output_parent_path=output_parent_path, **kwargs)
+            if dat is not None:
+                okay = dat.fo2_calc(run_alphamelts=False, **kwargs)
+            if (dat is None) or (not okay):
+                bad.append(name)
     return bad
 
 
