@@ -981,7 +981,8 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
         print(e)
         print(name, 'has no wt_oxides composition')
         return False
-    print('\n\n\n\n----------------------------------------\nStarting fO2 calculation for planet of', pl.star)
+    print('\n\n\n\n--------------------------------------------------------------------------------')
+    print('Starting fO2 calculation for planet of', pl.star)
     dat = PerplexFugacityData(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                               core_efficiency=core_efficiency, **kwargs)
 

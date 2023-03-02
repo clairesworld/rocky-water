@@ -37,7 +37,7 @@ for ce in core_eff:
                         planet_kwargs={'Tp': 999, 'oxides': oxide_list, 'excluded_phases': px_melt_phases},
                         #solve_interior=False, --> already a parameter
                         do_system_comp=True,  # uses werami_command_comp after fo2 calc
-                        suppress_output=True, run=True, verbose=True,
+                        suppress_output=False, run=True, verbose=True,
                         output_parent_path=output_parent_path, perplex_path=perplex_path,
                         mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
