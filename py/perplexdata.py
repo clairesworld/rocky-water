@@ -580,7 +580,7 @@ class PerplexData:
         except FileNotFoundError as e:
             print('ERROR: vertex did not complete, try running again with suppress_output=False')
             print('matching run files in perplex_path:')
-            for f in pathlib.Path(self.perplex_path.glob("self.name*")):
+            for f in pathlib.Path(self.perplex_path).glob("self.name*"):
                 print(f)
             # something probably went wrong with vertex or werami, run again with full output
             # os.system('./vertex < ' + vertex_command_file)
