@@ -541,7 +541,7 @@ class PerplexData:
             output = subprocess.run('./vertex < ' + vertex_command_file, shell=True,
                                     stdout=stdout, stderr=stderr)
             if verbose:
-                print('-------\nVERTEX OUTPUT\n', output, '-------\n')
+                print('-------\nVERTEX OUTPUT\n', output, '\n-------\n')
 
         else:
             # do not run vertex (but run werami...)
@@ -571,14 +571,14 @@ class PerplexData:
         output = subprocess.run('./werami < ' + werami_command_file, shell=True,
                                 stdout=stdout, stderr=stderr)
         if verbose:
-            print('-------\nWERAMI OUTPUT\n', output, '-------\n')
+            print('-------\nWERAMI OUTPUT\n', output, '\n-------\n')
 
         # delete extra files and rename .tab file to something meaningful
         try:
             os.rename(self.perplex_path + self.name + build_file_end + '_1.tab',
                       self.output_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
-            print('ERROR: vertex did not complete, try running again with suppress_output=False')
+            print('ERROR: werami did not complete, try running again with suppress_output=False ?')
             print('matching run files in perplex_path:')
             for f in pathlib.Path(self.perplex_path).glob(self.name + "*"):
                 print(f)

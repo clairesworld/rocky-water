@@ -45,7 +45,7 @@ for ce in core_eff:
                         use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext_Cr/',  # try local first
                         existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/',
                         # existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
-                        restart='2MASS 19174668+4119039',
+                        restart='2MASS 19243554+4040098',
                         run_vertex='auto',  # overwrite existing vertex files if exist
                         skip_existing=True,  # do not do anything if directory exists with *_results.csv
                         suffix=str(X_ferric*100).replace('.', ',') + 'fer',
