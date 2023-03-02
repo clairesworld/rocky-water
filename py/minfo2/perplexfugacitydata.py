@@ -23,6 +23,7 @@ wt_oxides_DMM_ext = {'SiO2': 44.71, 'MgO': 38.73, 'CaO': 3.17, 'Al2O3': 3.98, 'F
 
 map_from_JH_phase = {'O(JH)': 'Ol', 'Opx(JH)': 'Opx', 'Cpx(JH)': 'Cpx', 'Sp(JH)': 'Sp', 'Grt(JH)': 'Gt',
                      'Pl(JH)': 'Plag'}
+map_to_JH_phase = {v: k for k, v in map_from_JH_phase.items()}
 
 
 class PerplexFugacityData(px.PerplexData):
@@ -247,7 +248,7 @@ class PerplexFugacityData(px.PerplexData):
                          werami_command_text_fn=self.command_werami_phase_feiii_composition_grid,
                          vertex_command_text_fn=self.command_vertex_grid,
                          output_file_end='_ferric_comp.tab', build_file_end=build_file_end, verbose=verbose,
-                         clean=True, werami_kwargs={'points_file': points_file}, run_vertex='auto',
+                         clean=True, werami_kwargs={'points_file': points_file}, run_vertex=False,
                          # suppress_output=False,
                          **kwargs)
 
@@ -260,22 +261,26 @@ class PerplexFugacityData(px.PerplexData):
         try:
             irow = df_w.loc[(df_w['T(K)'] == T_of_interest) & (df_w['P(bar)'] == p_of_interest * 1e4)].index[0]
         except IndexError:
-            print(self.name, T_of_interest, p_of_interest*1e4, 'not found')
-            print(df_w.head())
+            print(self.name, T_of_interest, p_of_interest * 1e4, 'not found')
+            print(df_w['P(bar)'].to_numpy())
             return None
         # convert FeO + O2 into Fe2O3
-        for icol in range(2,len(df_w.columns),2):  # skip first 2 (T, P), every 1st is FeO
+        for icol in range(2, len(df_w.columns), 2):  # skip first 2 (T, P), every 1st is FeO
             col = df_w.columns[icol]
             ph = map_from_JH_phase[re.sub(r'[0-9]', '', col[2:-1])]  # remove C[*] and trailing digit
             if ph == phase:
-                ph_FeOstar = df_w.iloc[irow, icol]
+                ph_FeOstar = df_w.iloc[irow, icol]  # raw results has two columns per phase (FeO* and O2)
                 ph_O2 = df_w.iloc[irow, icol + 1]
                 # print('\n\n\n\nFeO* in', ph, ph_FeOstar)
                 # print('O2 in', ph, ph_O2)
 
                 # convert to Fe2O3
-                Xf = bulk.test_ferric_ratio_from_O2(ph_FeOstar, ph_O2)
-                m_FeO, m_Fe2O3 = bulk.partition_FeOstar(ph_FeOstar, Xf)
+                if (ph_O2 == 0) or (ph_FeOstar == 0):
+                    m_Fe2O3 = 0
+                    m_FeO = 0  # not used
+                else:
+                    Xf = bulk.test_ferric_ratio_from_O2(ph_FeOstar, ph_O2)
+                    m_FeO, m_Fe2O3 = bulk.partition_FeOstar(ph_FeOstar, Xf)
 
                 # print('Xf', Xf, 'm_Fe2O3', m_Fe2O3)
 
@@ -307,12 +312,20 @@ class PerplexFugacityData(px.PerplexData):
 
         """
         if absolute_abundance and (not hasattr(self, 'data')):
-            self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
+            self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv',
+                                    sep='\t')
 
-        wt_pt_dict = {map_from_JH_phase[ph]: None for ph in phases}
+        try:
+            wt_pt_dict = {map_from_JH_phase[ph]: None for ph in phases}
+        except KeyError:
+            # maybe already converted from JH phase to stx
+            wt_pt_dict = {ph: None for ph in phases}
         try:
             for ph in phases:
-                phase = map_from_JH_phase[ph]
+                try:
+                    phase = map_from_JH_phase[ph]
+                except KeyError:
+                    phase = ph
                 df = self.read_ferric_phase_comp(phase=phase, T_of_interest=T_of_interest, p_of_interest=p_of_interest)
                 if df is None:  # phase not found
                     wt_pt_dict[phase] = np.nan
@@ -334,7 +347,8 @@ class PerplexFugacityData(px.PerplexData):
                             # print('mass', phase, mass_ph)
                         except KeyError as e:
                             # print(self.data.head())
-                            print(self.name, 'key error', e)
+                            if verbose:
+                                print('Phase', e, 'not found in', self.name, '--> assigning 0 wt%')
                             mass_ph = 0
                     else:
                         mass_ph = 1
@@ -343,11 +357,34 @@ class PerplexFugacityData(px.PerplexData):
                         wt_pt_dict[phase] = df[component].iloc[0] * mass_ph
                     except KeyError:
                         print(component, 'not found in', phase)
-                        wt_pt_dict[phase] = np.nan
+                        wt_pt_dict[phase] = 0
         except FileNotFoundError:
             print('...results.csv file not found! skipping')
             return None
         return wt_pt_dict
+
+    def get_phase_composition_dict(self, p_of_interest, T_of_interest, component='Fe2O3',
+                                   phases=solution_phases_default,
+                                   to_absolute_abundance=True, verbose=False):
+        """
+        load phase compositon from results.csv file
+        todo maybe put these in results csv? for now can just copy over raw output files lol
+
+        Parameters
+        ----------
+        p_of_interest :
+        T_of_interest :
+        component :
+        phases :
+        absolute_abundance :
+        verbose :
+
+        Returns
+        -------
+
+        """
+        return self.read_phase_comp(p_of_interest, T_of_interest, component=component, phases=phases,
+                                    absolute_abundance=to_absolute_abundance, verbose=verbose)
 
     def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, T_iso=None, verbose=True, build_file_end='',
                  vertex_data='hp622ver', run=True, compare_buffer=None, do_system_comp=False, points_file=None,
@@ -425,7 +462,7 @@ class PerplexFugacityData(px.PerplexData):
                                  store_vertex_output=True,
                                  **kwargs)
                 self.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max,
-                                            verbose=True)
+                                             verbose=True)
                 print('done Fe3+ composition for', self.name)
 
         # extract mu and T of interest from output data
@@ -632,7 +669,8 @@ def init_from_results(name, X_ferric=None, T_iso=1373, load_results_csv=False, v
 
     # load saved results
     if load_results_csv:
-        dat.data = pd.read_csv(dat.output_path + dat.name + '_results' + str(int(T_iso)) + '.csv', sep='\t', index_col=0)
+        dat.data = pd.read_csv(dat.output_path + dat.name + '_results' + str(int(T_iso)) + '.csv', sep='\t',
+                               index_col=0)
         # print('self.data\n', dat.data.head())
         dat.read_fo2_results(verbose=verbose)
 
@@ -690,7 +728,8 @@ def read_dict_from_build(name=None, output_parent_path=output_parent_default, ve
 
     # compile in args dict
     d = {'vertex_data': vertex_data, 'wt_oxides': wt_oxides, 'excluded_phases': excluded_phases,
-         'solution_phases': solution_phases, 'p_min': float(p_min), 'p_max': float(p_max), 'T_min': float(T_min), 'T_max': float(T_max)}
+         'solution_phases': solution_phases, 'p_min': float(p_min), 'p_max': float(p_max), 'T_min': float(T_min),
+         'T_max': float(T_max)}
 
     # if verbose:
     #     print('d', d)
@@ -868,7 +907,8 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None,
         else:
             # print('not found', pl.output_path + pl.name + '_results.csv')
             # print('running\n', pl.wt_oxides)
-            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, T_iso=T_iso, **kwargs)
+            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, T_iso=T_iso,
+                                   **kwargs)
             if not okay:
                 bad.append(pl.name)
     print('bad cases:', bad)
@@ -876,7 +916,7 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None,
 
 
 def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None, planet_kwargs={},
-                     output_parent_path=output_parent_default, skip_existing=True, **kwargs):
+                        output_parent_path=output_parent_default, skip_existing=True, **kwargs):
     """
     Go through cases which haven't finished, start in 1D - TODO
 
@@ -908,16 +948,18 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=No
         else:
             # print('not found', pl.output_path + pl.name + '_results.csv')
             print('running\n', pl.wt_oxides)
-            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, T_iso=T_iso, output_parent_path=output_parent_path, **kwargs)
+            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, T_iso=T_iso, output_parent_path=output_parent_path,
+                                   **kwargs)
             if not okay:
                 bad.append(pl.name)
     print('bad cases:', bad)
     return pl_list
 
 
-def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, do_ferric_comp=True, T_iso=1373,
+def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_werami=True,
+                   do_ferric_comp=True, do_mu_comp=False, do_system_comp=False,
                    p_min=10000, p_max=40000, skip_names=[], start_after=None,
-                   rewrite_options=True, **kwargs):
+                   rewrite_options=True, cases=None, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
     if run_werami:
         run = True  # note this also re-writes build file (e.g. if options updated)
@@ -941,6 +983,8 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, do
 
         if name in skip_names:
             continue
+        elif (cases is not None) and name not in cases:
+            continue
 
         try:
             d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
@@ -951,14 +995,12 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, do
         dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
         # print('pressures', dat.pressure)
         # print('d', d)
-        logfo2 = dat.fo2_calc(T_iso=None, run=run, points_file=points_file, run_vertex=False, **d, **kwargs)
-        print(dat.name, ': log fo2 of system:', logfo2)
+        # logfo2 = dat.fo2_calc(T_iso=None, run=run, points_file=points_file, run_vertex=False, **d, **kwargs)
+        # print(dat.name, ': log fo2 of system:', logfo2)
 
         if do_ferric_comp:
             dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max, verbose=True)
             print('done Fe3+ composition for', dat.name)
-
-
 
 
 def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
@@ -991,6 +1033,7 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
         print('log fo2 of system:', logfo2)
     return True
 
+
 # def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None,
 #              **kwargs):
 #     mass_str = str(M_p / p.M_E) + 'M'
@@ -1016,7 +1059,6 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
 #         name = name + '_' + suffix
 #     name = name.replace('.', ',')  # dots will crash file i/o
 #     return name
-
 
 
 def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True, **kwargs):
@@ -1066,12 +1108,14 @@ def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True,
                     except KeyError as e:
                         # if verbose:
                         #     print(e)
-                        pass # this phase not stable at T,p
+                        pass  # this phase not stable at T,p
 
                 for s in ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']:
                     dfout.at[row, s] = bulk.get_element_ratio(s, dat.wt_oxides)
 
-    dfout.to_csv(output_parent_path + 'summary_perplex_' + str(T).replace('.', ',') + 'K_' + str(P).replace('.', ',') + 'GPa_' + str(Xfer).replace('.', ',') + 'fer_' + str(coreeff).replace('.', ',') + 'core' + '.csv', sep="\t", na_rep='NaN')
+    dfout.to_csv(output_parent_path + 'summary_perplex_' + str(T).replace('.', ',') + 'K_' + str(P).replace('.',
+                                                                                                            ',') + 'GPa_' + str(
+        Xfer).replace('.', ',') + 'fer_' + str(coreeff).replace('.', ',') + 'core' + '.csv', sep="\t", na_rep='NaN')
     if verbose:
         print(dfout.head(10))
     pd.reset_option("max_columns")

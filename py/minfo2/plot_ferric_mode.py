@@ -15,17 +15,17 @@ import perplexfugacitydata as pfug
 from py import main as rw
 from py.useful_and_bespoke import colourbar
 import datetime
+import matplotlib  # for running remotely
 
-# for running remotely
-import matplotlib
+""" scatter plot of where Fe3+ is on ternary diagram """
 
 where = 'starlite'
 ftype = '.pdf'
 
 date = datetime.date.today()
-print('date', str(date))
 
-fig_path_starlite = '/home/claire/Works/min-fo2/figs_scratch/'
+phases_1GPa = ['orthopyroxene', 'clinopyroxene', 'spinel']
+phases_4GPa = ['orthopyroxene', 'clinopyroxene', 'garnet']
 
 if where == 'apollo':
     opp_mlt = mfug.output_parent_default
@@ -39,8 +39,6 @@ elif where == 'starlite':
     perplex_path = '/home/claire/Works/perple_x/'
     fig_path = fo2plt.figpath
 
-""" scatter plot of where Fe3+ is on ternary diagram """
-
 
 def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
                     z_label=None, model='melts', cmap='rainbow', vmin=None, vmax=None, fontsize=16, offset=0.1,
@@ -51,6 +49,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     """ plot distribution of component between 3 phases
     p_of_interest: GPa
     """
+    print('Starting ternary plot with phases', phases)
+
     missing_Sp = 0
     missing_Opx = 0
     missing_Cpx = 0
@@ -69,6 +69,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         tax.right_axis_label(phases_px[1], fontsize=fontsize, offset=offset)
         tax.left_axis_label(phases_px[2], fontsize=fontsize, offset=offset)
         tax.set_title(title, fontsize=fontsize)
+        # print('ax labels:', phases_px[0], phases_px[1], phases_px[2])
 
         # Draw Boundary and Gridlines
         tax.boundary(linewidth=2.0)
@@ -91,17 +92,20 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         missing_Sp, missing_Opx, missing_Cpx, missing_Gt = tracker
         if model == 'perplex':
             dat = pfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp, perplex_path=perplex_path,
-                                         load_results_csv=True, **kwargs)
+                                         load_results_csv=True, verbose=verbose, **kwargs)
+            phases0 = [pfug.map_to_JH_phase[ph] for ph in phases]
 
         elif model == 'melts':
             dat = mfug.init_from_results(name, X_ferric=Xf, output_parent_path=opp,
-                                         load_results_csv=True, **kwargs)
+                                         load_results_csv=True, verbose=verbose, **kwargs)
             p_of_interest = p_of_interest * 1e4
+            phases0 = phases
 
         if dat is None:
             return None, tracker
         if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
-            print('dropping case with quartz:', dat.name)
+            if verbose:
+                print('dropping case with quartz:', dat.name)
             return None, tracker
 
         # print(dat.name, '\n', dat.data.head())
@@ -111,17 +115,17 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         else:
             z = 'k'
 
-        # d = dat.read_phase_main_components(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
-        #                                    component=component, absolute_abundance=absolute_abundance, verbose=False)
-        d = dat.get_phase_composition_dict(p_of_interest=p_of_interest, T_of_interest=T_of_interest, component=component,
-                                           phases=phases, to_absolute_abundance=absolute_abundance, verbose=False)
+        d = dat.get_phase_composition_dict(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
+                                           component=component,
+                                           phases=phases0, to_absolute_abundance=absolute_abundance, verbose=verbose)
 
         if d is None:
             # general failure for this case and p of interest
             return None, tracker
 
         # get opx, cpx, sp or gt, normalise to 100
-        d2 = {x: np.round(y, 3) for x, y in d.items()}  # if (y != 0) and (~np.isnan(y))}  # round to remove fp imprecision
+        d2 = {x: np.round(y, 3) for x, y in
+              d.items()}  # if (y != 0) and (~np.isnan(y))}  # round to remove fp imprecision
         if len(d2) > 3:
             raise NotImplementedError(name, 'more than 3 ferric hosts:', d2)
         if sum(d2.values()) == 0:
@@ -130,7 +134,6 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
         factor = 100 / sum(d2.values())
         for k in d2:
             d2[k] = d2[k] * factor
-        # print('d2', d2, 'sum', sum(d2.values()))
 
         xyz = []
         for k in phases_px:  # preserve order
@@ -148,10 +151,9 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             except KeyError:
                 xyz.append(0)  # e. g. no spinel in this composition?
 
-
-
-        if (np.nan in xyz):
+        if np.nan in xyz:
             print('xyz', xyz, dat.name)
+
         # add point to axes
         xyz = tuple(xyz)
         tax.scatter([xyz], marker=marker, edgecolors=mec, linewidths=lw, c=z, s=90, alpha=0.4,
@@ -188,35 +190,40 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
     return fig, tax
 
 
-phases_1GPa = ['orthopyroxene', 'clinopyroxene', 'spinel']
-phases_4GPa = ['orthopyroxene', 'clinopyroxene', 'garnet']
+""" make 4x4 figure with perplex and melts columns, 1 and 4 GPa rows """
+
+fontsize = 30
 fig, axes = plt.subplots(2, 2, figsize=(20, 20))
-_, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                         model='melts', cmap='viridis', vmin=0.69, vmax=1.6,
-                         phases=phases_1GPa,
-                         z_label='Mg/Si', mec='xkcd:midnight blue', lw=1.5, title='MELTS',
-                         ax=axes[0][0], save=False)
 
-# _, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-#                          model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=[mfug.map_to_px_phase[ph] for ph in phases_1GPa],
-#                          mec='xkcd:brick red', marker='d', lw=1.5, title='Perple_x',
-#                          ax=axes[0][1], save=False)
+# alphamelts column
+fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3',
+                           model='melts', phases=phases_1GPa, title='MELTS',
+                           fontsize=fontsize, lw=1.5, mec='xkcd:midnight blue',
+                           z_label='Mg/Si', z_var='mgsi', cmap='viridis', vmin=0.69, vmax=1.6,
+                           ax=axes[0][0], fig=fig, save=False)
 
-_, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-                         model='melts', cmap='viridis', vmin=0.69, vmax=1.6,
-                         phases=phases_1GPa,
-                         z_label='Mg/Si', mec='xkcd:midnight blue', lw=1.5,
-                         ax=axes[1][0], save=False)
+fig, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3',
+                           model='melts', phases=phases_1GPa,
+                           fontsize=fontsize, lw=1.5, mec='xkcd:midnight blue',
+                           z_label='Mg/Si', z_var='mgsi', cmap='viridis', vmin=0.69, vmax=1.6,
+                           ax=axes[1][0], fig=fig, save=False)
 
-# _, tax = ternary_scatter(p_of_interest=3.9, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3', z_var='mgsi',
-#                          model='perplex', cmap='viridis', vmin=0.69, vmax=1.6, phases=[mfug.map_to_px_phase[ph] for ph in phases_4GPa],
-#                          mec='xkcd:brick red', marker='d', lw=1.5,
-#                          ax=axes[1][1], save=False)
+# perplex column
+fig, tax = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3',
+                           model='perplex', phases=[mfug.map_to_px_phase[ph] for ph in phases_1GPa], title='Perple_x',
+                           fontsize=fontsize, lw=1.5, mec='xkcd:brick red', marker='d',
+                           z_var='mgsi', cmap='viridis', vmin=0.69, vmax=1.6,
+                           ax=axes[0][1], fig=fig, save=False)
+
+fig, tax = ternary_scatter(p_of_interest=3.9, T_of_interest=1373, core_eff=88, Xf=3.0, component='Fe2O3',
+                           model='perplex', phases=[mfug.map_to_px_phase[ph] for ph in phases_4GPa],
+                           fontsize=fontsize, lw=1.5, mec='xkcd:brick red', marker='d',
+                           z_var='mgsi', cmap='viridis', vmin=0.69, vmax=1.6,
+                           ax=axes[1][1], fig=fig, save=False)
 
 fig.suptitle("Fe$^{3+}$ modality", fontsize=16)
 fig.savefig(fig_path + 'ternary_subplots' + str(date) + ftype)
 plt.show()
-
 
 """ test individual """
 # _, tax = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=7.0, component='Fe2O3', z_var='mgsi',

@@ -517,6 +517,13 @@ class PerplexData:
                     print('could not find', self.output_path + self.name + build_file_end + fend)
                     print('     ^^^ was trying to run werami with:', werami_command_end)
                     break
+                elif fend == '.plt' and os.stat(self.output_path + self.name + build_file_end + fend).st_size == 0:
+                    # seems like .plt or (.blk???) files created before vertex finishes?
+                    run_vertex = True
+                    print('file is empty:', self.output_path + self.name + build_file_end + fend)
+                    print('(perhaps vertex quit or crashed part-way)')
+                    print('     ^^^ was trying to run werami with:', werami_command_end)
+                    break
                 else:
                     # temporarily move vertex output files to perple_x working directoy
                     vertex_copy_flag = True
@@ -571,17 +578,18 @@ class PerplexData:
         output = subprocess.run('./werami < ' + werami_command_file, shell=True,
                                 stdout=stdout, stderr=stderr)
         if verbose:
-            print('-------\nWERAMI OUTPUT\n', output, '\n-------\n')
+            print('-------\nWERAMI OUTPUT\n', output, '\n-------')
 
         # delete extra files and rename .tab file to something meaningful
         try:
             os.rename(self.perplex_path + self.name + build_file_end + '_1.tab',
                       self.output_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
-            print('ERROR: werami did not complete, try running again with suppress_output=False ?')
-            print('matching run files in perplex_path:')
+            print('-------\nERROR: werami did not complete, try running again with suppress_output=False ?\n-------')
+            print('Deleting matching run files in perplex_path:')
             for f in pathlib.Path(self.perplex_path).glob(self.name + "*"):
-                print(f)
+                print('        ', f)
+                os.remove(f)
             # something probably went wrong with vertex or werami, run again with full output
             # os.system('./vertex < ' + vertex_command_file)
             # os.system('./werami < ' + werami_command_file)

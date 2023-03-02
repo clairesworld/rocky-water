@@ -702,8 +702,9 @@ class MeltsFugacityData:
                     # for 1M_88Ceff_HIP84856_999K_3,0fer, other weird issue
                     # HIP 80680: no spinel for some reason (but garnet)
 
-                    print('\n', self.name, ': column', e, 'not found (p =', p_of_interest, ')')
-                    print('           ', list(self.data.columns)[3:])
+                    if verbose:
+                        print('\n', self.name, ': column', e, 'not found (p =', p_of_interest, ')')
+                        print('           ', list(self.data.columns)[3:])
                     mass_ph = 0
             else:
                 mass_ph = 1
@@ -719,9 +720,7 @@ class MeltsFugacityData:
                 if verbose and not to_absolute_abundance:
                     print('\n', self.name, ': column', e, 'not found (p =', p_of_interest, ')')
                     print('           ', list(self.data.columns)[3:])
-                    wt_pt_dict[map_to_px_phase[phase]] = 0
-                elif to_absolute_abundance:
-                    wt_pt_dict[map_to_px_phase[phase]] = 0
+                wt_pt_dict[map_to_px_phase[phase]] = 0
 
         return wt_pt_dict
 
