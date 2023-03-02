@@ -541,15 +541,16 @@ class PerplexData:
 
         else:
             # do not run vertex (but run werami...)
-            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof', '.dat']:
-                if os.path.isfile(self.output_path + self.name + build_file_end + fend):
-                    # temporarily move vertex output files to perple_x working directoy
-                    vertex_copy_flag = True
-                    os.rename(self.output_path + self.name + build_file_end + fend,
-                              self.perplex_path + self.name + build_file_end + fend)
-                else:
-                    raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
-
+            if not vertex_copy_flag:
+                # if didn't copy files to perplex wd above in 'auto', copy now
+                for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof', '.dat']:
+                    if os.path.isfile(self.output_path + self.name + build_file_end + fend):
+                        # temporarily move vertex output files to perple_x working directoy
+                        vertex_copy_flag = True
+                        os.rename(self.output_path + self.name + build_file_end + fend,
+                                  self.perplex_path + self.name + build_file_end + fend)
+                    else:
+                        raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
 
         print('running werami')
         # create werami command file

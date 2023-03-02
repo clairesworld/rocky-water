@@ -306,7 +306,7 @@ class PerplexFugacityData(px.PerplexData):
 
         """
         if absolute_abundance and (not hasattr(self, 'data')):
-            self.data = pd.read_csv(self.output_path + self.name + '_results.csv', sep='\t')
+            self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
 
         wt_pt_dict = {map_from_JH_phase[ph]: None for ph in phases}
         try:
@@ -349,7 +349,7 @@ class PerplexFugacityData(px.PerplexData):
         return wt_pt_dict
 
     def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, T_iso=None, verbose=True, build_file_end='',
-                 vertex_data='hp622ver', run=True, compare_buffer=None, check_comp=False, points_file=None,
+                 vertex_data='hp622ver', run=True, compare_buffer=None, do_system_comp=False, points_file=None,
                  mu0_file=None, save=True, excluded_phases=[], run_vertex='auto', **kwargs):
         """
         Parameters
@@ -365,7 +365,7 @@ class PerplexFugacityData(px.PerplexData):
         vertex_data :
         run :
         compare_buffer :
-        check_comp :
+        do_system_comp :
         points_file :
         mu0_file : Path or string
             Given relative to perplex_path
@@ -412,13 +412,17 @@ class PerplexFugacityData(px.PerplexData):
                              store_vertex_output=True,
                              **kwargs)
 
-            if check_comp:
+            if do_system_comp:
                 self.run_perplex(werami_command_end='_werami_command_comp.txt',
                                  werami_command_text_fn=self.command_werami_composition_grid,
                                  vertex_command_text_fn=self.command_vertex_grid,
                                  output_file_end='_comp.tab', build_file_end=build_file_end, verbose=verbose,
-                                 clean=True, werami_kwargs={'points_file': points_file}, run_vertex='auto',
+                                 clean=True, werami_kwargs={'points_file': points_file}, run_vertex=False,
+                                 store_vertex_output=True,
                                  **kwargs)
+                self.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max,
+                                            verbose=True)
+                print('done Fe3+ composition for', self.name)
 
         # extract mu and T of interest from output data
         df_w = self.read_chem_potential_werami(verbose=False, return_df=True)
@@ -429,7 +433,7 @@ class PerplexFugacityData(px.PerplexData):
         # prepare all data
         self.data = df_w.copy()
 
-        if check_comp:
+        if do_system_comp:
             df_c = self.read_werami(fend='_comp.tab')
 
             # concat with full results dataframe
@@ -476,7 +480,7 @@ class PerplexFugacityData(px.PerplexData):
         # store mega df
         if save:
             df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
-            df_save.to_csv(self.output_path + self.name + '_results.csv', sep="\t")
+            df_save.to_csv(self.output_path + self.name + '_results' + str(int(T_iso)) + '.csv', sep="\t")
 
         # store werami/frendly i/o files - note must be after reading-in is finished
         for fend in ['_WERAMI_options.txt', '_VERTEX_options.txt', '_mu.tab', '_comp.tab', '_standard.tab', '.dat']:
@@ -597,7 +601,7 @@ class PerplexFugacityData(px.PerplexData):
             pass
 
 
-def init_from_results(name, X_ferric=None, load_results_csv=False, verbose=False, **kwargs):
+def init_from_results(name, X_ferric=None, T_iso=1373, load_results_csv=False, verbose=False, **kwargs):
     """ currently not saving X_ferric in directory name so must enter known value manually
     output_parent_path in kwargs"""
     # TODO parse star from name using possible prefixes
@@ -624,7 +628,7 @@ def init_from_results(name, X_ferric=None, load_results_csv=False, verbose=False
 
     # load saved results
     if load_results_csv:
-        dat.data = pd.read_csv(dat.output_path + dat.name + '_results.csv', sep='\t', index_col=0)
+        dat.data = pd.read_csv(dat.output_path + dat.name + '_results' + str(int(T_iso)) + '.csv', sep='\t', index_col=0)
         # print('self.data\n', dat.data.head())
         dat.read_fo2_results(verbose=verbose)
 
@@ -845,7 +849,7 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
     return logfo2
 
 
-def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
+def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None, planet_kwargs={},
                      output_parent_path=output_parent_default, skip_existing=True, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
     pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
@@ -855,19 +859,19 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwar
     print('\nfinished generating compositions\n')
     bad = []
     for pl in pl_list:
-        if skip_existing and os.path.exists(pl.output_path + pl.name + '_results.csv'):
+        if skip_existing and os.path.exists(pl.output_path + pl.name + '_results' + str(int(T_iso)) + '.csv'):
             print('skipping', pl.name, ': results.csv file exists')
         else:
             # print('not found', pl.output_path + pl.name + '_results.csv')
             print('running\n', pl.wt_oxides)
-            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
+            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, T_iso=T_iso, **kwargs)
             if not okay:
                 bad.append(pl.name)
     print('bad cases:', bad)
     return pl_list
 
 
-def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_kwargs={},
+def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None, planet_kwargs={},
                      output_parent_path=output_parent_default, skip_existing=True, **kwargs):
     """
     Go through cases which haven't finished, start in 1D - TODO
@@ -895,19 +899,19 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, planet_k
     print('\nfinished generating compositions\n')
     bad = []
     for pl in pl_list:
-        if skip_existing and os.path.exists(pl.output_path + pl.name + '_results.csv'):
+        if skip_existing and os.path.exists(pl.output_path + pl.name + '_results' + str(int(T_iso)) + '.csv'):
             print('skipping', pl.name, ': results.csv file exists')
         else:
             # print('not found', pl.output_path + pl.name + '_results.csv')
             print('running\n', pl.wt_oxides)
-            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, **kwargs)
+            okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, T_iso=T_iso, output_parent_path=output_parent_path, **kwargs)
             if not okay:
                 bad.append(pl.name)
     print('bad cases:', bad)
     return pl_list
 
 
-def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, ferric_comp=True, T_iso=1373,
+def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, do_ferric_comp=True, T_iso=1373,
                    p_min=10000, p_max=40000, skip_names=[], start_after=None,
                    rewrite_options=True, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
@@ -943,12 +947,10 @@ def fo2_from_local(output_parent_path=output_parent_default, run_werami=True, fe
         dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
         # print('pressures', dat.pressure)
         # print('d', d)
-        logfo2 = dat.fo2_calc(run=run, run_vertex=False,  # ned
-                              points_file=points_file, T_iso=None, #p_min=p_min, p_max=p_max,
-                              **d, **kwargs)
+        logfo2 = dat.fo2_calc(T_iso=None, run=run, points_file=points_file, run_vertex=False, **d, **kwargs)
         print(dat.name, ': log fo2 of system:', logfo2)
 
-        if ferric_comp:
+        if do_ferric_comp:
             dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max, verbose=True)
             print('done Fe3+ composition for', dat.name)
 

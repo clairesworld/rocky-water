@@ -35,10 +35,9 @@ for ce in core_eff:
     pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
                         X_ferric=X_ferric, core_efficiency=ce,
                         planet_kwargs={'Tp': 999, 'oxides': oxide_list, 'excluded_phases': px_melt_phases},
-
                         #solve_interior=False, --> already a parameter
-                        check_comp=True,  # uses werami_command_comp after fo2 calc
-                        suppress_output=False, run=True, verbose=True,
+                        do_system_comp=True,  # uses werami_command_comp after fo2 calc
+                        suppress_output=True, run=True, verbose=True,
                         output_parent_path=output_parent_path, perplex_path=perplex_path,
                         mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                         names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
@@ -46,7 +45,6 @@ for ce in core_eff:
                         use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext_Cr/',  # try local first
                         existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/',
                         # existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
-                        # existing_output_parent=pfug.output_parent_apollo,  # <== existing kwarg
                         restart='2MASS 19174668+4119039',
                         run_vertex='auto',  # overwrite existing vertex files if exist
                         skip_existing=True,  # do not do anything if directory exists with *_results.csv
@@ -56,7 +54,7 @@ for ce in core_eff:
     # pf.fo2_from_local(#n_sample=2, not implemented
     #                   X_ferric=X_ferric, T_iso=T_iso, p_min=p_min, p_max=p_max,
     #                   output_parent_path=output_parent_path, perplex_path=perplex_path,
-    #                   run_werami=True, check_comp=True, ferric_comp=True,  # do all calculations except vertex
+    #                   run_werami=True, check_comp=True, do_ferric_comp=True,  # do all calculations except vertex
     #                   mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
     #                   suppress_output=True,
     #     # start_after='1M_88Ceff_2MASS19190557+4048026_999K_3,0fer'
