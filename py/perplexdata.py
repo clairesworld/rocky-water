@@ -510,19 +510,22 @@ class PerplexData:
         vertex_copy_flag = False  # track if you moved vertex files
         if run_vertex == 'auto':
             run_vertex = False
-            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof']:
+            for fend in ['_seismic_data.txt', '_auto_refine.txt', '.tim', '.plt', '.blk', '.arf', '.tof', '.dat']:
                 if not os.path.isfile(self.output_path + self.name + build_file_end + fend):
                     run_vertex = True  # if any of these files are missing, need to run
                     print('could not find', self.output_path + self.name + build_file_end + fend)
+                    print('     ^^^ was trying to run werami with:', werami_command_end)
                     break
                 else:
                     # temporarily move vertex output files to perple_x working directoy
                     vertex_copy_flag = True
                     print('found', self.output_path + self.name + build_file_end + fend)
                     print('copying to', self.perplex_path + self.name + build_file_end + fend)
-                    os.rename(self.output_path + self.name + build_file_end + fend,
-                              self.perplex_path + self.name + build_file_end + fend)
-            print('   vertex output files already exist for', self.name, ', skipping to werami')
+                    # os.rename(self.output_path + self.name + build_file_end + fend,
+                    #           self.perplex_path + self.name + build_file_end + fend)
+                    os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
+                                               self.perplex_path + self.name + build_file_end + fend))
+            print('vertex output files already exist for', self.name, ', skipping to werami for:', werami_command_end)
 
         # print('run_vertex', run_vertex)
         if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
@@ -547,25 +550,27 @@ class PerplexData:
                     if os.path.isfile(self.output_path + self.name + build_file_end + fend):
                         # temporarily move vertex output files to perple_x working directoy
                         vertex_copy_flag = True
-                        os.rename(self.output_path + self.name + build_file_end + fend,
-                                  self.perplex_path + self.name + build_file_end + fend)
+                        # os.rename(self.output_path + self.name + build_file_end + fend,
+                        #           self.perplex_path + self.name + build_file_end + fend)
+                        os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
+                                                   self.perplex_path + self.name + build_file_end + fend))
                     else:
                         raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
 
-        print('running werami')
+        print('starting werami calculations...')
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:
             s = werami_command_text_fn(build_file_end=build_file_end, **werami_kwargs)
             file.write(s)
 
-        print('   created werami command file', self.name + build_file_end + werami_command_end)
+        print('created werami command file', self.name + build_file_end + werami_command_end)
 
         # run werami
         output = subprocess.run('./werami < ' + werami_command_file, shell=True,
                                 stdout=stdout, stderr=stderr)
         if verbose:
-            print('  ', output)
+            print('-------\nWERAMI OUTPUT\n-------\n', output)
 
         # delete extra files and rename .tab file to something meaningful
         try:
@@ -585,6 +590,7 @@ class PerplexData:
                 if os.path.isfile(self.perplex_path + self.name + build_file_end + fend):
                     os.rename(self.perplex_path + self.name + build_file_end + fend,
                               self.output_path + self.name + build_file_end + fend)
+                    print('moved', self.perplex_path + self.name + build_file_end + fend, '>>>', self.output_path + self.name + build_file_end + fend)
         if clean:
             # get rid of any files left in
             for fend in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tim', '.plt', '.blk', '.arf', '.tof',

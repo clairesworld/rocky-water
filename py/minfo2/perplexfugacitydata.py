@@ -376,8 +376,8 @@ class PerplexFugacityData(px.PerplexData):
         -------
 
         """
-        if verbose:
-            print(self.__dict__)
+        # if verbose:
+        #     print(self.__dict__)
 
         # decide which T, p points to calculate
         if T_iso is not None:
@@ -400,6 +400,7 @@ class PerplexFugacityData(px.PerplexData):
                              use_solutions=True, build_file_end=build_file_end,
                              calculation_type='5',  # '5' for grid
                              T_min=T_min, T_max=T_max, **kwargs)
+            # todo: re-writing build file unnecessarily in perplex wd if it already exists in output folder
 
             # run vertex and werami to get mu at T, P of interest
             # strategy is to run each case once in vertex over grid and keep all the files
@@ -863,7 +864,7 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None,
             print('skipping', pl.name, ': results.csv file exists')
         else:
             # print('not found', pl.output_path + pl.name + '_results.csv')
-            print('running\n', pl.wt_oxides)
+            # print('running\n', pl.wt_oxides)
             okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, T_iso=T_iso, **kwargs)
             if not okay:
                 bad.append(pl.name)
