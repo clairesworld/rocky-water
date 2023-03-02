@@ -56,7 +56,7 @@ for ce in core_eff:
                       output_parent_path=output_parent_path, perplex_path=perplex_path,
                       run_werami=True, do_system_comp=True, do_ferric_comp=True,  # do all calculations except vertex
                       mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
-                      suppress_output=False,
+                      suppress_output=False, verbose=True,
                       cases=['1M_88Ceff_HIP69888_999K_3,0fer', '1M_88Ceff_HIP69888_999K_3,0fer', '1M_88Ceff_HIP69888_999K_3,0fer',
                              '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer', '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer',
                              '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer', '1M_88Ceff_HIP31039_999K_3,0fer',

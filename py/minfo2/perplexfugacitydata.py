@@ -999,7 +999,8 @@ def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_wer
         # print(dat.name, ': log fo2 of system:', logfo2)
 
         if do_ferric_comp:
-            dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max, verbose=True)
+            dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max,
+                                        **kwargs)
             print('done Fe3+ composition for', dat.name)
 
 
