@@ -405,6 +405,7 @@ class PerplexFugacityData(px.PerplexData):
 
             # run vertex and werami to get mu at T, P of interest
             # strategy is to run each case once in vertex over grid and keep all the files
+            print('\nCalculating mu...')
             self.run_perplex(werami_command_end='_werami_command_mu.txt',
                              werami_command_text_fn=self.command_werami_mu,
                              vertex_command_text_fn=self.command_vertex_grid,
@@ -415,6 +416,7 @@ class PerplexFugacityData(px.PerplexData):
                              **kwargs)
 
             if do_system_comp:
+                print('\nCalculating composition')
                 self.run_perplex(werami_command_end='_werami_command_comp.txt',
                                  werami_command_text_fn=self.command_werami_composition_grid,
                                  vertex_command_text_fn=self.command_vertex_grid,
