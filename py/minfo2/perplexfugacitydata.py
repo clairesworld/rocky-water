@@ -74,6 +74,7 @@ class PerplexFugacityData(px.PerplexData):
 
         X_fer_back = bulk.test_ferric_ratio_from_O2(self.wt_oxides['FeO'], self.wt_oxides['O2'])
         print('Fe3+/Fe', X_fer_back)
+        print('-----------')
 
         # insert Fe2O3 like MELTS - FeO already represents all mantle Fe - already gets printed
         wt_dict_o2 = bulk.insert_fe2o3({k: v for k, v in self.wt_oxides.items() if k != 'O2'}, X_fer_back)

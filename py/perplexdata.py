@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
+import glob
 import pathlib
 import subprocess
 from py.bulk_composition import stellar_mantle
@@ -519,8 +520,8 @@ class PerplexData:
                 else:
                     # temporarily move vertex output files to perple_x working directoy
                     vertex_copy_flag = True
-                    print('found', self.output_path + self.name + build_file_end + fend)
-                    print('copying to', self.perplex_path + self.name + build_file_end + fend)
+                    print('   found', self.output_path + self.name + build_file_end + fend)
+                    print('   >>> copying to', self.perplex_path + self.name + build_file_end + fend)
                     # os.rename(self.output_path + self.name + build_file_end + fend,
                     #           self.perplex_path + self.name + build_file_end + fend)
                     os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
@@ -540,7 +541,7 @@ class PerplexData:
             output = subprocess.run('./vertex < ' + vertex_command_file, shell=True,
                                     stdout=stdout, stderr=stderr)
             if verbose:
-                print('  ', output)
+                print('-------\nVERTEX OUTPUT\n-------\n', output)
 
         else:
             # do not run vertex (but run werami...)
@@ -557,14 +558,14 @@ class PerplexData:
                     else:
                         raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
 
-        print('starting werami calculations...')
+        print('\nStarting werami calculations...')
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:
             s = werami_command_text_fn(build_file_end=build_file_end, **werami_kwargs)
             file.write(s)
 
-        print('created werami command file', self.name + build_file_end + werami_command_end)
+        print('   Created werami command file', self.name + build_file_end + werami_command_end)
 
         # run werami
         output = subprocess.run('./werami < ' + werami_command_file, shell=True,
@@ -578,6 +579,9 @@ class PerplexData:
                       self.output_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
             print('ERROR: vertex did not complete, try running again with suppress_output=False')
+            print('matching run files in perplex_path:')
+            for f in pathlib.Path(self.perplex_path.glob("self.name*")):
+                print(f)
             # something probably went wrong with vertex or werami, run again with full output
             # os.system('./vertex < ' + vertex_command_file)
             # os.system('./werami < ' + werami_command_file)
