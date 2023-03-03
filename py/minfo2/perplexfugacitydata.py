@@ -261,8 +261,7 @@ class PerplexFugacityData(px.PerplexData):
         try:
             irow = df_w.loc[(df_w['T(K)'] == T_of_interest) & (df_w['P(bar)'] == p_of_interest * 1e4)].index[0]
         except IndexError:
-            print(self.name, T_of_interest, p_of_interest * 1e4, 'not found')
-            print(df_w['P(bar)'].to_numpy())
+            print(self.name, ':', T_of_interest, p_of_interest * 1e4, 'bar not found in', df_w['P(bar)'].to_numpy())
             return None
         # convert FeO + O2 into Fe2O3
         for icol in range(2, len(df_w.columns), 2):  # skip first 2 (T, P), every 1st is FeO
@@ -595,8 +594,9 @@ class PerplexFugacityData(px.PerplexData):
         return 'points_files/' + fname
 
     def read_fo2_results(self, verbose=False):
+        # assuming already loaded dataframe
         if np.isnan(self.data['P(bar)'].to_numpy().all()):
-            raise Exception('ERROR: PerplexFugacityData not initialised properly - not loaded dataframe')
+            raise Exception('ERROR: PerplexFugacityData not initialised properly - not loaded dataframe from results CSV')
 
         self.logfo2 = self.data['logfo2'].to_numpy()
         try:
@@ -642,7 +642,7 @@ class PerplexFugacityData(px.PerplexData):
             pass
 
 
-def init_from_results(name, X_ferric=None, T_iso=1373, load_results_csv=False, verbose=False, **kwargs):
+def init_from_results(name, X_ferric=None, T_iso=1373, load_results_csv=True, verbose=False, **kwargs):
     """ currently not saving X_ferric in directory name so must enter known value manually
     output_parent_path in kwargs"""
     # TODO parse star from name using possible prefixes
@@ -669,9 +669,13 @@ def init_from_results(name, X_ferric=None, T_iso=1373, load_results_csv=False, v
 
     # load saved results
     if load_results_csv:
-        dat.data = pd.read_csv(dat.output_path + dat.name + '_results' + str(int(T_iso)) + '.csv', sep='\t',
-                               index_col=0)
-        # print('self.data\n', dat.data.head())
+        try:
+            dat.data = pd.read_csv(dat.output_path + dat.name + '_results' + str(int(T_iso)) + '.csv', sep='\t',
+                                   index_col=0)
+        except FileNotFoundError:
+            if verbose:
+                print(name + '_results' + str(int(T_iso)) + 'CSV file not found, skipped...')
+            return None
         dat.read_fo2_results(verbose=verbose)
 
     return dat

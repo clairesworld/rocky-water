@@ -18,8 +18,7 @@ perplex_path = '/raid1/cmg76/perple_x/'
 T_iso = 1373
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
-pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
-oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']#, 'Cr2O3']
+oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'Na2O']#, 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
 X_ferric = 0.03
@@ -32,41 +31,34 @@ for ce in core_eff:
 
     # only need to run this once to get build files (i.e., bulk composition) and vertex output files
     # note this will first download the stellar composisions for the whole sample and then run perple_x
-    # pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
-    #                     X_ferric=X_ferric, core_efficiency=ce,
-    #                     planet_kwargs={'Tp': 999, 'oxides': oxide_list, 'excluded_phases': px_melt_phases},
-    #                     #solve_interior=False, --> already a parameter
-    #                     do_system_comp=True,  # uses werami_command_comp after fo2 calc
-    #                     suppress_output=False, run=True, verbose=True,
-    #                     output_parent_path=output_parent_path, perplex_path=perplex_path,
-    #                     mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
-    #                     names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
-    #                     # use_local_compositon=False,
-    #                     use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext_Cr/',  # try local first
-    #                     existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/',
-    #                     # existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
-    #                     # restart='2MASS 19243554+4040098',
-    #                     run_vertex='auto',  # overwrite existing vertex files if exist
-    #                     skip_existing=True,  # do not do anything if directory exists with *_results.csv
-    #                     suffix=str(X_ferric*100).replace('.', ',') + 'fer',
-    #                     )
+    pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
+                        X_ferric=X_ferric, core_efficiency=ce,
+                        planet_kwargs={'Tp': 999, 'oxides': oxide_list, 'excluded_phases': px_melt_phases},
+                        #solve_interior=False, --> already a parameter
+                        do_system_comp=True,  # uses werami_command_comp after fo2 calc
+                        suppress_output=False, run=True, verbose=True,
+                        output_parent_path=output_parent_path, perplex_path=perplex_path,
+                        mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
+                        names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
+                        # use_local_compositon=False,
+                        use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext_Cr/',  # try local first
+                        existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/',
+                        # existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
+                        # restart='2MASS 19243554+4040098',
+                        run_vertex='auto',  # overwrite existing vertex files if exist
+                        skip_existing=True,  # do not do anything if directory exists with *_results.csv
+                        suffix=str(X_ferric*100).replace('.', ',') + 'fer',
+                        )
 
-    pf.fo2_from_local(#n_sample=2, not implemented
-                      X_ferric=X_ferric, T_iso=T_iso, p_min=p_min, p_max=p_max,
-                      output_parent_path=output_parent_path, perplex_path=perplex_path,
-                      run_werami=True, do_system_comp=True, do_ferric_comp=True,  # do all calculations except vertex
-                      mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
-                      suppress_output=False, verbose=True,
-                      cases=['1M_88Ceff_HIP69888_999K_3,0fer', '1M_88Ceff_HIP69888_999K_3,0fer', '1M_88Ceff_HIP69888_999K_3,0fer',
-                             '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer', '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer',
-                             '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer', '1M_88Ceff_HIP31039_999K_3,0fer',
-                             '1M_88Ceff_HIP31039_999K_3,0fer', '1M_88Ceff_HIP31039_999K_3,0fer', '1M_88Ceff_HIP77838_999K_3,0fer',
-                             '1M_88Ceff_HIP77838_999K_3,0fer', '1M_88Ceff_HIP77838_999K_3,0fer', '1M_88Ceff_2MASS19330772+4817092_999K_3,0fer',
-                             '1M_88Ceff_2MASS19330772+4817092_999K_3,0fer', '1M_88Ceff_2MASS19330772+4817092_999K_3,0fer',
-                             '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer', '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer',
-                             '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer']
-        # start_after='1M_88Ceff_2MASS19190557+4048026_999K_3,0fer'
-    )
+    # pf.fo2_from_local(#n_sample=2, not implemented
+    #                   X_ferric=X_ferric, T_iso=T_iso, p_min=p_min, p_max=p_max,
+    #                   output_parent_path=output_parent_path, perplex_path=perplex_path,
+    #                   run_werami=True, do_system_comp=True, do_ferric_comp=True,  # do all calculations except vertex
+    #                   mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
+    #                   suppress_output=False, verbose=True,
+    #                   # cases=
+    #     # start_after='1M_88Ceff_2MASS19190557+4048026_999K_3,0fer'
+    # )
 
     # pf.fo2_from_hypatia_1D(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
     #                     X_ferric=X_ferric, core_efficiency=ce,

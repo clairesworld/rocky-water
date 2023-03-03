@@ -43,7 +43,6 @@ class MeltsFugacityData:
                        |                  |
                       p[0]     ...       p[n]
         """
-
         if (T_final is None) or (pressures_of_interest is None):
             raise Exception('ERROR: Must assign a T_final and pressures_of_interest list directly.')
 
@@ -70,12 +69,17 @@ class MeltsFugacityData:
         # initialise dataframe for storing important things
         self.data = pd.DataFrame(columns=['P(bar)', 'T(K)', 'logfo2'], index=range(len(pressures_of_interest)))
         self.alphamelts_path = alphamelts_path
+        self.logfo2_1GPa = None
+        self.logfo2_4GPa = None
+        self.delta_qfm_1GPa = None
+        self.delta_qfm_4GPa = None
 
         # set main output path for this composition and subpaths for pressure runs
         self.output_path = output_parent_path + self.name + '/'
         self.output_p_paths = [self.output_path + str(int(pp)) + 'bar/' for pp in pressures_of_interest]
         self.pressures_of_interest = pressures_of_interest
         self.T_final = T_final
+
 
         if verbose:
             print('\ninitialising MeltsFugacityData data', name, 'with:')
@@ -477,14 +481,13 @@ class MeltsFugacityData:
 
     def read_fo2_results(self, T_of_interest=1373.15, verbose=True):
 
-        if np.isnan(self.data['P(bar)'].to_numpy().all()):
-            try:
-                self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
-                if verbose:
-                    print('loaded df\n', self.data.head())
-            except FileNotFoundError:
-                print('...results csv file not found at', int(T_of_interest), 'K! skipping')
-                return None
+        try:
+            self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
+            if verbose:
+                print('loaded df\n', self.data.head())
+        except FileNotFoundError:
+            print('results csv file not found for', int(T_of_interest), 'K, skipping', self.name)
+            return None
 
         self.logfo2 = self.data['logfo2'].to_numpy()
         try:
@@ -508,20 +511,43 @@ class MeltsFugacityData:
             raise Exception('attempting to read in mismatching temperature data!')
 
         # save 1 GPa i.e. spinel stability field
-        idx = find_nearest_idx(pressure, 1)
-        self.logfo2_1GPa = self.logfo2[idx]
         try:
+            idx = find_nearest_idx(pressure, 1, ignorenan=True)
+            self.logfo2_1GPa = self.logfo2[idx]
             self.delta_qfm_1GPa = self.delta_qfm[idx]
+        except ValueError:
+            # all nans
+            self.logfo2_1GPa = np.nan
+            idx = None
+        except (KeyError, AttributeError):
+            pass
+        if np.isnan(self.logfo2_1GPa) and verbose:
+            print('\nwarning:', self.name, 'logfo2_1GPa', self.logfo2_1GPa)
+            print('idx', idx)
+            print('pressure', pressure)
+            print('logfo2', self.logfo2)
+            print('self.data\n', self.data.head(10))
+
+        # save 4 GPa i.e. garnet stability field
+        try:
+            idx = find_nearest_idx(pressure, 4, ignorenan=True)
+            self.logfo2_4GPa = self.logfo2[idx]
+            self.delta_qfm_4GPa = self.delta_qfm[idx]
+            idx = None
+        except ValueError:
+            # all nans
+            self.logfo2_4GPa = np.nan
         except (KeyError, AttributeError):
             pass
 
-        # save 4 GPa i.e. garnet stability field
-        idx = find_nearest_idx(pressure, 4)
-        self.logfo2_4GPa = self.logfo2[idx]
-        try:
-            self.delta_qfm_4GPa = self.delta_qfm[idx]
-        except (KeyError, AttributeError):
-            pass
+        if np.isnan(self.logfo2_4GPa) and verbose:
+            print('\nwarning:', self.name, 'logfo2_4GPa', self.logfo2_4GPa)
+            print('idx', idx)
+            print('pressure', pressure)
+            print('logfo2', self.logfo2)
+            print('self.data\n', self.data.tail(10))
+
+
 
     def read_phase_main(self, phase, p_of_interest, T_of_interest, verbose=False):
         filename = self.output_path + str(int(p_of_interest)) + 'bar/Phase_main_tbl.txt'
@@ -726,7 +752,7 @@ class MeltsFugacityData:
 
 
 def init_from_results(name, output_parent_path=output_parent_default, alphamelts_path=alphamelts_path_default,
-                      T_final=1373, load_results_csv=False, verbose=False, X_ferric=None, core_eff=None, **kwargs):
+                      T_final=1373, load_results_csv=True, verbose=False, X_ferric=None, core_eff=None, **kwargs):
     import re
     parts = name.split('_')
     try:
@@ -782,7 +808,9 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 if verbose:
                     print('loaded df\n', dat.data.head())
             except FileNotFoundError:
-                print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped loading data...')
+                if verbose:
+                    print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped...')
+                return None
 
         return dat
     else:

@@ -50,6 +50,15 @@ Cr
 2MASS19190557+4048026 crashed unknown reason
 
 
+88/3% Fe3+ compositon did not complete to 4 GPa for some reason, maybe badly formatted werami input file
+cases_missingfe2o3 = ['1M_88Ceff_HIP69888_999K_3,0fer', '1M_88Ceff_HIP69888_999K_3,0fer', '1M_88Ceff_HIP69888_999K_3,0fer',
+                             '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer', '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer',
+                             '1M_88Ceff_2MASS19492623+4947511_999K_3,0fer', '1M_88Ceff_HIP31039_999K_3,0fer',
+                             '1M_88Ceff_HIP31039_999K_3,0fer', '1M_88Ceff_HIP31039_999K_3,0fer', '1M_88Ceff_HIP77838_999K_3,0fer',
+                             '1M_88Ceff_HIP77838_999K_3,0fer', '1M_88Ceff_HIP77838_999K_3,0fer', '1M_88Ceff_2MASS19330772+4817092_999K_3,0fer',
+                             '1M_88Ceff_2MASS19330772+4817092_999K_3,0fer', '1M_88Ceff_2MASS19330772+4817092_999K_3,0fer',
+                             '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer', '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer',
+                             '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer']
 
 
 

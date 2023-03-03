@@ -234,9 +234,12 @@ def age_index(times, age, age_scale=1):
     return min(enumerate(times), key=lambda x: abs(age - x[1] * age_scale))[0]
 
 
-def find_nearest_idx(array, value):
+def find_nearest_idx(array, value, ignorenan=False):
     array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
+    if ignorenan:
+        idx = np.nanargmin(np.abs(array - value))
+    else:
+        idx = (np.abs(array - value)).argmin()
     return int(idx)
 
 
