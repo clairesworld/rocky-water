@@ -22,7 +22,7 @@ others:
 70Ceff 3fer
 alphamelts infinite loop: HIP 15578, HIP 17054, HIP 69888
 
-HIP 13291 no Ti
+HIP 13291 star no Ti
 
 2MASS19064452+4705535_999K_3,0fer/14285bar/ has rhm-oxide but not 10 kbar, 40 kbar
 
@@ -30,6 +30,10 @@ Spinel missing (Al is in cpx) - 480 cases 88/3 ?!?!?
 
 Cr
 1M_88Ceff_2MASS19141179+3833548_999K_3,0fer kyanite after 10 kbar <- removed
+everything in reprocess list - didn't seem to run except 1M_88Ceff_B-0103943_999K_3,0fer which hasn't loaded weirdly - look into this
+--> might be that:
+ Your choice: Superliquidus (1) or subsolidus (0) initial guess ? Initial calculation failed (40000.000000 bars, 2273.150000 K)!
+
 
 -----------------------------------------------------------------------------------------------
 PERPLE_X
