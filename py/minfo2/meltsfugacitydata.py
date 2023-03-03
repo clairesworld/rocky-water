@@ -479,7 +479,7 @@ class MeltsFugacityData:
         self.mass_melt_min = mass_melt_min
         self.n_pressures = p_count
 
-    def read_fo2_results(self, T_of_interest=1373.15, verbose=True):
+    def read_fo2_results(self, T_of_interest=1373.15, verbose=True, **kwargs):
 
         try:
             self.data = pd.read_csv(self.output_path + self.name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t')
