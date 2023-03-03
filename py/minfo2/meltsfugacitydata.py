@@ -901,11 +901,13 @@ def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, **kwarg
         idx0 = 0
     for name in subfolders[idx0:num]:
         if ((names is not None) and (name in names)) or (names is None):
+            print('-------------------------------\nStarting fo2 processing:', name)
             dat = init_from_results(name, output_parent_path=output_parent_path, load_results_csv=True, **kwargs)
             if dat is not None:
                 okay = dat.fo2_calc(run_alphamelts=False, **kwargs)
             if (dat is None) or (not okay):
                 bad.append(name)
+            print('\n\n\n\n\n\n')
     return bad
 
 

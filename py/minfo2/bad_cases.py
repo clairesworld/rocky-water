@@ -28,6 +28,9 @@ HIP 13291 no Ti
 
 Spinel missing (Al is in cpx) - 480 cases 88/3 ?!?!?
 
+Cr
+1M_88Ceff_2MASS19141179+3833548_999K_3,0fer kyanite after 10 kbar <- removed
+
 -----------------------------------------------------------------------------------------------
 PERPLE_X
 

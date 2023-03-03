@@ -879,8 +879,8 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
     if T_is_mult:  # for input multiple values
         if P_is_mult:
-            print('P', P)
-            print('T', T)
+            print('l. 882 P', P)
+            print('l. 883 T', T)
             raise NotImplementedError('ERROR: cannot interpolate buffer fo2 for gridded P, T of interest')
         else:
             logfo2 = []
