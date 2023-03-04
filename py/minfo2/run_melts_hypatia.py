@@ -11,6 +11,7 @@ import py.minfo2.meltsfugacitydata as mf
 """
 source /raid1/cmg76/venv/bin/activate
 cd ~/Works/rocky-water/
+python3 py/minfo2/run_melts_hypatia.py
 """
 
 # set paths
@@ -26,7 +27,7 @@ p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']  #, 'Cr2O3']
-skip_stars = []  #['HIP 522', 'HIP 801', 'HIP 102409']
+skip_stars = ['2MASS 19141179+3833548']  #['HIP 522', 'HIP 801', 'HIP 102409']
 location = 'apollo'
 
 # user input
@@ -69,9 +70,10 @@ for ce in core_eff:
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
                             skip_names=skip_stars,  # []
-                            # restart='NAME tres-2b',
+                            restart='2MASS 19155319+4437283',
                             dry_setup=True,  # dry_setup always True for batch melts calculations
                             )
+        restart = None  # reset
 
 
 
