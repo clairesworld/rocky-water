@@ -25,13 +25,18 @@ opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 """ vvv UNCOMMENT TO RUN vvv """
 
 # set these
-# T_of_interest = 1573.15  # 1673.15
-T_of_interests = [float(x) for x in input('Enter T_of_interest, separated by spaces (e.g. 1373.15): ').split()]
-X_ferric = [float(x) for x in input('Enter X_ferric, separated by spaces (e.g. 0.03): ').split()] #[0.07]  #, 0.03, 0.05, 0.07, 0.09]  # , 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
-core_eff = [float(x) for x in input('Enter core_eff, separated by spaces (e.g. 0.88): ').split()] #[0.88]
-# core_eff = [0.88]
-# X_ferric = [0.03]
 location = 'apollo'  # 'starlite'
+
+# user input
+T_of_interests = [float(x) for x in input('Enter T_of_interest, separated by spaces (default 1373.15): ').split()]
+X_ferric = [float(x) for x in input('Enter X_ferric, separated by spaces (default 0.03): ').split()] #[0.07]  #, 0.03, 0.05, 0.07, 0.09]  # , 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
+core_eff = [float(x) for x in input('Enter core_eff, separated by spaces (default 0.88): ').split()] #[0.88]
+if not T_of_interests:
+    T_of_interests = [1373.15]
+if not X_ferric:
+    X_ferric = [0.03]
+if not core_eff:
+    core_eff = [0.88]
 
 # run
 if location == 'apollo':

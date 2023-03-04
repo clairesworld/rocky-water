@@ -963,13 +963,13 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=No
 def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_werami=True,
                    do_ferric_comp=True, do_mu_comp=False, do_system_comp=False,
                    p_min=10000, p_max=40000, skip_names=[], start_after=None,
-                   rewrite_options=True, cases=None, **kwargs):
+                   rewrite_options=True, names=None, verbose=False, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
     if run_werami:
         run = True  # note this also re-writes build file (e.g. if options updated)
     else:
         run = False  # don't need to rerun any perplex stuff, just re-calc fo2.
-    points_file = 'points_files/' + str(int(T_iso)) + 'K_isotherm.xy'
+    # points_file = 'points_files/' + str(int(T_iso)) + 'K_isotherm.xy'
 
     subfolders = rw.get_run_dirs(output_path=output_parent_path)
     if not subfolders:
@@ -987,7 +987,7 @@ def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_wer
 
         if name in skip_names:
             continue
-        elif (cases is not None) and name not in cases:
+        elif (names is not None) and name not in names:
             continue
 
         try:
@@ -996,16 +996,18 @@ def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_wer
             print('FileNotFound:', e)
             continue
 
-        dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, **d, **kwargs)
+        dat = PerplexFugacityData(name=name, output_parent_path=output_parent_path, verbose=verbose, **d, **kwargs)
         # print('pressures', dat.pressure)
         # print('d', d)
-        # logfo2 = dat.fo2_calc(T_iso=None, run=run, points_file=points_file, run_vertex=False, **d, **kwargs)
-        # print(dat.name, ': log fo2 of system:', logfo2)
+        logfo2 = dat.fo2_calc(T_iso=T_iso, run=run, run_vertex=False, verbose=verbose, **d, **kwargs)
+
+        if verbose:
+            print(dat.name, ': log fo2 of system:', logfo2)
 
         if do_ferric_comp:
-            dat.ferric_composition_calc(points_file=points_file, T_iso=None, p_min=p_min, p_max=p_max,
-                                        **kwargs)
-            print('done Fe3+ composition for', dat.name)
+            dat.ferric_composition_calc(T_iso=T_iso, p_min=p_min, p_max=p_max, verbose=verbose, **kwargs)
+            if verbose:
+                print('done Fe3+ composition for', dat.name)
 
 
 def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
