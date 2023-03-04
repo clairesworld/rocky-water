@@ -55,7 +55,7 @@ for T_of_interest in T_of_interests:
                                 # restart='2MASS 19243554+4040098',
                                 run_vertex='auto',  # overwrite existing vertex files if exist
                                 skip_existing=True,  # do not do anything if directory exists with *_results.csv
-                                suffix=str(X_ferric*100).replace('.', ',') + 'fer',
+                                suffix=str(Xf*100).replace('.', ',') + 'fer',
                                 names=['1M_95Ceff_2MASS19421779+4248231_999K_3,0fer']
                                 )
 
