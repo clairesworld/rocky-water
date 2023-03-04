@@ -21,15 +21,21 @@ opp_starlite = '/home/claire/Works/min-fo2/alphamelts_output/hypatia_local2/'
 opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 
 # set these
-T_iso = 1373
+T_final = 1373.15
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']  #, 'Cr2O3']
-X_ferric = [0.03]
-core_eff = [0.99, 0.85, 0.80, 0.70]
 skip_stars = []  #['HIP 522', 'HIP 801', 'HIP 102409']
 location = 'apollo'
+
+# user input
+X_ferric = [float(x) for x in input('Enter X_ferric, separated by spaces (default 0.03): ').split()] #[0.07]  #, 0.03, 0.05, 0.07, 0.09]  # , 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
+core_eff = [float(x) for x in input('Enter core_eff, separated by spaces (default 0.88): ').split()] #[0.88]
+if not X_ferric:
+    X_ferric = [0.03]
+if not core_eff:
+    core_eff = [0.88]
 
 # run
 if location == 'apollo':
@@ -49,7 +55,7 @@ for ce in core_eff:
 
         # generate planet compositions from hypatia and calcualte mantle fo2
         mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=ce, X_ferric=Xf,
-                            T_final=T_iso, verbose=True,
+                            T_final=T_final, verbose=True,
                             oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
                             planet_kwargs={},
                             compare_buffer='qfm',
@@ -66,7 +72,6 @@ for ce in core_eff:
                             # restart='NAME tres-2b',
                             dry_setup=True,  # dry_setup always True for batch melts calculations
                             )
-        # mf.common_Tmin(output_parent_path)
 
 
 
