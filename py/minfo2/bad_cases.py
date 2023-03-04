@@ -25,6 +25,7 @@ alphamelts infinite loop: HIP 15578, HIP 17054, HIP 69888
 HIP 13291 star no Ti
 
 2MASS19064452+4705535_999K_3,0fer/14285bar/ has rhm-oxide but not 10 kbar, 40 kbar
+1M_80Ceff_2MASS04215269+5749018_999K_3,0fer/10000 bar has rhm-oxide, removing
 
 Spinel missing (Al is in cpx) - 480 cases 88/3 ?!?!?
 
