@@ -814,14 +814,12 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 #     print('loaded df\n', dat.data.head())
 
             except FileNotFoundError:
-                if verbose:
-                    print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped...')
+                print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped...')
                 return None
 
         return dat
     else:
-        if verbose:
-            print('no melts files at', output_parent_path + name)
+        print('no melts files at', output_parent_path + name)
         return None
 
 
