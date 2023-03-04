@@ -208,7 +208,7 @@ fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap,
                    xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,  x_scale=1, alpha=alpha,
                    title='1 GPa', s=markersize, marker='o', model1='melts', model2='perplex', vmin=vmin, vmax=vmax,
                    labelsize=labelsize, legsize=legsize, save=True, fname='logfo2_1GPa_mdls' + today, ffmt=ffmt,
-                   exclude_names=[], exclude_silica=True, xlims=(-13.5, -9), verbose=True
+                   exclude_names=[], exclude_silica=True, xlims=(-13.2, -9), verbose=True
                    )
 
 # 4 GPa
@@ -216,6 +216,10 @@ fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_4GPa', z_var='mgsi', cmap=cmap,
                    xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, x_scale=1, alpha=alpha,
                    title='4 GPa', s=markersize, marker='o', model1='melts', model2='perplex', vmin=vmin, vmax=vmax,
                    labelsize=labelsize, legsize=legsize, save=True, fname='logfo2_4GPa_mdls' + today, ffmt=ffmt,
-                   exclude_names=[], exclude_silica=True, xlims=(-11, -5))
+                   exclude_names=[], exclude_silica=True, xlims=(-11, -6))
 
 # plt.show()
+
+
+def fo2_1o1_subplot(**kwargs):
+    """ vertically stacked pressures, 1 cbar """

@@ -30,7 +30,7 @@ Spinel missing (Al is in cpx) - 480 cases 88/3 ?!?!?
 
 Cr
 1M_88Ceff_2MASS19141179+3833548_999K_3,0fer kyanite after 10 kbar <- removed
-everything in reprocess list - didn't seem to run except 1M_88Ceff_B-0103943_999K_3,0fer which hasn't loaded weirdly - look into this
+a bunch of these (dozens) had alphamelts not complete
 --> might be that:
  Your choice: Superliquidus (1) or subsolidus (0) initial guess ? Initial calculation failed (40000.000000 bars, 2273.150000 K)!
 

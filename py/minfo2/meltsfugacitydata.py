@@ -803,15 +803,16 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 dat.read_fo2_results(verbose=verbose, **kwargs)
 
                 # make sure results actually contains data (file may have been created with nans)
-                if dat.data['P(bar)', 'T(K)'].isnull().all():
+                if dat.data['P(bar)'].isnull().all() or dat.data['T(K)'].isnull().all():
                     print(name + '_results' + str(int(T_final)) + '.csv file is empty/nan (calculation failed?), skipped...')
                     return None
 
                 # update (e.g. if local folders with only 10000 bar copied)
                 dat.pressures_of_interest = list(dat.data['P(bar)'].to_numpy())
 
-                if verbose:
-                    print('loaded df\n', dat.data.head())
+                # if verbose:
+                #     print('loaded df\n', dat.data.head())
+
             except FileNotFoundError:
                 if verbose:
                     print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped...')
@@ -888,7 +889,7 @@ def common_Tmin(output_parent_path, store=True, **kwargs):
         df.to_csv(output_parent_path + 'completion_analysis.csv', sep="\t")
 
 
-def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, **kwargs):
+def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, T_of_interest=None, **kwargs):
     """for existing melts runs (e.g. done remotely), do the same fo2 analysis"""
 
     # get all runs in directory
@@ -907,9 +908,10 @@ def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, **kwarg
     for name in subfolders[idx0:num]:
         if ((names is not None) and (name in names)) or (names is None):
             print('-------------------------------\nStarting fo2 processing:', name)
-            dat = init_from_results(name, output_parent_path=output_parent_path, load_results_csv=False, **kwargs)
+            dat = init_from_results(name, output_parent_path=output_parent_path, load_results_csv=False,
+                                    T_final=T_of_interest, **kwargs)
             if dat is not None:
-                okay = dat.fo2_calc(run_alphamelts=False, **kwargs)
+                okay = dat.fo2_calc(run_alphamelts=False, T_of_interest=T_of_interest, **kwargs)
             if (dat is None) or (not okay):
                 bad.append(name)
             print('\n\n\n\n\n\n')
