@@ -12,6 +12,10 @@ import py.minfo2.meltsfugacitydata as mf
 source /raid1/cmg76/venv/bin/activate
 cd ~/Works/rocky-water/
 python3 py/minfo2/run_melts_hypatia.py
+
+cd /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_95coreeff_3ferric_ext/
+sh runstars.sh
+
 """
 
 # set paths
@@ -21,7 +25,7 @@ alphamelts_path_starlite = '/home/claire/Works/alphamelts/'
 opp_starlite = '/home/claire/Works/min-fo2/alphamelts_output/hypatia_local2/'
 opp_galson = '/home/claire/Works/min-fo2/alphamelts_output/earth-tea23/'
 
-# set these
+# set these - unlikely to change
 T_final = 1373.15
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
