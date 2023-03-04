@@ -56,6 +56,7 @@ for T_of_interest in T_of_interests:
                                 run_vertex='auto',  # overwrite existing vertex files if exist
                                 skip_existing=True,  # do not do anything if directory exists with *_results.csv
                                 suffix=str(X_ferric*100).replace('.', ',') + 'fer',
+                                names=['1M_95Ceff_2MASS19421779+4248231_999K_3,0fer']
                                 )
 
             # pf.fo2_from_hypatia_1D(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,

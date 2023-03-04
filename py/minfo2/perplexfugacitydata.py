@@ -897,7 +897,7 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 
 
 def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None, planet_kwargs={},
-                     output_parent_path=output_parent_default, skip_existing=True, **kwargs):
+                     output_parent_path=output_parent_default, skip_existing=True, names=None, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
     pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
                                       get_saturation=False,
@@ -908,7 +908,7 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None,
     for pl in pl_list:
         if skip_existing and os.path.exists(pl.output_path + pl.name + '_results' + str(int(T_iso)) + '.csv'):
             print('skipping', pl.name, ': results.csv file exists')
-        else:
+        elif (names is None) or (names and pl.name in names):
             # print('not found', pl.output_path + pl.name + '_results.csv')
             # print('running\n', pl.wt_oxides)
             okay = fo2_from_oxides(pl.name, p_min, p_max, pl=pl, output_parent_path=output_parent_path, T_iso=T_iso,
