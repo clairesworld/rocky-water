@@ -50,8 +50,7 @@ for T_of_interest in T_of_interests:
                                 names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                                 # use_local_compositon=False,
                                 use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
-                                existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/',
-                                # existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
+                                existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
                                 # restart='2MASS 19243554+4040098',
                                 run_vertex='auto',  # overwrite existing vertex files if exist
                                 skip_existing=True,  # do not do anything if directory exists with *_results.csv

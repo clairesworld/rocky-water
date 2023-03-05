@@ -62,7 +62,7 @@ for ce in core_eff:
         # generate planet compositions from hypatia and calcualte mantle fo2
         mf.fo2_from_hypatia(pressures_of_interest, n_sample=-1, core_efficiency=ce, X_ferric=Xf,
                             T_final=T_final, verbose=True,
-                            oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere just give both names lol
+                            oxide_list=oxide_list, oxides=oxide_list,  # fucked this up somewhere, give both parameters
                             planet_kwargs={},
                             compare_buffer='qfm',
                             output_parent_path=output_parent_path,
@@ -71,10 +71,9 @@ for ce in core_eff:
                             names_file=names_file,
                             # use_local_composition=False,
                             use_local_composition=True, existing_dir='hypatia_88coreeff_1ferric_ext/',  # try local first
-                            # use_local_composition=True, existing_dir=output_sub,
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
-                            skip_stars=skip_stars,  # []
+                            skip_stars=skip_stars,
                             # restart='2MASS 19155319+4437283',
                             dry_setup=True,  # dry_setup always True for batch melts calculations
                             )
