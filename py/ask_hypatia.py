@@ -154,32 +154,39 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
 
     def do_local(tried_once=False):
         try:
-            path = find_existing_directory(star, existing_output_parent=existing_output_parent, **kwargs)
-            print('found existing star at', path)
             try:
-                nH_star = np.loadtxt(path + '/nH_star.txt')
-                print('loaded nH_star', nH_star)
-                try:  # check for empty
-                    tmp = nH_star[1]
-                    print('tmp')
-                except IndexError:
-                    print('caught indexerror')
+                path = find_existing_directory(star, existing_output_parent=existing_output_parent, **kwargs)
+                print('found existing star at', path)
+                try:
+                    nH_star = np.loadtxt(path + '/nH_star.txt')
+                    print('loaded nH_star', nH_star)
+                    try:  # check for empty
+                        tmp = nH_star[1]
+                        print('tmp')
+                    except IndexError:
+                        print('caught indexerror')
+                        if tried_once:
+                            return None
+                        print('trying remote...')
+                        nH_star = do_remote(tried_once=True)
+                except OSError as e:
+                    # no data?
+                    print('os error', e)
                     if tried_once:
                         return None
                     print('trying remote...')
                     nH_star = do_remote(tried_once=True)
-            except OSError as e:
-                # no data?
-                print('os error', e)
+                    return nH_star
+                except FileNotFoundError:  # try pickled file
+                    with open(path + '/dat.pkl', "rb") as pfile:
+                        dat = pkl.load(pfile)
+                    nH_star = dat.nH_star
+            except IndexError:
+                # path to local star not found
                 if tried_once:
                     return None
                 print('trying remote...')
                 nH_star = do_remote(tried_once=True)
-                return nH_star
-            except FileNotFoundError:  # try pickled file
-                with open(path + '/dat.pkl', "rb") as pfile:
-                    dat = pkl.load(pfile)
-                nH_star = dat.nH_star
         except FileNotFoundError as e:
             print(e)
             if tried_once:
