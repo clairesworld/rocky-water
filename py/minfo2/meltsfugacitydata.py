@@ -419,7 +419,17 @@ class MeltsFugacityData:
                 if compare_buffer == 'qfm':
                     try:
                         print('getting QFM')
-                        logfo2_buffer = pf.read_qfm_os(self.data['T(K)'].to_numpy(), self.data['P(bar)'].to_numpy(),
+                        # use isothermal T but make sure this is ok
+                        tmp = self.data.copy(deep=True)['T(K)']
+                        tmp.dropna(subset=['T(K)'], inplace=True)
+                        tmpa = tmp.to_numpy()
+                        if (tmpa[0] == tmpa).all():
+                            T0 = tmpa[0]
+                        else:
+                            print(self.name, '\n', tmp)
+                            raise NotImplementedError('ERROR: multiple values of T in melts results?')
+
+                        logfo2_buffer = pf.read_qfm_os(T0, self.data['P(bar)'].to_numpy(),
                                                        verbose=False, perplex_path=perplex_path)
                         # print('logfo2_qfm', logfo2_buffer)
                         # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
@@ -427,7 +437,7 @@ class MeltsFugacityData:
                         self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
                         print('added qfm\n', self.data['delta_qfm'])
                     except NotImplementedError as e:
-                        # probably didn't get to 1100 C
+                        # probably didn't get to 1100 C <-- idk about this anymore 5/03
                         print(self.name, e)
                         print('T', self.data['T(K)'].to_numpy(), '\nP', self.data['P(bar)'].to_numpy())
                         raise e
