@@ -533,7 +533,7 @@ class PerplexData:
                     #           self.perplex_path + self.name + build_file_end + fend)
                     os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
                                                self.perplex_path + self.name + build_file_end + fend))
-            print('vertex output files already exist for', self.name, ', skipping to werami for:', werami_command_end)
+                print('vertex output files already exist for', self.name, ', skipping to werami for:', werami_command_end)
 
         # print('run_vertex', run_vertex)
         if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again

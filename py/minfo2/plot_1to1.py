@@ -24,7 +24,7 @@ dir2 = fo2plt.output_parent_px + 'hypatia_' + str(core_eff) + 'coreeff_' + str(X
 
 
 def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None, c='k', vmin=None, vmax=None,
-             xlabel=None, ylabel=None, alpha=0.5,
+             xlabel=None, ylabel=None, alpha=0.5, mec=None,
              title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10, dmm=True,
              c_dmm='r', xlims=None,
              labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True,
@@ -154,10 +154,12 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None,
         c = c
         cmap = None
 
-    sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, vmin=vmin, vmax=vmax, s=s, marker=marker, alpha=alpha)
+    sc = ax.scatter(df.x1, df.x2, c=c, edgecolors=mec, cmap=cmap, vmin=vmin, vmax=vmax, s=s, marker=marker, alpha=alpha)
 
     # make cbar
     if z_var is not None:
+        # make dummy scatter with no alpha
+        sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, vmin=vmin, vmax=vmax, s=0, alpha=1)
         cbar = colourbar(sc, ax=ax, ticksize=ticksize, format="%.1f")
         cbar.ax.set_ylabel('Mg/Si', rotation=270, fontsize=labelsize, labelpad=20)
 
@@ -197,14 +199,16 @@ labelsize = 16
 legsize = 12
 alpha = 0.3
 vmin, vmax = 0.69, 1.6
+mec = 'xkcd:midnight blue'
 cmap = 'viridis'
+c_dmm = 'xkcd:blood orange'
 xlabel = 'log(fO$_2$), pMELTS'
 ylabel = 'log(fO$_2$), Perple_x'
 zlabel = 'Mg/Si'
 ffmt = '.pdf'
 
 # 1 GPa
-fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap,
+fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap, mec=mec, c_dmm=c_dmm,
                    xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,  x_scale=1, alpha=alpha,
                    title='1 GPa', s=markersize, marker='o', model1='melts', model2='perplex', vmin=vmin, vmax=vmax,
                    labelsize=labelsize, legsize=legsize, save=True, fname='logfo2_1GPa_mdls' + today, ffmt=ffmt,
@@ -212,7 +216,7 @@ fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap,
                    )
 
 # 4 GPa
-fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_4GPa', z_var='mgsi', cmap=cmap,
+fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_4GPa', z_var='mgsi', cmap=cmap, mec=mec, c_dmm=c_dmm,
                    xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, x_scale=1, alpha=alpha,
                    title='4 GPa', s=markersize, marker='o', model1='melts', model2='perplex', vmin=vmin, vmax=vmax,
                    labelsize=labelsize, legsize=legsize, save=True, fname='logfo2_4GPa_mdls' + today, ffmt=ffmt,

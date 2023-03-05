@@ -424,9 +424,12 @@ class MeltsFugacityData:
                         # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
                         self.data['logfo2_qfm'] = logfo2_buffer
                         self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
-                    except NotImplementedError:
+                    except NotImplementedError as e:
                         # probably didn't get to 1100 C
-                        pass
+                        print(self.name, e)
+                        print('T', self.data['T(K)'].to_numpy(), '\nP', self.data['P(bar)'].to_numpy())
+                        raise e
+                        # pass
             else:
                 save = False  # don't save empty results csv for dry run with no calculations
             okay = True
