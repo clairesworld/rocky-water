@@ -428,7 +428,7 @@ class MeltsFugacityData:
                         # probably didn't get to 1100 C
                         pass
             else:
-                save = False
+                save = False  # don't save empty results csv for dry run with no calculations
             okay = True
         except FileNotFoundError as e:
             if ('dry_setup' not in kwargs) or not (kwargs['dry_setup']):

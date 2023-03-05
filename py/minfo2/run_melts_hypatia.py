@@ -74,7 +74,7 @@ for ce in core_eff:
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
                             skip_names=skip_stars,  # []
-                            restart='2MASS 19155319+4437283',
+                            # restart='2MASS 19155319+4437283',
                             dry_setup=True,  # dry_setup always True for batch melts calculations
                             )
         restart = None  # reset
