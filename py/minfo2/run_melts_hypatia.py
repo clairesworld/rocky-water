@@ -11,6 +11,7 @@ import py.minfo2.meltsfugacitydata as mf
 """
 source /raid1/cmg76/venv/bin/activate
 cd ~/Works/rocky-water/
+git pull
 python3 py/minfo2/run_melts_hypatia.py
 
 cd /raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/hypatia_95coreeff_3ferric_ext/
@@ -73,7 +74,7 @@ for ce in core_eff:
                             # use_local_composition=True, existing_dir=output_sub,
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
-                            skip_names=skip_stars,  # []
+                            skip_stars=skip_stars,  # []
                             # restart='2MASS 19155319+4437283',
                             dry_setup=True,  # dry_setup always True for batch melts calculations
                             )

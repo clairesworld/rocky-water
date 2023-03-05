@@ -340,6 +340,7 @@ def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
 
     sample_names = hyp.random_star(n_sample, **kwargs)  # returns list of strings being star ids
     for st in skip_stars:
+        print('removing', st, 'from sample')
         sample_names.remove(st)
     planets = []
 
