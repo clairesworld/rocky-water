@@ -32,6 +32,9 @@ T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']  #, 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
+# star compositions which had weird phases in melts, going to ignore here too
+skip_stars = ['2MASS 19141179+3833548']
+
 for T_of_interest in T_of_interests:
     for ce in core_eff:
         for Xf in X_ferric:
@@ -50,14 +53,15 @@ for T_of_interest in T_of_interests:
                                 mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                                 names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                                 # use_local_compositon=False,
-                                use_local_composition=True, existing_dir='earth-tea23/hypatia_88coreeff_1ferric_ext/',
+                                use_local_composition=True, existing_dir='earth-tea23/hypatia_95coreeff_3ferric_ext/',
                                 # try local first, 1 ferric
                                 existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
                                 # restart='2MASS 19243554+4040098',
                                 run_vertex='auto',  # overwrite existing vertex files if exist
                                 skip_existing=True,  # do not do anything if directory exists with *_results.csv
                                 suffix=str(Xf*100).replace('.', ',') + 'fer',
-                                names=['1M_95Ceff_2MASS19421779+4248231_999K_3,0fer']
+                                skip_stars=skip_stars,
+                                # names=['1M_95Ceff_2MASS19421779+4248231_999K_3,0fer']
                                 )
 
             # pf.fo2_from_hypatia_1D(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
