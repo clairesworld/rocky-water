@@ -50,7 +50,8 @@ for T_of_interest in T_of_interests:
                                 mu0_file='data_tables/mu_o2_standard.tab', compare_buffer='qfm',
                                 names_file='/home/cmg76/Works/rocky-water/py/host_names.txt',
                                 # use_local_compositon=False,
-                                use_local_composition=True, existing_dir='earth-tea23/hypatia_88coreeff_3ferric_ext/',  # try local first
+                                use_local_composition=True, existing_dir='earth-tea23/hypatia_88coreeff_1ferric_ext/',
+                                # try local first, 1 ferric
                                 existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
                                 # restart='2MASS 19243554+4040098',
                                 run_vertex='auto',  # overwrite existing vertex files if exist
