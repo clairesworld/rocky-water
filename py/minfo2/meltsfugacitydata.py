@@ -433,9 +433,9 @@ class MeltsFugacityData:
                                                        verbose=False, perplex_path=perplex_path)
                         # print('logfo2_qfm', logfo2_buffer)
                         # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-                        self.data['logfo2_qfm'] = logfo2_buffer
-                        self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
-                        print('added qfm\n', self.data['delta_qfm'])
+                        # self.data['logfo2_qfm'] = logfo2_buffer
+                        # self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
+                        # print('added qfm\n', self.data['delta_qfm'])
                     except NotImplementedError as e:
                         # probably didn't get to 1100 C <-- idk about this anymore 5/03
                         print(self.name, e)
