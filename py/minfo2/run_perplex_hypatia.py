@@ -28,7 +28,8 @@ if not core_eff:
 perplex_path = '/raid1/cmg76/perple_x/'
 p_min, p_max = 1e4, 4e4
 T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
-oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'Na2O']#, 'Cr2O3']
+# TiO2 needs to be in oxides to find Na, it won't get inxluded in final px calculation
+oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']  #, 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
 for T_of_interest in T_of_interests:
