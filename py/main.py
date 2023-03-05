@@ -339,9 +339,9 @@ def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
     """ restart is string name of last star that worked"""
 
     sample_names = hyp.random_star(n_sample, **kwargs)  # returns list of strings being star ids
-    print('skip stars')
+    # print('skip stars')
     for st in skip_stars:
-        print('removing', st, 'from sample')
+        print(st, 'in skip_stars, removing from sample')
         sample_names.remove(st)
     planets = []
 
@@ -357,8 +357,8 @@ def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
         subsample_names = sample_names[ii_start:]
     for ii, star in enumerate(subsample_names):
         print(ii + 1, '/', len(subsample_names))
-        print('skip_stars', skip_stars)
-        print(star, 'in skiip_stars?', star in skip_stars)
+        # print('skip_stars', skip_stars)
+        # print(star, 'in skiip_stars?', star in skip_stars)
         # print('kwargs planets_From_hypatia', kwargs)
         pl = build_planet(star=star, M_p=M_p * M_E, plot_all=plot_all, **kwargs)
         pl.write_star_composition(fname='nH_star.txt',

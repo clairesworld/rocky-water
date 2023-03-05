@@ -585,7 +585,7 @@ class PerplexData:
             os.rename(self.perplex_path + self.name + build_file_end + '_1.tab',
                       self.output_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
-            print('-------\nERROR: werami did not complete, try running again with suppress_output=False ?\n-------')
+            print('\n-------\n', e, '\nERROR: werami did not complete, try running again with suppress_output=False ?\n-------')
             print('Deleting matching run files in perplex_path:')
             for f in pathlib.Path(self.perplex_path).glob(self.name + "*"):
                 print('        ', f)
