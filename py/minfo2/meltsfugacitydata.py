@@ -421,7 +421,7 @@ class MeltsFugacityData:
                         print('getting QFM')
                         # use isothermal T but make sure this is ok
                         tmp = self.data.copy(deep=True)['T(K)']
-                        tmp.dropna(subset=['T(K)'], inplace=True)
+                        tmp.dropna(inplace=True)
                         tmpa = tmp.to_numpy()
                         if (tmpa[0] == tmpa).all():
                             T0 = tmpa[0]
