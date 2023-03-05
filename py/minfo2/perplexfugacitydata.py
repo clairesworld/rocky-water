@@ -889,7 +889,12 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
     elif P_is_mult:  # copy above
         logfo2 = []
         for pp in P:  # loop over each p for single T
-            logfo2.append(do(df, T, pp))
+            try:
+                logfo2.append(do(df, T, pp))
+            except ValueError:
+                print('T', T)
+                print('pp', pp)
+                print('df\n', df.head())
     else:
         logfo2 = do(df, T, P)
 
