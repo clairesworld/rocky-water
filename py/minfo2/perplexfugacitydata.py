@@ -892,9 +892,9 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
             try:
                 logfo2.append(do(df, T, pp))
             except ValueError:
-                print('T', T)
-                print('pp', pp)
-                print('df\n', df.head())
+                print('T', T, 'pp', pp, 'nan?')
+                logfo2.append(np.nan)
+
     else:
         logfo2 = do(df, T, P)
 
