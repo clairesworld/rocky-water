@@ -18,12 +18,15 @@ python3 py/minfo2/process_perplex_local.py
 T_of_interests = [float(x) for x in input('Enter T_of_interest, separated by spaces (default 1373): ').split()]
 X_ferric = [float(x) for x in input('Enter X_ferric, separated by spaces (default 0.03): ').split()]
 core_eff = [float(x) for x in input('Enter core_eff, separated by spaces (default 0.88): ').split()]
+restart = input('Restart first loop from star (no spaces)?:')
 if not T_of_interests:
     T_of_interests = [1373]
 if not X_ferric:
     X_ferric = [0.03]
 if not core_eff:
     core_eff = [0.88]
+if not restart:
+    restart = None
 
 perplex_path = '/raid1/cmg76/perple_x/'
 p_min, p_max = 1e4, 4e4
@@ -39,6 +42,9 @@ for T_of_interest in T_of_interests:
 
             # recalculate fo2 or at a different temperature
             pf.fo2_from_local(output_parent_path=output_parent_path, T_iso=T_of_interest, run_werami=True,
-                              do_ferric_comp=True, do_system_comp=True, p_min=p_min, p_max=p_max, X_ferric=Xf,
+                              do_ferric_comp=False, do_system_comp=False,   # don't need these for most cases
+                              p_min=p_min, p_max=p_max, X_ferric=Xf,
                               perplex_path=perplex_path, mu0_file='data_tables/mu_o2_standard.tab',
-                              compare_buffer='qfm', suppress_output=True, verbose=True)
+                              compare_buffer='qfm', suppress_output=True, verbose=True,
+                              restart=restart)
+            restart = None
