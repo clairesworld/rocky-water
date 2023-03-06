@@ -423,18 +423,25 @@ class MeltsFugacityData:
                         tmp = self.data.copy(deep=True)['T(K)']
                         tmp.dropna(inplace=True)
                         tmpa = tmp.to_numpy()
-                        if (tmpa[0] == tmpa).all():
-                            T0 = tmpa[0]
-                        else:
-                            print(self.name, '\n', tmp)
-                            raise NotImplementedError('ERROR: multiple values of T in melts results?')
+                        try:
+                            if (tmpa[0] == tmpa).all():
+                                T0 = tmpa[0]
+                            else:
+                                print(self.name, '\n', tmp)
+                                raise NotImplementedError('ERROR: multiple values of T in melts results?')
+                        except IndexError:
+                            # tmpa is size 0 - all nan?
+                            print('cannot find temperature for QFM interpolation', self.name)
+                            print(self.data['T(K)'])
+                            self.data['logfo2_qfm'] = np.nan
+                            self.data['delta_qfm'] = np.nan
 
                         logfo2_buffer = pf.read_qfm_os(T0, self.data['P(bar)'].to_numpy(),
                                                        verbose=False, perplex_path=perplex_path)
                         # print('logfo2_qfm', logfo2_buffer)
                         # print('logfo2 = QFM + ', logfo2 - logfo2_buffer, 'at', P, 'bar,', T, 'K')
-                        # self.data['logfo2_qfm'] = logfo2_buffer
-                        # self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
+                        self.data['logfo2_qfm'] = logfo2_buffer
+                        self.data['delta_qfm'] = self.data.logfo2 - logfo2_buffer
                         # print('added qfm\n', self.data['delta_qfm'])
                     except NotImplementedError as e:
                         # probably didn't get to 1100 C <-- idk about this anymore 5/03

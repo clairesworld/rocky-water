@@ -23,7 +23,7 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                   output_parent_path=fo2plt.output_parent_px, output_parent_path_melts=fo2plt.output_parent_mlt_earth,
                   fig=None, axes=[], fformat='.png', ax_histy=None,
                   ylim=(-11.5, -7), model='melts', ylabel=r'log($f_{{\rm O}_2}$)', xlim=None, xlabels=None,
-                  labelsize=16, save=True, fname=None, z_name=None, fig_path=fo2plt.figpath,
+                  labelsize=16, ticksize=14, save=True, fname=None, z_name=None, fig_path=fo2plt.figpath,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False, **sc_kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
     components can be bulk oxides or mineral phase proportion """
@@ -44,6 +44,9 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
 
     for ii in range(ncols):
         axes[ii].set_xlabel(xlabels[ii], fontsize=labelsize)
+        axes[ii].tick_params(axis='both', labelsize=ticksize)
+        axes[ii].yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+        axes[ii].xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
         axes[ii].set_ylim(ylim)
         if xlim:
             axes[ii].set_xlim(xlim[ii])
@@ -62,21 +65,7 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
             results_file = output_parent_path + name + '/' + name + '_results' + str(int(T_of_interest)) + '.csv'
             if (len(os.listdir(sub)) > 0) and os.path.exists(results_file):  # > 1 if contains nH_star e.g.
                 if name not in exclude_names:
-                    # df = pd.read_csv(results_file, sep='\t')
-                    # df = fo2plt.apply_filters(df, name)
-                    # if exclude_silica:
-                    #     df = fo2plt.filter_silica_sat(df)
-                    # idx = df['P(bar)'].sub(np.round(p_of_interest) * 1e4).abs().idxmin()
-                    # try:
-                    #     row = df.iloc[idx]
-                    # except (TypeError, IndexError) as e:
-                    #     # pressure not found
-                    #     continue
-                    # # except IndexError as e:
-                    # #     print(name)
-                    # #     print(p_of_interest * 1e4)
-                    # #     print(df['P(bar)'])
-                    # #     raise e
+
                     if model == 'melts':
                         dat = mfug.init_from_results(name=name, output_parent_path=output_parent_path,
                                                      load_results_csv=True, verbose=False)
@@ -85,6 +74,11 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                                                      load_results_csv=True, verbose=False)
 
                     if dat is not None:
+                        if exclude_silica:
+                            if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
+                                if verbose:
+                                    print('dropping case with quartz:', dat.name)
+                                continue
 
                         # get pressure row
                         try:
@@ -143,11 +137,13 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                                 sc_kwargs.update({'c': c})
                                 # todo: need to check for vmin vmac cmap etc
                             ax.scatter(x, y, **sc_kwargs)
-                            if once:
+                            # print(dat.name, '(x, y) =', x, y)
+                            # if once:  # for histogram, don't repeat run for all columns
+                            if ii == 0:
                                 ys.append(y)
                                 T = dat.data['T(K)'].unique()[0]  # isothermal
                     else:
-                        print('problem initialising data object for', name)
+                        print('  ...problem initialising data object for', name, '(returned None)')
             elif verbose:
                 print(sub, 'is empty')
         once = False
@@ -165,11 +161,16 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
         ax_histy.spines.top.set_visible(False)
         ax_histy.tick_params(axis="both", labelbottom=False, labelleft=False)
 
+    print('num points:', len(ys))
+
     # plt.suptitle(str(p_of_interest) + ' GPa, ' + str(T) + ' K', fontsize=labelsize)
 
     if save:
         fig.savefig(fig_path + fname + fformat)
     return fig, axes
+
+
+
 
 
 """ 
@@ -182,11 +183,13 @@ Xf = 3
 T_of_interest = 1373
 exclude_silica = True
 y_name = 'delta_qfm'
+ylabel = r'$\Delta$QFM'
 model = 'melts'
 components = ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']
 markersize = 40
 labelsize = 16
 legsize = 12
+ticksize = 10
 alpha = 0.3
 vmin, vmax = 0, 0.6
 mec = 'xkcd:midnight blue'
@@ -204,7 +207,7 @@ for jj, p_of_interest in enumerate((1, ncols)):
     if model == 'melts':
         source = fo2plt.output_parent_mlt_earth
         # ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa - for logfO2 axis
-        ylims = [None, None]  # delta QFM
+        ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
         c = 'xkcd:midnight blue'
         title = 'pMELTS'
     elif model == 'perplex':
@@ -222,15 +225,17 @@ for jj, p_of_interest in enumerate((1, ncols)):
         ax_histy = fig.add_subplot(gs[jj, -1])  # for y histogram if making one
 
     fig, axs = element_xplot(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
-                             components=components, y_name=y_name,
+                             components=components, y_name=y_name, ylabel=ylabel,
                              output_parent_path=output_parent_path,
                              xlim=[(0.8, 1.65), (0.05, 0.2), (0, 0.18), (0.025, 0.13)],
-                             ylim=ylims[jj], c=c, s=markersize, alpha=alpha, labelsize=labelsize,
+                             ylim=ylims[jj], c=c, s=markersize, alpha=alpha, labelsize=labelsize, ticksize=ticksize,
                              save=False, fig=fig, axes=axes,
                              model=model, verbose=False,
                              z_name='X_Fe3_Opx', vmin=vmin, vmax=vmax, cmap=cmap,
                              ax_histy=ax_histy, make_hist=True,
                              exclude_silica=exclude_silica, fformat=fformat)
+
+    # print('ylim', axs[0].get_ylim())
 
     axs[0] = cornertext(axs[0], str(p_of_interest) + ' GPa', size=labelsize, pos='top left')
     axs[1].set_xticks([0.075, 0.125, 0.175])  # Fe/Si
@@ -278,3 +283,5 @@ fig.savefig(fo2plt.figpath + 'crossplot_elements_' + model + today + fformat, bb
 #                      linec='k', labelsize=16, save=True, fname='crossplot_opx_' + str(p_of_interest),
 #                      model=model, verbose=False,
 #                      exclude_silica=exclude_silica)
+
+plt.show()
