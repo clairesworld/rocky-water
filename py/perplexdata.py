@@ -447,7 +447,7 @@ class PerplexData:
 
             file.write(s)
         if verbose:
-            print('   wrote to', build_file)
+            print('Wrote to build file:', build_file)
 
     def write_adiabat(self, P, T, file_end='_adiabat', fout=None, verbose=False, overwrite=True, **kwargs):
         """ write perple_x build file, p in bar """
@@ -499,6 +499,7 @@ class PerplexData:
                     store_vertex_output=False, output_file_end='.tab', werami_kwargs=None, **kwargs):
         """ run_vertex = 'auto' will check for vertex output files in run output directory, False will require output
         files already in perple_x working directory"""
+        print('using run_vertex =', run_vertex)
         if werami_kwargs is None:
             werami_kwargs = {}
         cwd = os.getcwd()
@@ -528,17 +529,17 @@ class PerplexData:
                     # temporarily move vertex output files to perple_x working directoy
                     vertex_copy_flag = True
                     print('   found', self.output_path + self.name + build_file_end + fend)
-                    print('   >>> copying to', self.perplex_path + self.name + build_file_end + fend)
+                    print('    >>> copying to', self.perplex_path + self.name + build_file_end + fend)
                     # os.rename(self.output_path + self.name + build_file_end + fend,
                     #           self.perplex_path + self.name + build_file_end + fend)
                     os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
                                                self.perplex_path + self.name + build_file_end + fend))
-                print('vertex output files already exist for', self.name, ', skipping to werami for:', werami_command_end)
+                print('All vertex output files already exist for', self.name, ', skipping to werami for', werami_command_end)
 
         # print('run_vertex', run_vertex)
         if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
             # create vertex command file
-            print('running vertex')
+            print('Running vertex!')
             vertex_command_file = self.name + build_file_end + '_vertex_command.txt'
             with open(self.perplex_path + vertex_command_file, 'w') as file:
                 s = vertex_command_text_fn(build_file_end=build_file_end)
@@ -565,14 +566,14 @@ class PerplexData:
                     else:
                         raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
 
-        print('\nStarting werami calculations...')
+        print('\n----------------------------\nStarting werami calculations...')
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:
             s = werami_command_text_fn(build_file_end=build_file_end, **werami_kwargs)
             file.write(s)
 
-        print('   created werami command file', self.name + build_file_end + werami_command_end)
+        print('Wrote to werami command file:', self.name + build_file_end + werami_command_end)
 
         # run werami
         output = subprocess.run('./werami < ' + werami_command_file, shell=True,
@@ -603,6 +604,8 @@ class PerplexData:
                     os.rename(self.perplex_path + self.name + build_file_end + fend,
                               self.output_path + self.name + build_file_end + fend)
                     print('moved', self.perplex_path + self.name + build_file_end + fend, '>>>', self.output_path + self.name + build_file_end + fend)
+                else:
+                    print('could not find', self.perplex_path + self.name + build_file_end + fend)
         if clean:
             # get rid of any files left in
             for fend in ['_seismic_data.txt', '_auto_refine.txt', '_1.plt', '.tim', '.plt', '.blk', '.arf', '.tof',
@@ -613,6 +616,7 @@ class PerplexData:
         # return to original dir
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
         # os.chdir(cwd)
+        print('--------------------------------------------------------------------------\n')
 
     def werami_adiabat(self, **kwargs):
         self.run_perplex(werami_command_end='_werami_command_thermo.txt',
