@@ -41,6 +41,7 @@ for T_of_interest in T_of_interests:
             output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
             output_parent_path = pf.output_parent_apollo + output_sub
 
+            # sometimes you get build file not found errors, seems to be just an os problem copying files, restart
             restart = 'HIP 49699'
 
             # only need to run this once to get build files (i.e., bulk composition) and vertex output files

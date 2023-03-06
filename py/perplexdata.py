@@ -499,7 +499,7 @@ class PerplexData:
                     store_vertex_output=False, output_file_end='.tab', werami_kwargs=None, **kwargs):
         """ run_vertex = 'auto' will check for vertex output files in run output directory, False will require output
         files already in perple_x working directory"""
-        print('using run_vertex =', run_vertex)
+
         if werami_kwargs is None:
             werami_kwargs = {}
         cwd = os.getcwd()
@@ -567,6 +567,7 @@ class PerplexData:
                         raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
 
         print('\n----------------------------\nStarting werami calculations...')
+        print('using run_vertex =', run_vertex)
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:

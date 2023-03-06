@@ -131,6 +131,17 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                                 # search for component in phase comp
                                 elif z_name in row.index:
                                     c = row[z_name]
+                                elif 'X_Fe3' in z_name:
+                                    phase = z_name.split('_')[2]
+                                    # perplex haven't loaded these in results
+                                    d = dat.get_phase_composition_dict(p_of_interest=p_of_interest,
+                                                                       T_of_interest=T_of_interest,
+                                                                       component='Fe2O3',
+                                                                       phases=[phase],
+                                                                       to_absolute_abundance=False,
+                                                                       verbose=verbose)
+                                    print(z_name, 'd', d)
+                                    c = d[phase]
                                 else:
                                     raise NotImplementedError(z_name, 'not implemented for scatter colouring')
                                 # print('c', c, name)
@@ -184,7 +195,8 @@ T_of_interest = 1373
 exclude_silica = True
 y_name = 'delta_qfm'
 ylabel = r'$\Delta$QFM'
-model = 'melts'
+# model = 'melts'
+model = 'perplex'
 components = ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']
 markersize = 40
 labelsize = 16
@@ -208,13 +220,13 @@ for jj, p_of_interest in enumerate((1, ncols)):
         source = fo2plt.output_parent_mlt_earth
         # ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa - for logfO2 axis
         ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
-        c = 'xkcd:midnight blue'
+        mec = 'xkcd:midnight blue'
         title = 'pMELTS'
     elif model == 'perplex':
         source = fo2plt.output_parent_px
         # ylims = [(-13.5, -8.7), (-10, -6.5)]  # 1 GPa, 4 GPa - for logfO2 axis
-        ylims = [None, None]  # delta QFM
-        c = 'xkcd:brick red'
+        ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
+        mec = 'xkcd:brick red'
         title = 'Perple_X'
     output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
 
@@ -228,7 +240,9 @@ for jj, p_of_interest in enumerate((1, ncols)):
                              components=components, y_name=y_name, ylabel=ylabel,
                              output_parent_path=output_parent_path,
                              xlim=[(0.8, 1.65), (0.05, 0.2), (0, 0.18), (0.025, 0.13)],
-                             ylim=ylims[jj], c=c, s=markersize, alpha=alpha, labelsize=labelsize, ticksize=ticksize,
+                             ylim=ylims[jj],
+                             edgecolors=mec, s=markersize, alpha=alpha,   # sc_kwargs
+                             labelsize=labelsize, ticksize=ticksize,
                              save=False, fig=fig, axes=axes,
                              model=model, verbose=False,
                              z_name='X_Fe3_Opx', vmin=vmin, vmax=vmax, cmap=cmap,
@@ -247,6 +261,18 @@ for jj, p_of_interest in enumerate((1, ncols)):
 fig.suptitle(title, fontsize=labelsize, y=0.92)
 fig.savefig(fo2plt.figpath + 'crossplot_elements_' + model + today + fformat, bbox_inches='tight')
 # plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 """ other phase abundances """
@@ -284,4 +310,4 @@ fig.savefig(fo2plt.figpath + 'crossplot_elements_' + model + today + fformat, bb
 #                      model=model, verbose=False,
 #                      exclude_silica=exclude_silica)
 
-plt.show()
+
