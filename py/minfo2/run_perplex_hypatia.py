@@ -41,6 +41,8 @@ for T_of_interest in T_of_interests:
             output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
             output_parent_path = pf.output_parent_apollo + output_sub
 
+            restart = 'HIP 49699'
+
             # only need to run this once to get build files (i.e., bulk composition) and vertex output files
             # note this will first download the stellar composisions for the whole sample and then run perple_x
             pf.fo2_from_hypatia(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_of_interest,
@@ -56,13 +58,14 @@ for T_of_interest in T_of_interests:
                                 use_local_composition=True, existing_dir='earth-tea23/hypatia_88coreeff_1ferric_ext/',
                                 # try local first, 1 ferric
                                 existing_output_parent='/raid1/cmg76/alphamelts/output/rocky-fo2/earth-tea23/',
-                                restart='HIP 49699',
+                                restart=restart,
                                 run_vertex='auto',  # overwrite existing vertex files if exist
                                 skip_existing=True,  # do not do anything if directory exists with *_results.csv
                                 suffix=str(Xf*100).replace('.', ',') + 'fer',
                                 skip_stars=skip_stars,
                                 # names=['1M_95Ceff_2MASS19421779+4248231_999K_3,0fer']
                                 )
+            restart = None
 
             # pf.fo2_from_hypatia_1D(p_min, p_max, n_sample=-1, T_min=T_min, T_max=T_max, T_iso=T_iso,
             #                     X_ferric=X_ferric, core_efficiency=ce,
