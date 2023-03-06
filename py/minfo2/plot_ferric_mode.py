@@ -53,7 +53,8 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
                     markersize=110, markeralpha=0.6, show_cmap=False,
                     absolute_abundance=True,
                     name=None, opp=None, save=False, mec=None, lw=1.5, ticksize=12, fig_path=fo2plt.figpath, fname=None,
-                    fig=None, tax=None, ax=None, verbose=False, pickle_to=None, pickle_from=None, ftype=ftype,**kwargs):
+                    fig=None, tax=None, ax=None, verbose=False, pickle_to=None, pickle_from=None, ftype=ftype,
+                    **kwargs):
     """ plot distribution of component between 3 phases
     p_of_interest: GPa
     """
@@ -127,7 +128,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             if v_var:
                 v = [eval('dat.' + v_var)]
             else:
-                v = 'k' # hi
+                v = 'k'  # hi
 
             d = dat.get_phase_composition_dict(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
                                                component=component,
@@ -243,7 +244,7 @@ cmap = 'viridis'
 vmin, vmax = 0.69, 1.6
 
 # alphamelts column
-ax00.text(0.05, 0.95, '1 GPa', transform=ax00.transAxes, size=fontsize, )
+ax00.text(0.05, 0.9, '1 GPa', transform=ax00.transAxes, size=fontsize, )
 fig, tax0 = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3',
                             v_var='mgsi', model='melts', cmap=cmap, vmin=vmin, vmax=vmax,
                             fontsize=fontsize, xoffset=xoffset, offset=offset, ticksize=ticksize,
@@ -251,7 +252,7 @@ fig, tax0 = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88,
                             show_cmap=False, save=True, mec=mec, lw=1.5, fname='ternary-tmp', fig=fig,
                             ax=ax00, pickle_from=fig_path + 'data/ternary0.p')
 
-ax10.text(0.05, 0.95, '4 GPa', transform=ax10.transAxes, size=fontsize, )
+ax10.text(0.05, 0.9, '4 GPa', transform=ax10.transAxes, size=fontsize, )
 fig, tax1 = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3',
                             v_var='mgsi', model='melts', cmap=cmap, vmin=vmin, vmax=vmax,
                             fontsize=fontsize, xoffset=xoffset, offset=offset, ticksize=ticksize,
@@ -290,22 +291,34 @@ im = ax00.scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
 # cbar.ax.set_ylabel('Mg/Si', rotation=270, fontsize=fontsize, labelpad=50)
 # cbar.ax.tick_params(axis="y", labelsize=ticksize)
 
+# cax = inset_axes(
+#     ax01,
+#     width="40%",  # width: 5% of parent_bbox width
+#     height="5%",  # height: 50%
+#     loc="upper left",
+#     bbox_to_anchor=(1.05, 0.5, 1, 1),
+#     bbox_transform=ax01.transAxes,
+#     borderpad=0,
+# )
+
+
 cax = inset_axes(
     ax01,
-    width="40%",  # width: 5% of parent_bbox width
-    height="5%",  # height: 50%
-    loc="upper left",
-    bbox_to_anchor=(1.05, 0.5, 1, 1),
-    bbox_transform=ax01.transAxes,
-    borderpad=0,
+    width="40%",  # width: 50% of parent_bbox width
+    height="5%",  # height: 5%
+    loc="upper right",
+    borderpad=-5,
+    # bbox_to_anchor=(1.1, 1., 1, 1),
+    # bbox_transform=ax01.transAxes,
 )
-cbar = fig.colorbar(im, cax=cax, format="%.1f", orientation='horizontal', #ticks=[1, 2, 3]
-                    )
-cbar.ax.set_xlabel('Mg/Si', fontsize=fontsize, labelpad=50)
+cax.xaxis.set_ticks_position("bottom")
+cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", )
+cbar.ax.set_xlabel('Mg/Si', fontsize=fontsize, labelpad=10)
 cbar.ax.tick_params(axis="x", labelsize=ticksize)
 
 fig.savefig(fig_path + 'ternary_subplots' + str(date) + ftype)
 # for some reason this only saves axis labels if individual subplots save=True
+
 # plt.show()
 
 """ test individual """

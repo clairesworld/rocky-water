@@ -11,6 +11,7 @@ import py.bulk_composition as bulk
 from matplotlib import rc
 import datetime
 from matplotlib.ticker import FormatStrFormatter
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 today = str(datetime.date.today())
 # rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
@@ -134,13 +135,17 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                                 elif 'X_Fe3' in z_name:
                                     phase = z_name.split('_')[2]
                                     # perplex haven't loaded these in results
-                                    d = dat.get_phase_composition_dict(p_of_interest=p_of_interest,
+                                    if (p_of_interest == 4) and model == 'perplex':
+                                        pprime = 3.9  # correct for fact u didnt run px at 4 gpa lol
+                                    else:
+                                        pprime = p_of_interest
+                                    d = dat.get_phase_composition_dict(p_of_interest=pprime,
                                                                        T_of_interest=T_of_interest,
                                                                        component='Fe2O3',
                                                                        phases=[phase],
                                                                        to_absolute_abundance=False,
                                                                        verbose=verbose)
-                                    print(z_name, 'd', d)
+                                    # print(z_name, 'd', d)
                                     c = d[phase]
                                 else:
                                     raise NotImplementedError(z_name, 'not implemented for scatter colouring')
@@ -216,18 +221,20 @@ gs = fig.add_gridspec(2, ncols + 1, width_ratios=[10] * ncols + [1], height_rati
                       wspace=0.05, hspace=0.05)
 
 for jj, p_of_interest in enumerate((1, ncols)):
+
     if model == 'melts':
         source = fo2plt.output_parent_mlt_earth
         # ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa - for logfO2 axis
         ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
         mec = 'xkcd:midnight blue'
-        title = 'pMELTS'
+        title = r'$f_{{\rm O}_2}$ distribution with pMELTS'
     elif model == 'perplex':
         source = fo2plt.output_parent_px
         # ylims = [(-13.5, -8.7), (-10, -6.5)]  # 1 GPa, 4 GPa - for logfO2 axis
-        ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
-        mec = 'xkcd:brick red'
-        title = 'Perple_X'
+        ylims = [(-5, 0.5), (-4, 1.5)]  # delta QFM
+        mec = 'xkcd:midnight blue'
+        title = r'$f_{{\rm O}_2}$ distribution with Perple_X'
+
     output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
 
     axes = []  # create new ax list just for this row
@@ -257,6 +264,23 @@ for jj, p_of_interest in enumerate((1, ncols)):
         for ax in axs:
             ax.set_xticks([])
             ax.set_xlabel(None)
+
+        # make colorbar top row
+        dum = np.linspace(vmin, vmax)
+        im = axs[-2].scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
+        cax = inset_axes(
+            axs[-2],
+            width="50%",  # width: 50% of parent_bbox width
+            height="5%",  # height: 5%
+            loc="upper left",
+            bbox_to_anchor=(1, 1.05, 1, 1),
+            bbox_transform=axs[-2].transAxes,
+            borderpad=0,
+        )
+        cax.xaxis.set_ticks_position("bottom")
+        cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", )
+        cbar.ax.set_xlabel('wt.% Fe$_2$O$_3$ in Opx', fontsize=labelsize, labelpad=5)
+        cbar.ax.tick_params(axis="x", labelsize=ticksize)
 
 fig.suptitle(title, fontsize=labelsize, y=0.92)
 fig.savefig(fo2plt.figpath + 'crossplot_elements_' + model + today + fformat, bbox_inches='tight')
