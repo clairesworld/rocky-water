@@ -126,7 +126,7 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
             if v_var:
                 v = [eval('dat.' + v_var)]
             else:
-                v = 'k'
+                v = 'k' # hi
 
             d = dat.get_phase_composition_dict(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
                                                component=component,
