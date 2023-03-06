@@ -306,14 +306,14 @@ cax = inset_axes(
     ax01,
     width="40%",  # width: 50% of parent_bbox width
     height="5%",  # height: 5%
-    loc="upper right",
-    borderpad=-5,
-    # bbox_to_anchor=(1.1, 1., 1, 1),
-    # bbox_transform=ax01.transAxes,
+    # loc="upper right",
+    borderpad=0,  #-5,
+    loc="lower right",
+    bbox_to_anchor=(1, 1.05, 1, 1),
 )
 cax.xaxis.set_ticks_position("bottom")
 cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", )
-cbar.ax.set_xlabel('Mg/Si', fontsize=fontsize, labelpad=10)
+cbar.ax.set_xlabel('Mg/Si', fontsize=ticksize, labelpad=10)
 cbar.ax.tick_params(axis="x", labelsize=ticksize)
 
 fig.savefig(fig_path + 'ternary_subplots' + str(date) + ftype)

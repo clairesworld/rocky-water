@@ -436,7 +436,7 @@ class MeltsFugacityData:
                             # print('added qfm\n', self.data['delta_qfm'])
                         except IndexError:
                             # tmpa is size 0 - all nan?
-                            print('cannot find temperature for QFM interpolation', self.name)
+                            print('no valid temperatures for QFM interpolation (all NaN?)', self.name)
                             print(self.data['T(K)'])
                             self.data['logfo2_qfm'] = np.nan
                             self.data['delta_qfm'] = np.nan

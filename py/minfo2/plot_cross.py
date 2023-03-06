@@ -169,7 +169,7 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
         if ax_histy is None:
             ax_histy = fig.add_subplot(gs[0, -1], sharey=axes[-1])
         ax_histy.hist(ys,  range=ylim,
-                      density=True, orientation='horizontal', color='w', edgecolor='k', bins=15)
+                      density=True, orientation='horizontal', color='0.5', edgecolor='k', linewidth=0.4, bins=25)
         ax_histy.set_xticks([])
         ax_histy.set_yticks([])
         ax_histy.spines.bottom.set_visible(False)
@@ -208,7 +208,7 @@ labelsize = 16
 legsize = 12
 ticksize = 10
 alpha = 0.3
-vmin, vmax = 0, 0.6
+vmin, vmax = 0, 0.8
 mec = 'xkcd:midnight blue'
 cmap = 'viridis'
 fformat = '.pdf'
@@ -221,7 +221,6 @@ gs = fig.add_gridspec(2, ncols + 1, width_ratios=[10] * ncols + [1], height_rati
                       wspace=0.05, hspace=0.05)
 
 for jj, p_of_interest in enumerate((1, ncols)):
-
     if model == 'melts':
         source = fo2plt.output_parent_mlt_earth
         # ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa - for logfO2 axis
@@ -272,15 +271,17 @@ for jj, p_of_interest in enumerate((1, ncols)):
             axs[-2],
             width="50%",  # width: 50% of parent_bbox width
             height="5%",  # height: 5%
-            loc="upper left",
+            loc="lower right",
             bbox_to_anchor=(1, 1.05, 1, 1),
             bbox_transform=axs[-2].transAxes,
             borderpad=0,
         )
-        cax.xaxis.set_ticks_position("bottom")
-        cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", )
-        cbar.ax.set_xlabel('wt.% Fe$_2$O$_3$ in Opx', fontsize=labelsize, labelpad=5)
-        cbar.ax.tick_params(axis="x", labelsize=ticksize)
+        cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", ticks=[vmin, vmax])
+        # cbar.ax.set_xlabel(r'wt.\% Fe$_2$O$_3$ in opx', fontsize=ticksize, labelpad=5)
+        # cbar.ax.xaxis.set_label_position('top')
+        cax.text(-0.5, 0.5, r'wt.\% Fe$_2$O$_3$ in opx', fontsize=ticksize, transform=cax.transAxes, )
+        cax.xaxis.set_ticks_position("top")
+        cbar.ax.tick_params(axis="x", labelsize=ticksize, bottom=False, labelbottom=False, top=True, labeltop=True)
 
 fig.suptitle(title, fontsize=labelsize, y=0.92)
 fig.savefig(fo2plt.figpath + 'crossplot_elements_' + model + today + fformat, bbox_inches='tight')

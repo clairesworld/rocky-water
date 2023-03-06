@@ -249,7 +249,7 @@ class PerplexFugacityData(px.PerplexData):
                          vertex_command_text_fn=self.command_vertex_grid,
                          output_file_end='_ferric_comp.tab', build_file_end=build_file_end, verbose=verbose,
                          clean=True, werami_kwargs={'points_file': points_file}, run_vertex=False,
-                         suppress_output=True,
+                         # suppress_output=True,
                          **kwargs)
 
     def read_ferric_phase_comp(self, phase=None, T_of_interest=None, p_of_interest=None, scale=100):
