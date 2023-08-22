@@ -1,10 +1,10 @@
 import numpy as np
-from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, G, R_E, rho_E
+from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, G, R_E, rho_E
 import os
-import py.saturation as sat
+import saturation as sat
 import time
-import py.perplexdata as px
-import py.ask_hypatia as hyp
+import perplexdata as px
+import ask_hypatia as hyp
 import pickle as pkl
 import random
 
