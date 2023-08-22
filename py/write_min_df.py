@@ -49,10 +49,18 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
             df_list[z].loc[irow, 'T(K)'] = ser['T(K)']
 
             for ph in phase_columns:
-                df_list[z].loc[irow, ph] = ser['X_' + ph]
+                try:
+                    df_list[z].loc[irow, ph] = ser['X_' + ph]
+                except KeyError as e:
+                    print(e, 'not found in', dat.name, 'mineralogy output')
+                    pass
 
             for ox in ox_columns:
-                df_list[z].loc[irow, ox] = dat.wt_oxides[ox]
+                try:
+                    df_list[z].loc[irow, ox] = dat.wt_oxides[ox]
+                except KeyError as e:
+                    print(e, 'not found in', dat.name, 'wt oxides')
+                    pass
 
     # write csv
     for z, pressure in enumerate(pressures):
