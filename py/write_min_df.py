@@ -11,7 +11,7 @@ location = 'apollo'
 
 
 def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88, Tp=1600, phase_columns=phase_columns,
-                   ox_columns=ox_columns, output_path_override=None, sep=',', **kwargs):
+                   ox_columns=ox_columns, output_path_override=None, sep=',', test_mode=False, **kwargs):
 
     if output_path_override is None:
         output_path = output_parent_path + 'hypatia{:d}M_{:d}K_{:d}Fe_hires/'.format(M_p, Tp, core_eff)
@@ -19,13 +19,17 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
         output_path = output_parent_path + output_path_override
 
     # read each planet in dir
-    dats = rw.read_dir(output_path, subsample=2, verbose=True, prevent_blank_dir=True)
+    if test_mode:
+        subsample = 3
+    else:
+        subsample = None
+    dats = rw.read_dir(output_path, subsample=subsample, verbose=True, prevent_blank_dir=True)
 
     # initialise list of dfs for each pressure
     df_list = []
     for pressure in pressures:
-        df_list.append(pd.DataFrame(columns=['star', 'M_p(M_E)', 'Fe_core/Fe_tot', 'P(GPa)', 'T(K)', 'Tp(K)']
-                                            + [ph + '(wt%)' for ph in phase_columns]
+        df_list.append(pd.DataFrame(columns=['star', 'P(GPa)', 'T(K)', 'Tp(K)']
+                                            + [ph + '(wt%)' for ph in phase_columns] + ['M_p(M_E)', 'Fe_core/Fe_tot']
                                             + [ox + '(wt%)' for ox in ox_columns],
                             index=range(len(dats))))
 
@@ -57,17 +61,19 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
                 try:
                     df_list[z].loc[irow, ph + '(wt%)'] = ser[ph]
                 except KeyError as e:
-                    print(e, 'not found in', dat.name, 'mineralogy output at', pressure, 'GPa')
+                    if test_mode:
+                        print(e, 'not found in', dat.name, 'mineralogy output at', pressure, 'GPa')
                     flag = True
                     pass
-            if flag:
+            if flag and test_mode:
                 print(ser)
 
             for ox in ox_columns:
                 try:
                     df_list[z].loc[irow, ox + '(wt%)'] = dat.wt_oxides[ox]
                 except KeyError as e:
-                    print(e, 'not found in', dat.name, 'wt oxides')
+                    if test_mode:
+                        print(e, 'not found in', dat.name, 'wt oxides')
                     pass
 
     # write csv
