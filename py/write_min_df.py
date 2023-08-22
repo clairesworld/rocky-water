@@ -4,7 +4,7 @@ import parameters as p
 import main as rw
 import perplexdata as px
 
-phase_columns = ['an', 'gt', 'cpx', 'opx', 'hpcpx', 'ol', 'wad', 'ring', 'pv', 'qtz', 'coes', 'st', 'wus', 'dvm']
+phase_columns = ['gt', 'cpx', 'opx', 'hpcpx', 'ol', 'wad', 'ring', 'pv', 'qtz', 'coes', 'st', 'wus', 'dvm']
 ox_columns = px.oxide_list_default
 location = 'apollo'
 
@@ -23,22 +23,26 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
     # initialise list of dfs for each pressure
     df_list = []
     for pressure in pressures:
-        df_list.append(pd.DataFrame(columns=['star', 'M_p(M_E)', 'Fe_core/Fe_tot', 'P(GPa)', 'T(K)', 'Tp(K)'] + phase_columns + ox_columns,
+        df_list.append(pd.DataFrame(columns=['star', 'M_p(M_E)', 'Fe_core/Fe_tot', 'P(GPa)', 'T(K)', 'Tp(K)']
+                                            + [ph + '(wt%)' for ph in phase_columns]
+                                            + [ox + '(wt%)' for ox in ox_columns],
                             index=range(len(dats))))
 
         # add constants
         df_list[-1]['M_p(M_E)'] = M_p
         df_list[-1]['Fe_core/Fe_tot'] = core_eff
-        df_list[-1]['T_p(K)'] = Tp
+        df_list[-1]['Tp(K)'] = Tp
 
     # load data for this planet at all pressures
     for irow, dat in enumerate(dats):
+
         if dat.df_comp is not None:
             pass
         else:
             print('dat.df_comp is None', dat.name)
 
         for z, pressure in enumerate(pressures):
+            flag = False
 
             # find pressure
             ii = dat.df_comp['P(bar)'].sub(pressure * 1e4).abs().idxmin()
@@ -50,14 +54,17 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
 
             for ph in phase_columns:
                 try:
-                    df_list[z].loc[irow, ph] = ser['X_' + ph]
+                    df_list[z].loc[irow, ph + '(wt%)'] = ser['X_' + ph]
                 except KeyError as e:
-                    print(e, 'not found in', dat.name, 'mineralogy output')
+                    print(e, 'not found in', dat.name, 'mineralogy output at', pressure, 'GPa')
+                    flag = True
                     pass
+            if flag:
+                print(ser)
 
             for ox in ox_columns:
                 try:
-                    df_list[z].loc[irow, ox] = dat.wt_oxides[ox]
+                    df_list[z].loc[irow, ox + '(wt%)'] = dat.wt_oxides[ox]
                 except KeyError as e:
                     print(e, 'not found in', dat.name, 'wt oxides')
                     pass
