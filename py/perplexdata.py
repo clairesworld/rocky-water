@@ -1,13 +1,13 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 import pandas as pd
-from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
+from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
 import glob
 import pathlib
 import subprocess
-from py.bulk_composition import stellar_mantle
-import py.ask_hypatia as hyp
+from bulk_composition import stellar_mantle
+import ask_hypatia as hyp
 
 perplex_path_default = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
 output_parent_default = perplex_path_default + 'output/'
