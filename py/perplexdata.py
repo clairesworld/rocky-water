@@ -19,7 +19,7 @@ wt_oxides_Earth = {'SiO2': 44.48, 'MgO': 39.22, 'CaO': 3.44, 'Al2O3': 3.59, 'FeO
 wt_oxides_MD95 = {'SiO2': 45.0, 'MgO': 37.8, 'CaO': 3.55, 'Al2O3': 4.45, 'FeO': 8.05}  # McDonough & Sun 1995 BSE
 wt_oxides_pyrolite = {'SiO2': 38.71, 'MgO': 49.85, 'FeO': 6.17, 'CaO': 2.94, 'Al2O3': 2.22}  # 'Na2O': 0.11
 
-oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']  # 'NaO
+oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']  # 'Na2O
 solution_phases_default = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c', 'Opx', 'Aki', 'Ppv', 'Gt', 'CF',
                            'Pl']  # 'NAl'
 
