@@ -4,7 +4,8 @@ import parameters as p
 import main as rw
 import perplexdata as px
 
-phase_columns = ['gt', 'cpx', 'opx', 'hpcpx', 'ol', 'wad', 'ring', 'pv', 'qtz', 'coes', 'st', 'wus', 'dvm']
+# phase_columns = ['gt', 'cpx', 'opx', 'hpcpx', 'ol', 'wad', 'ring', 'pv', 'qtz', 'coes', 'st', 'wus', 'dvm']
+phase_columns = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c', 'Opx', 'Aki', 'Ppv', 'Gt', 'CF', 'st', 'ca-pv']
 ox_columns = px.oxide_list_default
 location = 'apollo'
 
@@ -54,7 +55,7 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
 
             for ph in phase_columns:
                 try:
-                    df_list[z].loc[irow, ph + '(wt%)'] = ser['X_' + ph]
+                    df_list[z].loc[irow, ph + '(wt%)'] = ser[ph]
                 except KeyError as e:
                     print(e, 'not found in', dat.name, 'mineralogy output at', pressure, 'GPa')
                     flag = True
