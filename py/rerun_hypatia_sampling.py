@@ -78,7 +78,7 @@ core_eff = 0.8831461545794602
 n = 600  # 1200
 
 run_all_masses(masses=[1],
-               Tp=Tp, core_eff=core_eff, perplex_path=perplex_path_default, use_local_composition=False,
+               Tp=Tp, core_eff=core_eff, perplex_path='/raid1/cmg76/perple_x/', use_local_composition=False,
                names_file='host_names_full.txt', restart='2MASS 19592683+4549384',
             )
 

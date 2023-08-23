@@ -4,8 +4,7 @@ import parameters as p
 import main as rw
 import perplexdata as px
 
-# phase_columns = ['gt', 'cpx', 'opx', 'hpcpx', 'ol', 'wad', 'ring', 'pv', 'qtz', 'coes', 'st', 'wus', 'dvm']
-phase_columns = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c', 'Opx', 'Aki', 'Ppv', 'Gt', 'CF', 'st', 'ca-pv']
+phase_columns = ['O', 'Opx', 'Cpx', 'Sp', 'Gt', 'Wad', 'Ring', 'Aki', 'Pv', 'Wus', 'C2/c', 'Ppv', 'CF', 'ca-pv', 'q', 'coes', 'st', ]
 ox_columns = px.oxide_list_default
 location = 'apollo'
 
@@ -37,6 +36,7 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_eff=88
         df_list[-1]['M_p(M_E)'] = M_p
         df_list[-1]['Fe_core/Fe_tot'] = core_eff
         df_list[-1]['Tp(K)'] = Tp
+        df_list[-1].fillna(0, inplace=True)
 
     # load data for this planet at all pressures
     for irow, dat in enumerate(dats):
