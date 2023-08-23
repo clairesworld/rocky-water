@@ -1,7 +1,7 @@
 import numpy as np
-import py.fugacity as fug
+import fugacity as fug
 from scipy.interpolate import interp1d, splev
-from py.useful_and_bespoke import find_nearest_idx, colorize, iterable_not_string
+from useful_and_bespoke import find_nearest_idx, colorize, iterable_not_string
 from scipy import optimize
 import matplotlib.pyplot as plt
 import pandas as pd

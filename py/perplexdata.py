@@ -1,13 +1,13 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 import pandas as pd
-from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
+from parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, M_Si, M_Mg, M_Ca, M_CaO, M_Al, M_Al2O3, G, R_E, rho_E
 import os
 import glob
 import pathlib
 import subprocess
-from py.bulk_composition import stellar_mantle
-import py.ask_hypatia as hyp
+from bulk_composition import stellar_mantle
+import ask_hypatia as hyp
 
 perplex_path_default = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
 output_parent_default = perplex_path_default + 'output/'
@@ -19,7 +19,7 @@ wt_oxides_Earth = {'SiO2': 44.48, 'MgO': 39.22, 'CaO': 3.44, 'Al2O3': 3.59, 'FeO
 wt_oxides_MD95 = {'SiO2': 45.0, 'MgO': 37.8, 'CaO': 3.55, 'Al2O3': 4.45, 'FeO': 8.05}  # McDonough & Sun 1995 BSE
 wt_oxides_pyrolite = {'SiO2': 38.71, 'MgO': 49.85, 'FeO': 6.17, 'CaO': 2.94, 'Al2O3': 2.22}  # 'Na2O': 0.11
 
-oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']  # 'NaO
+oxide_list_default = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO']  # 'Na2O
 solution_phases_default = ['O', 'Sp', 'Cpx', 'Wad', 'Ring', 'Pv', 'Wus', 'C2/c', 'Opx', 'Aki', 'Ppv', 'Gt', 'CF',
                            'Pl']  # 'NAl'
 
