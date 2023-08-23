@@ -91,7 +91,7 @@ class PerplexData:
 
     def load_composition_px(self, build_file_end='', fillnan=True, check_consistent=True, verbose=True,
                             save=True, interp_missing=True, **kwargs):
-        file = self.perplex_path + self.name + build_file_end + '_comp.tab'
+        file = self.output_path + self.name + build_file_end + '_comp.tab'
 
         try:
             df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
@@ -156,7 +156,7 @@ class PerplexData:
 
     def load_adiabat(self, build_file_end='', fillnan=True, check_consistent=True, fix_nan=True, run_bad=False,
                      store=False, head=False, rho_m_av=None, **kwargs):
-        file = self.perplex_path + self.name + build_file_end + '_thermo.tab'
+        file = self.output_path + self.name + build_file_end + '_thermo.tab'
 
         df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
                          # dtype=np.float64
@@ -247,14 +247,6 @@ class PerplexData:
         core_eff = n_Fe_core / (n_FeO_mantle + n_Fe_core) = m_Fe_core / (m_Fe_mantle + m_Fe_core) as n_Fe = n_FeO in mtl
         """
         # todo: still might want to triple check this is consistent with stellar composition constraints
-        # try:
-        #     idx = self.oxide_list.index('FEO')
-        # except ValueError:
-        #     idx = self.oxide_list.index('FeO')
-        # try:
-        #     x_Fe_mm = self.wt_oxides[idx] * (M_Fe / M_FeO)  # mass fraction Fe in mantle wrt mtl
-        # except KeyError:
-        #     x_Fe_mm = self.wt_oxides['FeO'] * (M_Fe / M_FeO)  # mass fraction Fe in mantle wrt mtl
 
         try:
             x_Fe_mm = self.wt_oxides['FeO'] * (M_Fe / M_FeO)  # mass fraction Fe in mantle wrt total mantle mass
