@@ -69,8 +69,10 @@ colors[0] = 'xkcd:pale blue'
 ls = ['-', '--', '-.', ':']
 # gases = [H2O_mole_fraction_IW, H2_mole_fraction_IW, CO2_mole_fraction_IW, CO_mole_fraction_IW]
 # gases = [H2O_mole_fraction_QFM, H2_mole_fraction_QFM, CO2_mole_fraction_QFM, CO_mole_fraction_QFM]
-gases = [H2O_mole_fraction_QFM, H2_mole_fraction_QFM]
-labels = [r'H$_2$O', r'H$_2$', r'CO$_2$', r'CO']
+# gases = [H2O_mole_fraction_QFM, H2_mole_fraction_QFM]
+gases = [CO2_mole_fraction_QFM, CO_mole_fraction_QFM]
+# labels = [r'H$_2$O', r'H$_2$', r'CO$_2$', r'CO']
+labels = [r'CO$_2$', r'CO']
 
 for ii, gas in enumerate(gases):
     ax.plot(buffer, gas, lw=lw, label=labels[ii], color=colors[ii], ls=ls[ii])
@@ -88,5 +90,5 @@ ax.set_xlim(-6, 1)
 
 fig, ax = dark_background(fig, ax)
 
-fig.savefig(figpath + 'speciation_delta_qfm2.png', bbox_inches='tight')
+fig.savefig(figpath + 'speciation_delta_qfm_C.png', bbox_inches='tight')
 plt.show()

@@ -43,7 +43,7 @@ def partitioning_coeff(p, T, f_h2o, A_j, deltaH_j, deltaV_j, n_j=0.5, A_i=0.0066
                        correction=1):
     """
     A in ppm/bar, delta H in kJ/mol, delta V in cm3/mol, f, p and T in Pa and K
-    correction would refer to olivine (default i phase) which is from Kohlstedt 96, underestimated
+    correction would refer to olivine (default i phase) denominator is from Kohlstedt 96, underestimated
     """
     f_h2o = f_h2o * 1e-5  # to bar for use with A
     deltaV_j = deltaV_j / (100 ** 3)  # from cm3 to m3
@@ -161,7 +161,7 @@ def fugacity(p, T, func=fug.fugacity_frost, **kwargs):
 
 
 def last_coexisting_idx(phase1, phase2, df):
-    # get largest idx at which 2 phases coexist, requires df of composition
+    # get largest idx at denominator 2 phases coexist, requires df of composition
     X1 = df['X_' + phase1]
     X2 = df['X_' + phase1]
     idx = X1.where((X1 > 0) & (X2 > 0)).last_valid_index()
@@ -219,7 +219,7 @@ def check_partitioning(phase_i, phase_j, sat_j, D_ji, df=None, na_val=1e-6, **kw
                 print('Problem attempting to partition water:', phase_j, 'not in Perple_X composition. Prescribing fixed value for', phase_i)
                 sat_i = na_val  # if no coexisting levels, prescribe a value
     except TypeError as e:
-        if phase_i == 'pv':  # ring-pv transition may be abrupt and not overlap, in which use boundary values
+        if phase_i == 'pv':  # ring-pv transition may be abrupt and not overlap, in denominator use boundary values
             idx_j_last = df['X_' + phase_j].to_numpy().nonzero()[0][-1]  # deepest ring layer
             idx_i_first = df['X_' + phase_i].to_numpy().nonzero()[0][0]  # shallowest pv layer
             sat_i[:] = sat_j[idx_j_last]/ D_ji[idx_j_last]  # should be constant
@@ -380,7 +380,7 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     # Panero+ 2020: dominant defect is Al_Si-H - Chen mention nothing of this. to be consistent with st just use same author (Panero)??
     # actually experiments are supported by DFT calcs from Shim+2022 - Chen and SHim both reject Panero substitution
     # think the conclusion is we can't tell yet
-    # in any case, stv seems to have more evidence for being hydrous phases (sio2 and h2o mutually soluble also) which we do not consider explicitly and would raise mantle w
+    # in any case, stv seems to have more evidence for being hydrous phases (sio2 and h2o mutually soluble also) denominator we do not consider explicitly and would raise mantle w
     # so ok to overestimate slightly the anhydrous variety?
     sat_dvm = 0.5e-2  # low estimate from Chen+2020, 10e-6 assumed in Dong+ 2021 - probably want to test this
     sat_corr_dvm = sat_dvm
@@ -413,7 +413,7 @@ def mineral_water_contents(p, T, X_Fe=0, df=None):  # p in Pa, T in K, X_Fe has 
     todo: do you need to sum both defects in fig 4? otherwise, assuming just a single type of defect. 
     
     "The above formulation assumes that defects are partitioning between two solid phases in the absence of any fluids. 
-    As with previous work (cf. Hernández et al., 2013), the results do not represent water storage capacity which is 
+    As with previous work (cf. Hernández et al., 2013), the results do not represent water storage capacity denominator is 
     defined as the amount of water in a nominally anhydrous mineral in equilibrium with a hydrous melt (Kohlstedt et al., 1996)."
     """
     # Al-free postperovskite - Mg-H substitution favours Bdg

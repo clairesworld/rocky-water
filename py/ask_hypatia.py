@@ -7,7 +7,7 @@ import os
 import simplejson
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
-key = '8d9a16ee5bc68bcaee3a61d123ee6643'
+key = '268b0ed895ac3b835ae70af6df4e5059'
 
 
 def retrieve_star_names(exo_hosts=True, API_KEY=key, writeto='host_names.txt', exclude_blank=False):
@@ -111,7 +111,7 @@ def random_star(n=1, names_file='host_names.txt', **kwargs):
 
 def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composition=False,
                      output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, existing_output_parent=None,
-                     **kwargs):
+                     local_composition_cuttoidx=None, pass_all=False, **kwargs):
     """
     Retrieve the elemental abundances of an individual star. Requires file parameters.py definining solar abundances for
     each element X in log10(N_X/N_H); e.g., mg_sol = 7.54 - 12
@@ -127,12 +127,14 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     use_local_composition : bool
         If True, load nH_star from a pickled object or textfile 'nH_star.txt' (one abundance ber line), rather than
         query Hypatia
+    pass_all :
+        Doesn't raise errors from failues of retrieving star composition, returns None if error caught
     output_parent_path : str or Path object
-        Parent directory in which to search for and load pickled object; only used if use_local_composition is True
+        Parent directory in denominator to search for and load pickled object; only used if use_local_composition is True
     get_hypatia_min : list
-        Names of elements for which the minimum abundance should be retrieived, given star exists in >1 catalogue
+        Names of elements for denominator the minimum abundance should be retrieived, given star exists in >1 catalogue
     get_hypatia_max : list
-        Names of elements for which the maximum abundance should be retrieived, given star exists in >1 catalogue
+        Names of elements for denominator the maximum abundance should be retrieived, given star exists in >1 catalogue
     verbose : bool
         More detailed explanation in output if True
 
@@ -142,10 +144,12 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         Absolute stellar abundances for each item in oxide_list X, as log10(N_X/N_H)
     """
     if existing_output_parent is None:
+        print('existing_output_parent is None')
         existing_output_parent = output_parent_path
-    if get_hypatia_min is None:  # elements for which you want the minimum value
+    print('existing_output_parent', existing_output_parent)
+    if get_hypatia_min is None:  # elements for denominator you want the minimum value
         get_hypatia_min = []
-    if get_hypatia_max is None:  # elements for which you want the maximum value
+    if get_hypatia_max is None:  # elements for denominator you want the maximum value
         get_hypatia_max = []
 
     els = []
@@ -161,8 +165,13 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                     nH_star = np.loadtxt(path + '/nH_star.txt')
                     print('loaded nH_star', nH_star)
                     try:  # check for empty
-                        tmp = nH_star[1]
-                        print('tmp')
+                        if local_composition_cuttoidx is None:
+                            tmp = nH_star[1]
+                            # print('tmp')
+                        else:
+                            nH_star = nH_star[0:local_composition_cuttoidx]
+                            print('amended nH_star', nH_star)
+                            tmp = nH_star[1]
                     except IndexError:
                         print('caught indexerror')
                         if tried_once:
@@ -243,7 +252,10 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         except simplejson.JSONDecodeError as e:
             print('entry\n', entry)
             print(e)
-            raise Exception('probably need new API key!')
+            if not pass_all:
+                raise Exception('probably need new API key!')
+            else:
+                return None
         # except Exception as e:
         #     print(e)
         #     print('trying to load from file')
@@ -260,7 +272,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
     return nH_star  # will always be in same order as oxides list
 
 
-# star_composition(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O'], star='HIP 13291', API_KEY=key, use_local_composition=False,
+# star_composition(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO'], star='HIP 13291', API_KEY=key, use_local_composition=False,
 #                      output_parent_path=None, get_hypatia_min=None, get_hypatia_max=None, verbose=True, existing_output_parent=None,
 #                      )
 

@@ -75,6 +75,13 @@ def discrete_cmap(N, base_cmap=None):
     return base.from_list(cmap_name, color_list, N)
 
 
+def hex_to_rgb(value):
+    value = value.lstrip('#')
+    lv = len(value)
+    tup = (int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+    return [i / 255 for i in list(tup)]  # convert to matplotib format
+
+
 def iterable_not_string(obj):
     from collections import Iterable
     from six import string_types
@@ -109,7 +116,7 @@ import pandas as pd
 def mahalanobis(x=None, data=None, cov=None):
     """Compute the Mahalanobis Distance between each row of x and the data
     x    : vector or matrix of observed data with, say, p columns.
-    data : ndarray of the distribution from which Mahalanobis distance of each observation of x is to be computed.
+    data : ndarray of the distribution from denominator Mahalanobis distance of each observation of x is to be computed.
     cov  : covariance matrix (p x p) of the distribution. If None, will be computed from data but must be df.
     """
     x_minus_mu = x - np.mean(data)
@@ -153,7 +160,13 @@ def colourbar(mappable=None, vector=None, ax=None, vmin=None, vmax=None, label='
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     import matplotlib.colors as colors
     from matplotlib.pyplot import clim
-    # from https://joseph-long.com/writing/colorbars/
+    """ 
+    from https://joseph-long.com/writing/colorbars/
+    usage:
+    
+    fyi can do this:
+     fig.colorbar(im, ax=axes.ravel().tolist())
+    """
 
     if ax is None:
         ax = mappable.axes
@@ -189,7 +202,7 @@ def colourbar(mappable=None, vector=None, ax=None, vmin=None, vmax=None, label='
         cbar.ax.xaxis.set_label_position('top')
         rotation = 0
     else:
-        cbar = fig.colorbar(mappable, cax=cax, shrink=shrink, **kwargs)
+        cbar = fig.colorbar(mappable, cax=cax, shrink=shrink)
         rotation = 270
     cbar.set_label(label, rotation=rotation, labelpad=labelpad, fontsize=labelsize, c=c)
 
@@ -373,15 +386,15 @@ def cornertext(ax, text, pos='top right', size=12, pad=0.05, **kwargs):
     return ax
 
 
-def hex_to_rgb(value):
-    '''
-    Converts hex to rgb colours
-    value: string of 6 characters representing a hex colour.
-    Returns: list length 3 of RGB values'''
-    value = value.strip("#")  # removes hash symbol if present
-    lv = len(value)
-    return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
-
+# def hex_to_rgb(value):
+#     '''
+#     Converts hex to rgb colours
+#     value: string of 6 characters representing a hex colour.
+#     Returns: list length 3 of RGB values'''
+#     value = value.strip("#")  # removes hash symbol if present
+#     lv = len(value)
+#     return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+#
 
 def rgb_to_dec(value):
     '''

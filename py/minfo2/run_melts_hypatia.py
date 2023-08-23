@@ -33,7 +33,7 @@ T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 pressures_of_interest = np.linspace(p_min, p_max, 15)  # bar, for alphaMELTS
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']  #, 'Cr2O3']
 skip_stars = ['2MASS 19141179+3833548']  #['HIP 522', 'HIP 801', 'HIP 102409']
-location = 'apollo'
+location = 'starlite'
 
 # user input
 X_ferric = [float(x) for x in input('Enter X_ferric, separated by spaces (default 0.03): ').split()] #[0.07]  #, 0.03, 0.05, 0.07, 0.09]  # , 0.01, 0.05, 0.07, 0.09]  #[0.01, 0.03, 0.05, 0.07, 0.09]
@@ -70,7 +70,7 @@ for ce in core_eff:
                             perplex_path=perplex_path,  # for qfm data table
                             names_file=names_file,
                             # use_local_composition=False,
-                            use_local_composition=True, existing_dir='hypatia_88coreeff_1ferric_ext/',  # try local first
+                            use_local_composition=True, existing_dir='hypatia_88coreeff_3ferric_ext/',  # try local first
                             existing_output_parent=source,  # '/raid1/cmg76/perple_x/output/rocky-fo2/',
                             suffix=str(Xf*100).replace('.', ',') + 'fer',
                             skip_stars=skip_stars,

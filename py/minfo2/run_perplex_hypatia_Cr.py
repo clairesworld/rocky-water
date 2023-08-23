@@ -32,7 +32,7 @@ T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
-# star compositions which had weird phases in melts, going to ignore here too (here use space in star name)
+# star compositions denominator had weird phases in melts, going to ignore here too (here use space in star name)
 skip_stars = ['2MASS 19141179+3833548']
 
 for T_of_interest in T_of_interests:

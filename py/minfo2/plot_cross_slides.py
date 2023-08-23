@@ -11,10 +11,8 @@ import py.bulk_composition as bulk
 from matplotlib import rc
 import datetime
 from matplotlib.ticker import FormatStrFormatter, PercentFormatter, FuncFormatter
-from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import cmcrameri
-
 
 today = str(datetime.date.today())
 # rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
@@ -22,13 +20,13 @@ rc('text', usetex=True)
 
 """ make cross plot of oxides / elements"""
 
+
 def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='logfo2',
                   output_parent_path=fo2plt.output_parent_px, output_parent_path_melts=fo2plt.output_parent_mlt_earth,
                   fig=None, axes=[], fformat='.png', ax_histy=None, nbins=None, x_str_format=None,
                   ylim=(-11.5, -7), model='melts', ylabel=r'log($f_{{\rm O}_2}$)', xlim=None, xlabels=None,
                   labelsize=16, ticksize=14, save=True, fname=None, z_name=None, fig_path=fo2plt.figpath,
-                  make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False,
-                  **sc_kwargs):
+                  make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False, **sc_kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
     components can be bulk oxides or mineral phase proportion """
 
@@ -37,7 +35,7 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
     if xlabels is None:
         xlabels = components
     if x_str_format is None:
-        x_str_format = ['%.1f'] * len(components)
+        x_str_format = ['%.1f']*len(components)
 
     # setup gridspec
     ncols = len(components)
@@ -48,9 +46,6 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                               wspace=0.05)
         [axes.append(fig.add_subplot(gs[0, ii])) for ii in range(ncols)]
 
-    all_x = []
-    all_y = []
-    all_names = []
     for ii in range(ncols):
         axes[ii].set_xlabel(xlabels[ii], fontsize=labelsize)
         axes[ii].tick_params(axis='both', labelsize=ticksize)
@@ -61,9 +56,6 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
             axes[ii].set_xlim(xlim[ii])
         if ii > 0:
             axes[ii].set_yticks([])
-        all_x.append([])
-        all_y.append([])
-        all_names.append([])
     axes[0].set_ylabel(ylabel, fontsize=labelsize)
 
     # get directory names in folder
@@ -108,8 +100,8 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                             if component in dat.wt_oxides.keys():
                                 x = dat.wt_oxides[component]
                             # search for component in phase comp
-                            elif component in row.index:
-                                x = row[component]
+                            elif 'X_' + component in row.index:
+                                x = row['X_' + component]
                             # maybe ratio with H
                             elif '/H' in component:
                                 try:
@@ -134,19 +126,6 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                             # maybe it's an element ratio
                             elif '/' in component:
                                 x = bulk.get_element_ratio(component, dat.wt_oxides)
-
-                            elif 'X_Fe3' in component:
-                                # maybe not loaded
-                                if (p_of_interest == 4) and model == 'perplex':
-                                    pprime = 3.9  # correct for fact u didnt run px at 4 gpa lol
-                                else:
-                                    pprime = p_of_interest
-                                x = dat.get_phase_composition_dict(p_of_interest=pprime,
-                                                                   T_of_interest=T_of_interest,
-                                                                   component='Fe2O3',
-                                                                   phases=[component.split('_')[-1]],
-                                                                   to_absolute_abundance=False,
-                                                                   verbose=verbose)[component.split('_')[-1]]
                             else:
                                 if verbose:
                                     print(name, ':', component, 'not found in', dat.wt_oxides.keys(), 'or', row.index)
@@ -155,12 +134,9 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                                 y = row[y_name]
                                 # print(y)
                             except KeyError as e:
-                                if '/' in y_name:
-                                    y = bulk.get_element_ratio(y_name, dat.wt_oxides)
-                                else:
-                                    print(name, 'keyerror', e)
-                                    print(row, '\n\n')
-                                    y = np.nan
+                                print(name, 'keyerror', e)
+                                print(row, '\n\n')
+                                y = np.nan
                             if z_name:
                                 if z_name in dat.wt_oxides.keys():
                                     c = dat.wt_oxides[component]
@@ -181,28 +157,14 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                                                                        to_absolute_abundance=False,
                                                                        verbose=verbose)
                                     # print(z_name, 'd', d)
-                                    try:
-                                        c = d[phase]
-                                    except TypeError as e:
-                                        print(dat.name, model)
-                                        raise e
+                                    c = d[phase]
                                 else:
                                     raise NotImplementedError(z_name, 'not implemented for scatter colouring')
                                 # print('c', c, name)
                                 sc_kwargs.update({'c': c})
                                 # todo: need to check for vmin vmac cmap etc
                             ax.scatter(x, y, **sc_kwargs)
-                            all_x[ii].append(x)
-                            all_y[ii].append(y)
-                            all_names[ii].append(name)
-
-                            # sanity
-                            if (p_of_interest == 4) and (model == 'melts'):
-                                if name in (fit_exclude_4GPa_melts):
-                                    ax.scatter(x, y, c='g', s=markersize)
-
                             # print(dat.name, '(x, y) =', x, y)
-
                             # if once:  # for histogram, don't repeat run for all columns
                             if ii == 0:
                                 ys.append(y)
@@ -217,7 +179,7 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
     if make_hist:
         if ax_histy is None:
             ax_histy = fig.add_subplot(gs[0, -1], sharey=axes[-1])
-        ax_histy.hist(ys, range=ylim,
+        ax_histy.hist(ys,  range=ylim,
                       density=True, orientation='horizontal', color='0.5', edgecolor='k', linewidth=0.4, bins=nbins)
         ax_histy.set_xticks([])
         ax_histy.set_yticks([])
@@ -231,104 +193,11 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
     # plt.suptitle(str(p_of_interest) + ' GPa, ' + str(T) + ' K', fontsize=labelsize)
 
     if save:
-        fig.savefig(fig_path + fname + fformat, dpi=300)
+        fig.savefig(fig_path + fname + fformat)
     return fig, axes
 
 
-def xplot_p_grid(model, components, pressures):
-    ncols = len(components)
-    nrows = len(pressures)
-    fig = plt.figure(figsize=(ncols * 2.5, nrows * 2.5))
-    gs = fig.add_gridspec(nrows, ncols + 1, width_ratios=[10] * ncols + [1], height_ratios=[10] * nrows,
-                          left=0.1, right=0.9,
-                          wspace=0.05, hspace=0.05)
 
-    for jj, p_of_interest in enumerate(pressures):
-        if model == 'melts':
-            source = fo2plt.output_parent_mlt_earth
-            # ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa - for logfO2 axis
-            ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
-            # yticks = [-1, 0, 1, 2]
-            mec = 'xkcd:midnight blue'
-            title = r'$f_{{\rm O}_2}$ distribution with pMELTS'
-        elif model == 'perplex':
-            source = fo2plt.output_parent_px
-            # ylims = [(-13.5, -8.7), (-10, -6.5)]  # 1 GPa, 4 GPa - for logfO2 axis
-            ylims = [(-5.1, 0.5), (-4.4, 1.1)]  # delta QFM
-            mec = 'xkcd:midnight blue'
-            title = r'$f_{{\rm O}_2}$ distribution with Perple_X'
-
-        output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
-
-        axes = []  # create new ax list just for this row
-        [axes.append(fig.add_subplot(gs[jj, ii])) for ii in range(ncols)]
-        ax_histy = None
-        if make_hist:
-            ax_histy = fig.add_subplot(gs[jj, -1])  # for y histogram if making one
-
-        fig, axs = element_xplot(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
-                                 components=components, y_name=y_name, ylabel=ylabel,
-                                 output_parent_path=output_parent_path,
-                                 xlim=xlims, xlabels=x_labels, x_str_format=x_str_format,
-                                 ylim=ylims[jj],
-                                 edgecolors=mec, s=markersize, alpha=alpha,  # sc_kwargs
-                                 labelsize=labelsize, ticksize=ticksize,
-                                 save=False, fig=fig, axes=axes,
-                                 model=model, verbose=False,
-                                 z_name='X_Fe3_Opx', vmin=vmin, vmax=vmax, cmap=cmap,
-                                 ax_histy=ax_histy, make_hist=True, nbins=35,
-                                 exclude_silica=exclude_silica, fformat=fformat)
-
-        # print('ylim', axs[0].get_ylim())
-        if model == 'melts':
-            plt.setp(axs[0].get_yticklabels()[0], visible=False)
-            plt.setp(axs[0].get_yticklabels()[-1], visible=False)
-
-        axs[0] = cornertext(axs[0], str(p_of_interest) + ' GPa', size=labelsize, pos='top left')
-        axs[1].set_xticks([0.05, 0.1, 0.15])  # Al/Si
-        # axs[1].set_xticks([0.075, 0.125, 0.175])  # Fe/Si
-        if jj < nrows - 1:
-            for ax in axs:
-                ax.set_xticks([])
-                ax.set_xlabel(None)
-
-        if jj == 0:
-            # make colorbar top row
-            dum = np.linspace(vmin, vmax)
-            im = axs[-2].scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
-            cax = inset_axes(
-                axs[-2],
-                width="50%",  # width: 50% of parent_bbox width
-                height="5%",  # height: 5%
-                loc="lower right",
-                bbox_to_anchor=(1, 1.05, 1, 1),
-                bbox_transform=axs[-2].transAxes,
-                borderpad=0,
-            )
-
-            def percent_tick_fmt(x, pos):
-                return "{:.1f}".format(x) + r"\%"
-
-            cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format=FuncFormatter(percent_tick_fmt),
-                                ticks=[vmin, vmax])
-
-            cbar.ax.set_xlabel(r'[Fe$_2$O$_3$]$^{\rm opx}$', fontsize=ticksize + 1, labelpad=-1)
-            cbar.ax.xaxis.set_label_position('top')
-            # cax.text(-0.5, 0.5, r'Fe$_2$O$_3$ in opx', fontsize=ticksize, transform=cax.transAxes, )
-            cax.xaxis.set_ticks_position("top")
-            cbar.ax.tick_params(axis="x", labelsize=ticksize - 2, bottom=False, labelbottom=False, top=True,
-                                labeltop=True)
-            # ax.yaxis.set_major_formatter(PercentFormatter())
-
-    fig.suptitle(title, fontsize=labelsize, y=0.93)
-    fig.savefig(fo2plt.figpath + 'crossplot_xtra_' + model + today + fformat, bbox_inches='tight')
-    print('saved figure')
-
-    # plt.show()
-    # fig, *axs = dark_background(fig, axs)
-    # fig.savefig(fo2plt.figpath + 'crossplot_xtra_dark_' + model + today + fformat, bbox_inches='tight')
-
-    return fig
 
 
 """ 
@@ -341,13 +210,13 @@ Xf = 3
 T_of_interest = 1373
 exclude_silica = True
 y_name = 'delta_qfm'
-ylabel = r'$\Delta$FMQ'
-# model = 'melts'
+ylabel = r'$f_{{\rm O}_2}$ ($\Delta$FMQ)'
+model = 'melts'
 # model = 'perplex'
 # components = ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']
 # xlims = [(0.8, 1.65), (0.05, 0.2), (0, 0.18), (0.025, 0.13)]
 components = ['Mg/Si', 'Al/Si', 'Fe/H', 'O_total']
-pressures = (1, 4)
+pressures = [4]
 # xlims = [(0.75, 1.75), (0, 0.19), (-5.4, -3.9), (41.7, 47.3)]
 xlims = [(0.75, 1.75), (0, 0.19), (-5.4, -3.9), (43.1, 47.3)]
 x_labels = ['Mg/Si', 'Al/Si', r'[Fe/H]$_{\star}$', r'Total O$_{\rm rock}$ (wt.\%)']
@@ -360,75 +229,101 @@ alpha = 0.3
 vmin, vmax = 0, 0.8
 mec = 'xkcd:midnight blue'
 cmap = cmcrameri.cm.hawaii
-fformat = '.pdf'
+fformat = '.png'
 make_hist = True
-fit = False
 
-fig1 = xplot_p_grid('melts', components, pressures)
-fig2 = xplot_p_grid('perplex', components, pressures)
+ncols = len(components)
+fig = plt.figure(figsize=(ncols * 2.5, len(pressures) * 2.5))
+gs = fig.add_gridspec(len(pressures), ncols + 1, width_ratios=[10] * ncols + [1], height_ratios=[10] * len(pressures),
+                      left=0.1, right=0.9,
+                      wspace=0.05, hspace=0.05)
+
+for jj, p_of_interest in enumerate(pressures):
+    if model == 'melts':
+        source = fo2plt.output_parent_mlt_earth
+        # ylims = [(-11, -8.5), (-8, -5.3)]  # 1 GPa, 4 GPa - for logfO2 axis
+        ylims = [(-1.5, 2.5)]  # delta QFM
+        # yticks = [-1, 0, 1, 2]
+        mec = 'xkcd:midnight blue'
+        title = r'$f_{{\rm O}_2}$ distribution with pMELTS'
+    elif model == 'perplex':
+        source = fo2plt.output_parent_px
+        # ylims = [(-13.5, -8.7), (-10, -6.5)]  # 1 GPa, 4 GPa - for logfO2 axis
+        ylims = [(-4.4, 1.1)]  # delta QFM
+        mec = 'xkcd:midnight blue'
+        title = r'$f_{{\rm O}_2}$ distribution with Perple_X'
+
+    output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
+
+    axes = []  # create new ax list just for this row
+    [axes.append(fig.add_subplot(gs[jj, ii])) for ii in range(ncols)]
+    ax_histy = None
+    if make_hist:
+        ax_histy = fig.add_subplot(gs[jj, -1])  # for y histogram if making one
+
+    fig, axs = element_xplot(p_of_interest=p_of_interest, T_of_interest=T_of_interest,
+                             components=components, y_name=y_name, ylabel=ylabel,
+                             output_parent_path=output_parent_path,
+                             xlim=xlims, xlabels=x_labels, x_str_format=x_str_format,
+                             ylim=ylims[jj],
+                             edgecolors=mec, s=markersize, alpha=alpha,   # sc_kwargs
+                             labelsize=labelsize, ticksize=ticksize,
+                             save=False, fig=fig, axes=axes,
+                             model=model, verbose=False,
+                             z_name='X_Fe3_Opx', vmin=vmin, vmax=vmax, cmap=cmap,
+                             ax_histy=ax_histy, make_hist=True, nbins=35,
+                             exclude_silica=exclude_silica, fformat=fformat)
+
+    # print('ylim', axs[0].get_ylim())
+    if model == 'melts':
+        plt.setp(axs[0].get_yticklabels()[0], visible=False)
+        plt.setp(axs[0].get_yticklabels()[-1], visible=False)
+
+    axs[0] = cornertext(axs[0], str(p_of_interest) + ' GPa', size=labelsize, pos='top left', c='xkcd:off white')
+    axs[1].set_xticks([0.05, 0.1, 0.15])  # Al/Si
+    # axs[1].set_xticks([0.075, 0.125, 0.175])  # Fe/Si
+    if jj == 0:
+    #     for ax in axs:
+    #         ax.set_xticks([])
+    #         ax.set_xlabel(None)
+
+        # make colorbar top row
+        dum = np.linspace(vmin, vmax)
+        im = axs[-2].scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
+        cax = inset_axes(
+            axs[-2],
+            width="50%",  # width: 50% of parent_bbox width
+            height="5%",  # height: 5%
+            loc="lower right",
+            bbox_to_anchor=(1, 1.05, 1, 1),
+            bbox_transform=axs[-2].transAxes,
+            borderpad=0,
+        )
 
 
+        def percent_tick_fmt(x, pos):
+            return "{:.1f}".format(x) + r"\%"
+
+        cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format=FuncFormatter(percent_tick_fmt),
+                            ticks=[vmin, vmax])
+
+        cbar.ax.set_xlabel(r'[Fe$_2$O$_3$]$^{\rm opx}$', fontsize=ticksize+1, labelpad=-1)
+        cbar.ax.xaxis.set_label_position('top')
+        # cax.text(-0.5, 0.5, r'Fe$_2$O$_3$ in opx', fontsize=ticksize, transform=cax.transAxes, )
+        cax.xaxis.set_ticks_position("top")
+        cbar.ax.tick_params(axis="x", labelsize=ticksize-2, bottom=False, labelbottom=False, top=True, labeltop=True)
+        # ax.yaxis.set_major_formatter(PercentFormatter())
+
+
+
+fig.suptitle(title, fontsize=labelsize, y=0.99, c='xkcd:off white')
+
+fig, *axs = dark_background(fig, list(axs) + [cbar.ax, ax_histy])
+fig.savefig(fo2plt.figpath + 'crossplot_xtra_dark_' + model + today + fformat, bbox_inches='tight', dpi=300)
 # plt.show()
 
 
-""" other phase abundances """
-
-# if p_of_interest == 1:
-#     ylim = (-14, -9)
-#     phcomps = ['Ol', 'Opx', 'Cpx', 'Sp']
-# elif p_of_interest == 4:
-#     ylim = (-11.5, -7)
-#     phcomps = ['Ol', 'Opx', 'Cpx', 'Gt']
-# if not exclude_silica:
-#     phcomps.append('q')
-# fo2plt.element_xplot(p_of_interest=p_of_interest, components=phcomps,
-#                      output_parent_path=output_parent_path,
-#                      ylim=ylim, linec='k', labelsize=16, save=True, fname='crossplot_phases_' + str(p_of_interest),
-#                      model=model, verbose=True,
-#                      exclude_silica=exclude_silica)
 
 
-# """ test Al """
-# core_eff = 88
-# Xf = 3
-# T_of_interest = 1373
-# p_of_interest = 1
-# # model = 'melts'
-# model = 'perplex'
-# components = ['X_Sp', 'X_Ol', 'X_Opx', 'X_Fe3_Opx', 'X_Fe3_Cpx', 'X_Fe3_Sp']
-#
-# if model == 'melts':
-#     source = fo2plt.output_parent_mlt_earth
-#     if p_of_interest == 1:
-#         xlim = [(0, 7), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (1, 5)]
-#     elif p_of_interest == 4:
-#         xlim = [(0, 20), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (1, 5)]
-# elif model == 'perplex':
-#     source = fo2plt.output_parent_px
-#     if p_of_interest == 1:
-#         xlim = [(0, 7), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (1, 5)]
-#     elif p_of_interest == 4:
-#         xlim = [(0, 20), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (0, 1)]
-#
-# output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
-#
-# fig, axes = element_xplot(p_of_interest=p_of_interest, components=components, T_of_interest=T_of_interest,
-#               xlim=xlim,
-#               y_name='Al/Si', ylabel='Al/Si',
-#               output_parent_path=output_parent_path,
-#               ylim=(0, 0.2),
-#               labelsize=16, save=True, fname='crossplot_Al_' + str(p_of_interest) + 'GPa_' + model,
-#               edgecolors='xkcd:midnight blue',
-#               model=model, exclude_silica=True)
-#
-#
-# plt.show()
-#
-# element_xplot(p_of_interest=4, components=components,
-#               xlim=[(30, 45), (43, 57), (1, 5), (3, 10), (1, 5)],
-#               y_name='X_Opx', ylabel='Opx abundance (wt%)',
-#               output_parent_path=output_parent_path,
-#               ylim=(0, 80),
-#               linec='k', labelsize=16, save=True, fname='crossplot_opx_' + str(p_of_interest),
-#               model='melts', verbose=False,
-#               exclude_silica=exclude_silica)
+
+

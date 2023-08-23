@@ -85,7 +85,7 @@ class PerplexFugacityData(px.PerplexData):
         s = self.name + build_file_end
         return s
 
-    def command_werami_mu(self, points_file=px.perplex_path_default + 'Earth_1600K_adiabat.dat', build_file_end='',
+    def command_werami_mu_grid(self, points_file=px.perplex_path_default + 'Earth_1600K_adiabat.dat', build_file_end='',
                           **kwargs):
         """ string for werami command file to get chemical potentials """
 
@@ -94,6 +94,19 @@ class PerplexFugacityData(px.PerplexData):
         s = s + '2\n'  # Path will be described by:  2 - a file containing a list of x-y points
         s = s + points_file + '\n'  # Enter the file name:
         s = s + '1\n'  # every nth plot will be plotted, enter n:
+        s = s + '23\n'  # Select a property: 23 - Dependent potentials (J/mol, bar, K)
+        s = s + str(self.oxide_list.index('O2') + 1) + '\n'  # Enter a component:  [here index starts at 1]
+        s = s + '0\n'  # Select an additional property or enter 0 to finish:
+        s = s + '0\n'  # Select operational mode: 0 - EXIT
+        s = s + 'EOF'
+        return s
+
+    def command_werami_mu(self, points_file=px.perplex_path_default + 'Earth_1600K_adiabat.dat', build_file_end='',
+                          **kwargs):
+        """ string for werami command file to get chemical potentials """
+
+        s = self.name + build_file_end + '\n'  # Enter the project name (the name assigned in BUILD)
+        s = s + '3\n'  # Select operational mode: 3 - properties along a 1d path
         s = s + '23\n'  # Select a property: 23 - Dependent potentials (J/mol, bar, K)
         s = s + str(self.oxide_list.index('O2') + 1) + '\n'  # Enter a component:  [here index starts at 1]
         s = s + '0\n'  # Select an additional property or enter 0 to finish:
@@ -232,7 +245,7 @@ class PerplexFugacityData(px.PerplexData):
 
     def ferric_composition_calc(self, T_iso=None, points_file=None, p_min=1000, p_max=40000, verbose=True,
                                 build_file_end='', **kwargs):
-        # decide which T, p points to calculate
+        # decide denominator T, p points to calculate
         if T_iso is not None:
             if points_file is not None:
                 raise Exception('ERROR: cannot take both points_file and isotherm, set one of these to None')
@@ -387,10 +400,13 @@ class PerplexFugacityData(px.PerplexData):
 
     def fo2_calc(self, p_min=1000, p_max=40000, T_min=1600, T_max=1603, T_iso=None, verbose=True, build_file_end='',
                  vertex_data='hp622ver', run=True, compare_buffer=None, do_system_comp=False, points_file=None,
-                 mu0_file=None, save=True, excluded_phases=[], run_vertex='auto', **kwargs):
+                 mu0_file=None, save=True, excluded_phases=[], run_vertex='auto', run_on_grid=True, **kwargs):
         """
         Parameters
         ----------
+        excluded_phases :
+        run_vertex :
+        run_on_grid :
         p_min :
         p_max :
         T_min :
@@ -416,10 +432,10 @@ class PerplexFugacityData(px.PerplexData):
         # if verbose:
         #     print(self.__dict__)
 
-        # decide which T, p points to calculate
+        # decide denominator T, p points to calculate
         if T_iso is not None:
             if points_file is not None:
-                raise Exception('ERROR: cannot take both points_file and isotherm, set one of these to None')
+                print('WARNING: input points_file directly, must match T_iso')
             try:
                 # run werami over an isothermal section
                 points_file = self.write_isothermal_points(T0=T_iso, p_min=p_min, p_max=p_max, delta_p=1000)
@@ -430,12 +446,23 @@ class PerplexFugacityData(px.PerplexData):
             raise NotImplementedError('ERROR: need either input points_file or input isotherm')
 
         if run:
+            if run_on_grid:
+                calculation_type = '5'  # '5' for grid
+                vertex_command_text_fn = self.command_vertex_grid
+                werami_command_comp_text_fn = self.command_werami_composition_grid
+                werami_command_mu_text_fn = self.command_werami_mu_grid
+            else:
+                calculation_type = '10'  # from coordinate file
+                vertex_command_text_fn = self.command_vertex  # defined in perplexdata.py
+                werami_command_comp_text_fn = self.command_werami_composition  # defined in perplexdata.py
+                werami_command_mu_text_fn = self.command_werami_mu
             # create build file
-            self.write_build(title='Planet', p_min=p_min, p_max=p_max,  # adiabat_file=points_file,
+            self.write_build(title='Planet', p_min=p_min, p_max=p_max,
+                             adiabat_file=points_file,  # only used if run_on_grid=False
                              verbose=verbose, overwrite=True, vertex_data=vertex_data, option_file='perplex_option_fo2',
                              excluded_phases=excluded_phases,  # melt phases
                              use_solutions=True, build_file_end=build_file_end,
-                             calculation_type='5',  # '5' for grid
+                             calculation_type=calculation_type,
                              T_min=T_min, T_max=T_max, **kwargs)
             # todo: re-writing build file unnecessarily in perplex wd if it already exists in output folder
 
@@ -443,8 +470,8 @@ class PerplexFugacityData(px.PerplexData):
             # strategy is to run each case once in vertex over grid and keep all the files
             print('\nCalculating mu...')
             self.run_perplex(werami_command_end='_werami_command_mu.txt',
-                             werami_command_text_fn=self.command_werami_mu,
-                             vertex_command_text_fn=self.command_vertex_grid,
+                             werami_command_text_fn=werami_command_mu_text_fn,
+                             vertex_command_text_fn=vertex_command_text_fn,
                              output_file_end='_mu.tab', build_file_end=build_file_end, verbose=verbose,
                              clean=True,  ## store_vertex_output means files don't get deleited
                              werami_kwargs={'points_file': points_file}, run_vertex=run_vertex,
@@ -454,8 +481,8 @@ class PerplexFugacityData(px.PerplexData):
             if do_system_comp:
                 print('\nCalculating composition')
                 self.run_perplex(werami_command_end='_werami_command_comp.txt',
-                                 werami_command_text_fn=self.command_werami_composition_grid,
-                                 vertex_command_text_fn=self.command_vertex_grid,
+                                 werami_command_text_fn=werami_command_comp_text_fn,
+                                 vertex_command_text_fn=vertex_command_text_fn,
                                  output_file_end='_comp.tab', build_file_end=build_file_end, verbose=verbose,
                                  clean=True, werami_kwargs={'points_file': points_file}, run_vertex=False,
                                  store_vertex_output=True,
@@ -521,6 +548,7 @@ class PerplexFugacityData(px.PerplexData):
         if save:
             df_save = self.data.loc[:, ~self.data.columns.duplicated()].copy()
             df_save.to_csv(self.output_path + self.name + '_results' + str(int(T_iso)) + '.csv', sep="\t")
+            print('>>> saved to', self.output_path + self.name + '_results' + str(int(T_iso)) + '.csv')
 
         # store werami/frendly i/o files - note must be after reading-in is finished
         for fend in ['_WERAMI_options.txt', '_VERTEX_options.txt', '_mu.tab', '_comp.tab', '_standard.tab', '.dat']:
@@ -927,7 +955,7 @@ def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None,
 def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None, planet_kwargs={},
                         output_parent_path=output_parent_default, skip_existing=True, **kwargs):
     """
-    Go through cases which haven't finished, start in 1D - TODO
+    Go through cases denominator haven't finished, start in 1D - TODO
 
     Parameters
     ----------
@@ -966,7 +994,7 @@ def fo2_from_hypatia_1D(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=No
 
 
 def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_werami=True,
-                   do_ferric_comp=True, do_mu_comp=False, do_system_comp=False,
+                   do_ferric_comp=True,
                    p_min=10000, p_max=40000, skip_names=[], start_after=None,
                    rewrite_options=True, names=None, verbose=False, **kwargs):
     # perform fo2 calculations on local (existing) vertex data in entire directory
@@ -994,6 +1022,8 @@ def fo2_from_local(output_parent_path=output_parent_default, T_iso=1373, run_wer
             continue
         elif (names is not None) and name not in names:
             continue
+
+        print('\n\n\n-------------------------------\nStarting fo2 processing:', name)
 
         try:
             d = read_dict_from_build(name=name, output_parent_path=output_parent_path, verbose=False)
@@ -1026,6 +1056,8 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
         if star is not None and test_oxides is not None:
             raise NotImplementedError('Are you sure you want to input both test_oxides and star? Only need one.')
         planet_kwargs.update({'test_oxides': test_oxides, 'core_efficiency': core_efficiency})
+        if 'oxides' in kwargs:
+            planet_kwargs.update({'oxides': kwargs['oxides']})
         pl = rw.build_planet(name=name, star=star, get_saturation=False, solve_interior=False, verbose=verbose,
                              output_parent_path=output_parent_path, **planet_kwargs)
 

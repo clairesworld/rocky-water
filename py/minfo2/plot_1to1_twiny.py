@@ -31,7 +31,9 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None,
              title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10, dmm=True,
              c_dmm='r', dmm_pos='lower right', xlims=None, xticks=None,
              labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True,
-             x_scale=1, fig_path=fo2plt.figpath, xlabelpad=None, buffer_scale=None, p_of_interest=None, **kwargs):
+             x_scale=1, fig_path=fo2plt.figpath, xlabelpad=None, buffer_scale=None, p_of_interest=None,
+             x2label=r'$\Delta$FMQ',
+             fig=None, ax=None, **kwargs):
     # get matching names
 
     # if cmap and (not vmin or not vmax):
@@ -49,10 +51,17 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None,
     if zlabel is None:
         zlabel = z_var
 
-    fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+    if ax is None:
+        if buffer_scale:
+            fig, ax = plt.subplots(1, 1, figsize=(4, 4), layout='constrained')
+        else:
+            fig, ax = plt.subplots(1, 1, figsize=(4, 4), layout='constrained')
+
+    ax.axis('equal')
     ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=xlabelpad)
     ax.set_ylabel(ylabel, fontsize=labelsize)
     # ax.set_title(title, fontsize=labelsize)
+
     ax = cornertext(ax, title, pos='top left', size=labelsize)
 
     # parse X_ferric
@@ -172,7 +181,7 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None,
         ax.scatter(x, y, c=eval('mdat.' + z_var), cmap=cmap, vmin=vmin, vmax=vmax, edgecolors=c_dmm, marker='o', s=s,
                    linewidth=2)
         if dmm_pos == 'upper right':
-            posx, posy = (x+0.07, y+0.25)
+            posx, posy = (x + 0.07, y + 0.25)
             # va, ha = 'top', 'left'
         elif dmm_pos == 'lower right':
             posx, posy = (x + 0.07, y - 0.07)
@@ -196,19 +205,95 @@ def fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None,
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
     ax.xaxis.set_minor_locator(AutoMinorLocator())
     ax.yaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
+
+    if buffer_scale:
+        # add second x axis
+
+        def to_x2(X):
+            if (p_of_interest == 1) and x_var == 'logfo2_1GPa':
+                V = X - -8.905608075
+            elif (p_of_interest == 4) and x_var == 'logfo2_4GPa':
+                V = X - -6.753763
+            else:
+                raise NotImplementedError()
+            return V
+
+        def to_x(X):
+            if (p_of_interest == 1) and x_var == 'logfo2_1GPa':
+                V = X + -8.905608075
+            elif (p_of_interest == 4) and x_var == 'logfo2_4GPa':
+                V = X + -6.753763
+            else:
+                raise NotImplementedError()
+            return V
+
+        secax = ax.secondary_xaxis('top', functions=(to_x2, to_x))
+        secax.set_xlabel(x2label, fontsize=labelsize, labelpad=xlabelpad)
+        secax.xaxis.set_major_formatter(FormatStrFormatter('%.0f'))
+        secax.xaxis.set_minor_locator(AutoMinorLocator())
+        secax.tick_params(axis='x', labelsize=ticksize)
 
     # make cbar
     if z_var is not None:
         # make dummy scatter with no alpha
         sc = ax.scatter(df.x1, df.x2, c=c, cmap=cmap, vmin=vmin, vmax=vmax, s=0, alpha=1)
-        cbar = colourbar(sc, ax=ax, ticksize=ticksize, format="%.1f"
-                         )
+
+        cbar = colourbar(sc, ax=ax, ticksize=ticksize, format="%.1f")
         cbar.ax.set_ylabel('Mg/Si', rotation=270, fontsize=labelsize, labelpad=20)
         cbar.ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))  # to get right font
+
     if save:
+        # if buffer_scale and z_var:
+        #     # if you want to save the figure, trigger the event manually
+        #     fig.canvas.draw()
+        #     resize()
         fig.savefig(fig_path + fname + ffmt, bbox_inches='tight')
     return fig, ax
+
+
+def fo2_1to1_subplot(dir1, dir2, x_var='logfo2_1GPa', T_iso=1373, z_var=None, cmap=None, c='k', vmin=None, vmax=None,
+                    xlabel=None, ylabel=None, alpha=0.5, mec=None,
+                    title=None, s=20, marker='o', model1=None, model2=None, verbose=False, zlabel=None, ticksize=10,
+                    dmm=True,
+                    c_dmm='r', dmm_pos='lower right', xlims=None, xticks=None,
+                    labelsize=16, legsize=12, save=True, ffmt='.pdf', fname=None, exclude_names=[], exclude_silica=True,
+                    x_scale=1, fig_path=fo2plt.figpath, xlabelpad=None, buffer_scale=None, p_of_interest=None,
+                    **kwargs):
+    """ vertically stacked pressures, 1 cbar """
+
+    fig, axes = plt.subplots(2, 1, figsize=(3.5, 7), layout='constrained')
+
+    # 1 GPa
+    fig, axes[0] = fo2_1to1(dir1, dir2,
+                            x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap, vmin=vmin, vmax=vmax,
+                            xlabel='',
+                            ylabel=ylabel, alpha=alpha, mec=mec, title='1 GPa', s=markersize, marker='o',
+                            model1='melts',
+                            model2='perplex', zlabel=zlabel, c_dmm=c_dmm, dmm_pos='lower right',
+                            xlims=(-13.2, -9), xticks=(-13, -12, -11, -10, -9), x_scale=1,
+                            labelsize=labelsize, legsize=legsize, xlabelpad=7,
+                            buffer_scale=True, p_of_interest=1,
+                            save=False, x2label=r'$\Delta$FMQ, pMELTS',
+                            exclude_names=[], exclude_silica=True,
+                            fig=fig, ax=axes[0])
+
+    # 4 GPa
+    fig, axes[1] = fo2_1to1(dir1, dir2,
+                            x_var='logfo2_4GPa', z_var='mgsi', cmap=cmap, vmin=vmin, vmax=vmax,
+                            xlabel=xlabel,
+                            ylabel=ylabel, alpha=alpha, mec=mec, title='4 GPa', s=markersize, marker='o',
+                            model1='melts',
+                            model2='perplex', zlabel=zlabel, c_dmm=c_dmm, dmm_pos='upper right',
+                            xlims=(-11, -6), xticks=(-11, -10, -9, -8, -7, -6), x_scale=1,
+                            labelsize=labelsize, legsize=legsize, xlabelpad=7,
+                            buffer_scale=True, x2label='',
+                            p_of_interest=4,
+                            save=False,  exclude_names=[],
+                            exclude_silica=True,
+                            fig=fig, ax=axes[1])
+
+    fig.savefig(fig_path + 'logfo2_mdls_pressures' + ffmt, bbox_inches='tight')
+    return fig, axes
 
 
 markersize = 40
@@ -224,28 +309,31 @@ ylabel = r'log($f_{{\rm O}_2}$), Perple\_X'
 zlabel = 'Mg/Si'
 ffmt = '.pdf'
 
-# 1 GPa
-fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap, vmin=vmin, vmax=vmax, xlabel=xlabel,
+fig, axes = fo2_1to1_subplot(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap, vmin=vmin, vmax=vmax, xlabel=xlabel,
                    ylabel=ylabel, alpha=alpha, mec=mec, title='1 GPa', s=markersize, marker='o', model1='melts',
                    model2='perplex', zlabel=zlabel, c_dmm=c_dmm, dmm_pos='lower right',
                    xlims=(-13.2, -9), xticks=(-13, -12, -11, -10, -9), x_scale=1,
                    labelsize=labelsize, legsize=legsize, xlabelpad=7, buffer_scale=True, p_of_interest=1,
-                   save=True, ffmt=ffmt, fname='logfo2_1GPa_mdls' + today,
+                   save=True, ffmt=ffmt,
                    exclude_names=[], exclude_silica=True)
 
+#
+#
+# # 1 GPa
+# fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_1GPa', z_var='mgsi', cmap=cmap, vmin=vmin, vmax=vmax, xlabel=xlabel,
+#                    ylabel=ylabel, alpha=alpha, mec=mec, title='1 GPa', s=markersize, marker='o', model1='melts',
+#                    model2='perplex', zlabel=zlabel, c_dmm=c_dmm, dmm_pos='lower right',
+#                    xlims=(-13.2, -9), xticks=(-13, -12, -11, -10, -9), x_scale=1,
+#                    labelsize=labelsize, legsize=legsize, xlabelpad=7, buffer_scale=True, p_of_interest=1,
+#                    save=True, ffmt=ffmt, fname='logfo2_1GPa_mdls' + today,
+#                    exclude_names=[], exclude_silica=True)
+#
 # # 4 GPa
 # fig, ax = fo2_1to1(dir1, dir2, x_var='logfo2_4GPa', z_var='mgsi', cmap=cmap, vmin=vmin, vmax=vmax, xlabel=xlabel,
 #                    ylabel=ylabel, alpha=alpha, mec=mec, title='4 GPa', s=markersize, marker='o', model1='melts',
 #                    model2='perplex', zlabel=zlabel, c_dmm=c_dmm, dmm_pos='upper right',
 #                    xlims=(-11, -6), xticks=(-11, -10, -9, -8, -7, -6), x_scale=1,
-#                    labelsize=labelsize, legsize=legsize,  xlabelpad=7, buffer_scale=True, p_of_interest=4,
-#                    save=True, ffmt=ffmt, fname='logfo2_4GPa_mdls' + today, exclude_names=[], exclude_silica=True )
-
-
+#                    labelsize=labelsize, legsize=legsize, xlabelpad=7, buffer_scale=True, p_of_interest=4,
+#                    save=True, ffmt=ffmt, fname='logfo2_4GPa_mdls' + today, exclude_names=[], exclude_silica=True)
 
 plt.show()
-
-
-def fo2_1o1_subplot(**kwargs):
-    """ vertically stacked pressures, 1 cbar """
-    # todo
