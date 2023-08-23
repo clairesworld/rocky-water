@@ -272,7 +272,7 @@ def build_multi_planets(loop_var_name, loop_var_vals, names=None, **kwargs):
 
 def get_run_dirs(output_path, prevent_blank_dir=True, verbose=False):
     try:
-        print('reading', output_path)
+        print('\nreading', output_path)
         subfolders = [f.path for f in os.scandir(output_path) if f.is_dir()]
     except FileNotFoundError:
         # directory doesn't exist

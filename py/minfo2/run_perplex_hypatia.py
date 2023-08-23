@@ -18,12 +18,16 @@ python3 py/minfo2/run_perplex_hypatia.py
 T_of_interests = [float(x) for x in input('Enter T_of_interest, separated by spaces (default 1373): ').split()]
 X_ferric = [float(x) for x in input('Enter X_ferric, separated by spaces (default 0.03): ').split()]
 core_eff = [float(x) for x in input('Enter core_eff, separated by spaces (default 0.88): ').split()]
+restart = input('Restart first loop from star (no spaces)?:')
+# sometimes you get build file not found errors, seems to be just an os problem copying files, restart
 if not T_of_interests:
     T_of_interests = [1373]
 if not X_ferric:
     X_ferric = [0.03]
 if not core_eff:
     core_eff = [0.88]
+if not restart:
+    restart = None
 
 perplex_path = '/raid1/cmg76/perple_x/'
 p_min, p_max = 1e4, 4e4
@@ -32,7 +36,7 @@ T_min, T_max = 1372.5, 1900.5  # endpoint can't equal T_of_interest
 oxide_list = ['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O']  #, 'Cr2O3']
 px_melt_phases = ['ctjL', 'dijL', 'enL', 'geik']
 
-# star compositions which had weird phases in melts, going to ignore here too (here use space in star name)
+# star compositions denominator had weird phases in melts, going to ignore here too (here use space in star name)
 skip_stars = ['2MASS 19141179+3833548']
 
 for T_of_interest in T_of_interests:
@@ -40,9 +44,6 @@ for T_of_interest in T_of_interests:
         for Xf in X_ferric:
             output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext/'
             output_parent_path = pf.output_parent_apollo + output_sub
-
-            # sometimes you get build file not found errors, seems to be just an os problem copying files, restart
-            restart = 'HIP 49699'
 
             # only need to run this once to get build files (i.e., bulk composition) and vertex output files
             # note this will first download the stellar composisions for the whole sample and then run perple_x

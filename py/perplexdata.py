@@ -43,6 +43,8 @@ class PerplexData:
         self.perplex_path = perplex_path
         self.output_path = output_parent_path + self.name + '/'
 
+        print('oxides', oxides)
+
         # ensure output_parent_px is a valid directory, create directory if it doesn't exist yet
         # if not os.path.isdir(self.output_path):
         #     raise Exception(self.output_path, 'is not a valid directory with input parameter output_parent_path',
@@ -91,6 +93,7 @@ class PerplexData:
 
     def load_composition_px(self, build_file_end='', fillnan=True, check_consistent=True, verbose=True,
                             save=True, interp_missing=True, **kwargs):
+        # file = self.perplex_path + self.name + build_file_end + '_comp.tab'  --> OLD
         file = self.output_path + self.name + build_file_end + '_comp.tab'
 
         try:
@@ -156,7 +159,9 @@ class PerplexData:
 
     def load_adiabat(self, build_file_end='', fillnan=True, check_consistent=True, fix_nan=True, run_bad=False,
                      store=False, head=False, rho_m_av=None, **kwargs):
-        file = self.output_path + self.name + build_file_end + '_thermo.tab'
+
+        #file = self.perplex_path + self.name + build_file_end + '_thermo.tab'  --> OLD
+        file = self.output_path + self.name + build_file_end + '_thermo.tab'  # should have already moved to output folder (inefficient?)
 
         df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
                          # dtype=np.float64
@@ -337,7 +342,10 @@ class PerplexData:
         # print('pressure at um base', self.data['P(bar)'][i_um_base], 'bar')
         self.mass_um = np.sum(self.df_all['mass(kg)'][:i_um_base + 1])
 
-        self.mass_h2o_um = total_water_mass(self.df_all, i_min=0, i_max=i_um_base)
+        try:
+            self.mass_h2o_um = total_water_mass(self.df_all, i_min=0, i_max=i_um_base)
+        except KeyError:
+            pass
         return self.mass_um
 
     def star_to_oxide(self, **kwargs):
@@ -741,7 +749,7 @@ class PerplexData:
                 n = 1200 #500
             elif M / M_E <= 2.5:
                 n = 1200
-            elif M / M_E <= 5:
+            else:
                 n = 1600
 
         if profile == 'warm':
@@ -907,7 +915,7 @@ class PerplexData:
             for i in range(2, n + 1):  # goes to i = n-1
                 mass[n - i] = mass[n - i + 1] - M / n  # such that it never goes to 0 (would cause numerical errors)
             radius[0] = 0  #np.cbrt(mass[0] / density[0] / (4 * np.pi / 3))
-            print('radius[0]', radius)
+            # print('radius[0]', radius[0])
             for i in range(1, n):
                 dmass = mass[i] - mass[i - 1]
                 radius[i] = np.cbrt((dmass / density[i] / (4 * np.pi / 3)) + radius[i - 1] ** 3)
@@ -965,6 +973,10 @@ class PerplexData:
                 print('WARNING: reached maximum iterations for interior solver')
             # end while
 
+        # delete temporary iteration files
+        for f in glob.glob(self.output_path + "*temp*.tab"):
+            os.remove(f)
+
         # ultimately only need adiabat for mantle - write this to file
         self.write_adiabat(p_mantle_compute, T_mantle_compute, file_end='_adiabat', **kwargs)
 
@@ -972,8 +984,8 @@ class PerplexData:
         self.radius = radius
         self.density = density
         self.gravity = gravity
-        print('gravity stored', self.gravity, 'len', len(self.gravity))
-        print('radius stored', self.radius, 'len', len(self.radius))
+        # print('gravity stored', self.gravity, 'len', len(self.gravity))
+        # print('radius stored', self.radius, 'len', len(self.radius))
         self.temperature = temperature
         self.pressure = pressure
         self.alpha = alpha

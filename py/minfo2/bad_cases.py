@@ -28,8 +28,12 @@ HIP 13291 star no Ti
 1M_80Ceff_2MASS04215269+5749018_999K_3,0fer/10000 bar has rhm-oxide, removing
 1M_80Ceff_2MASS19064452+4705535_999K_3,0fer/10000bar/ has rhm-oxide, removing
 1M_85Ceff_2MASS04215269+5749018_999K_3,0fer/10000bar/ has rhm-oxide, removing
+1M_88Ceff_2MASS04215269+5749018_999K_9,0fer/10000bar/ has rhm-oxide, removing
+1M_88Ceff_2MASS19064452+4705535_999K_9,0fer/10000bar/ has rhm-oxide, removing
+
 
 1M_99Ceff_2MASS19394601-2544539_999K_3,0fer/40000bar/ has corundum, removing
+
 
 Spinel missing (Al is in cpx) - 480 cases 88/3 ?!?!?
 

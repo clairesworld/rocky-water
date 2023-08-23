@@ -83,7 +83,7 @@ Tp = 1600
 #
 
 # earth.get_garnet_composition()
-# plotpx.single_composition(earth, which='pressure', modality_type='water', comp_stacked=True, save=True,
+# plotpx.single_composition(earth, denominator='pressure', modality_type='water', comp_stacked=True, save=True,
 #                           show=True, cmap='tab20', labelsize=16, plot_phases_order=None, p_max=None, make_legend=True)
 # plotpx.single_phase_subfig(earth, 'c_h2o', var_scale=1e6, var_log=True, vertical_pressure=False,
 #                                            title=earth.name,
@@ -125,7 +125,7 @@ Tp = 1600
 #     # print('p_mtz', dat.p_mtz * 1e-9, 'GPa')
 #     # print('pmax', dat.pressure[dat.i_cmb + 1] * 1e-9, 'GPa', 'Tmax', dat.temperature[dat.i_cmb + 1], 'K')
 #     m_w_tot = dat.mass_h2o_total / p.TO
-#     # plotpx.single_composition(dat, which='pressure',# modality_type='water',
+#     # plotpx.single_composition(dat, denominator='pressure',# modality_type='water',
 #     #                    xlabel=None, ylabel=None, cmap='tab20', labelsize=16,
 #     #                           # plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv', 'qtz', 'coes',
 #     #                           #                                  'st', 'wus', 'capv', 'ppv', 'fapv']
@@ -163,7 +163,7 @@ Tp = 1600
 #                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
 #                         )
 #     m_w_tot = dat.mass_h2o_total / p.TO
-#     # plotpx.single_composition(dat, which='pressure', #modality_type='water',
+#     # plotpx.single_composition(dat, denominator='pressure', #modality_type='water',
 #     #                    xlabel=None, ylabel=None, cmap='tab20', labelsize=16, p_max=35, title=str(dat.mgsi),
 #     #                           plot_phases_order=['gt', 'cpx', 'opx','hpcpx',  'ol', 'wad', 'ring','pv',
 #     #                                              # 'qtz', 'coes','st', 'seif',
@@ -215,11 +215,11 @@ Tp = 1600
 """ upper mantle water mass - histograms """
 
 
-# def hist_saturation_subfig(which='um', masses=None, xlim='default', bins=None, labelsize=14, cmap='rainbow', save=True,
+# def hist_saturation_subfig(denominator='um', masses=None, xlim='default', bins=None, labelsize=14, cmap='rainbow', save=True,
 #                            show=True, earth=None, **kwargs):
 #     if masses is None:
 #         masses = [0.1, 0.5, 1, 2, 3, 4]
-#     if which == 'um':
+#     if denominator == 'um':
 #         if xlim == 'default':
 #             xlim = (0.1, 4.0)
 #         key = 'mass_h2o_um'
@@ -227,7 +227,7 @@ Tp = 1600
 #         data_label = None
 #         ls = '-'
 #         fname = 'histsubplot-Mp_w_um'
-#     elif which == 'total':
+#     elif denominator == 'total':
 #         if xlim == 'default':
 #             xlim = (0.1, 8)
 #         key = 'mass_h2o_total'
@@ -235,7 +235,7 @@ Tp = 1600
 #         data_label = None
 #         ls = '-'
 #         fname = 'histsubplot-Mp_w_tot'
-#     elif which == 'both':
+#     elif denominator == 'both':
 #         if xlim == 'default':
 #             xlim = (0.1, 8)
 #         key = ['mass_h2o_um', 'mass_h2o_total']
@@ -280,7 +280,7 @@ Tp = 1600
 #         plt.show()
 
 
-# hist_saturation_subfig(which='um', masses=[0.1], xlim=(0, 1),
+# hist_saturation_subfig(denominator='um', masses=[0.1], xlim=(0, 1),
 #                        bins=100, showmedian=True, show=False)
 
 def find_sd(nsd, dir_name, prop, dats=None):

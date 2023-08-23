@@ -40,7 +40,7 @@ def figure_3(num=9, save=True):
 
     ## check out some compositional profiles
     # for ii in [0, -1]:
-    #     dat_list[ii].plot_composition(which='pressure', fig_path=px.fig_path, save=True)
+    #     dat_list[ii].plot_composition(denominator='pressure', fig_path=px.fig_path, save=True)
 
 
 def figure_4(Tp, labelsize=12, cmap='tab20', plot_composition=True, save=True,

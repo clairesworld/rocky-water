@@ -408,9 +408,9 @@ class MeltsFugacityData:
                     # retrieve phases
                     self.read_melts_phases(which='mass', T_of_interest=T_of_interest, verbose=verbose, **kwargs)
 
-                    if verbose:
-                        print(self.name, 'finished reading')
-                        print(self.data.head())
+                    # if verbose:
+                    #     print(self.name, 'finished reading')
+                    #     print(self.data.head())
                 except SettingWithCopyError:
                     print('handling..')
                     frameinfo = getframeinfo(currentframe())
@@ -660,6 +660,9 @@ class MeltsFugacityData:
                 # pressure not found
                 print(p_of_interest, 'bar not found')
                 raise e
+            except AttributeError:
+                # array?
+                idx = np.abs(self.pressures_of_interest - p_of_interest).argmin()
 
         wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
         try:
@@ -735,8 +738,16 @@ class MeltsFugacityData:
             return None
 
         # initialise d
-        wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
+        try:
+            wt_pt_dict = {map_to_px_phase[ph]: None for ph in phases}
+        except KeyError:
+            wt_pt_dict = {ph: None for ph in phases}
         for phase in phases:
+            try:
+                phase0 = map_to_px_phase[phase]
+            except KeyError:
+                phase0 = phase
+
             if to_absolute_abundance:
                 # get phase mass as well so you can normalise to total quantity of phase
                 try:
@@ -757,16 +768,16 @@ class MeltsFugacityData:
 
             # extract column of phase component mass
             if component == 'Fe2O3':
-                col = 'X_Fe3_' + map_to_px_phase[phase]
+                col = 'X_Fe3_' + phase0
             else:
-                raise NotImplementedError('Not Implemented: component', component, 'in phase', phase, 'not processed in results csv')
+                raise NotImplementedError('Not Implemented: component', component, 'in phase', phase0, 'not processed in results csv')
             try:
-                wt_pt_dict[map_to_px_phase[phase]] = self.data.loc[idx, col] * mass_ph
+                wt_pt_dict[phase0] = self.data.loc[idx, col] * mass_ph
             except KeyError as e:
                 if verbose and not to_absolute_abundance:
                     print('\n', self.name, ': column', e, 'not found (p =', p_of_interest, ')')
                     print('           ', list(self.data.columns)[3:])
-                wt_pt_dict[map_to_px_phase[phase]] = 0
+                wt_pt_dict[phase0] = 0
 
         return wt_pt_dict
 
@@ -819,12 +830,14 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
         # load results csv
         if load_results_csv:
             try:
+                # print('T_final in init_from_results()', T_final)
                 dat.data = pd.read_csv(dat.output_path + name + '_results' + str(int(T_final)) + '.csv', sep='\t')
-                dat.read_fo2_results(verbose=verbose, **kwargs)
+                dat.read_fo2_results(verbose=verbose, T_of_interest=T_final, **kwargs)
 
                 # make sure results actually contains data (file may have been created with nans)
                 if dat.data['P(bar)'].isnull().all() or dat.data['T(K)'].isnull().all():
-                    print(name + '_results' + str(int(T_final)) + '.csv file is empty/nan (calculation failed?), skipped...')
+                    if verbose:
+                        print(name + '_results' + str(int(T_final)) + '.csv file is empty/nan (calculation failed?), skipped...')
                     return None
 
                 # update (e.g. if local folders with only 10000 bar copied)
@@ -834,7 +847,8 @@ def init_from_results(name, output_parent_path=output_parent_default, alphamelts
                 #     print('loaded df\n', dat.data.head())
 
             except FileNotFoundError:
-                print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped...')
+                if verbose:
+                    print(name + '_results' + str(int(T_final)) + '.csv file not found, skipped...')
                 return None
 
         return dat
@@ -936,7 +950,8 @@ def fo2_from_local(output_parent_path, num=-1, restart=None, names=None, T_of_in
     return bad
 
 
-def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True, **kwargs):
+def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True, exclude_silica=True,
+                          dropnan=True, **kwargs):
     """ create summary of this case , T in K, P in GPa """
     pd.set_option("display.max_columns", 99)
 
@@ -964,6 +979,11 @@ def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True,
 
         dat = init_from_results(name, output_parent_path=output_parent_path, load_results_csv=True, **kwargs)
         if dat is not None:
+            if exclude_silica:
+                if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
+                    print('dropping case with quartz:', dat.name)
+                    continue
+
             # get run data at T, p
             df = dat.data.loc[(dat.data['T(K)'] == T) & (dat.data['P(bar)'] == P * 1e4)]
             if len(df.index) > 0:  # maybe melts crashed or didn't run for some reason
@@ -987,6 +1007,9 @@ def create_isothermal_csv(output_parent_path, T, P, Xfer, coreeff, verbose=True,
 
                 for s in ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']:
                     dfout.at[row, s] = bulk.get_element_ratio(s, dat.wt_oxides)
+
+    if dropnan:
+        dfout.dropna(subset=['logfO2'], inplace=True)
 
     dfout.to_csv(output_parent_path + 'summary_melts_' + str(T).replace('.', ',') + 'K_' + str(P).replace('.', ',') + 'GPa_' + str(Xfer*100).replace('.', ',') + 'fer_' + str(coreeff*100).replace('.', ',') + 'core' + '.csv', sep="\t", na_rep='NaN')
     if verbose:

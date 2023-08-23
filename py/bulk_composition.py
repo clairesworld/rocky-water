@@ -17,9 +17,38 @@ def mass_ratio_to_mol_ratio(m_i, m_j, s_i='', s_j=''):
 
 NaTi_sol = 10 ** p.na_sol / 10 ** p.ti_sol
 NaTi_bse = mass_ratio_to_mol_ratio(0.36, 0.2, 'Na2O', 'TiO2')
+# print('NaTi_bse / NaTi_sol', NaTi_bse / NaTi_sol)
 
 
-def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs):
+def get_stellar_percent_abundance(nH_star, which='moles', oxide_list=None):
+    # convert list of nH_star into relative abundance in mol% (with respect to other elements in list)
+    rel = [10 ** x for x in nH_star]
+
+    if which == 'mass':  # n = m / M
+        rel = [n * eval('p.M_' + ox[:2]) for (n, ox) in zip(rel, oxide_list)]  # will be renormalised
+    elif which == 'moles':
+        pass
+
+    # renormalise
+    print('-----------\nstellar composition (%)\n-----------')
+    factor = 100 / sum(rel)
+    rel = [x * factor for x in rel]
+    [print("{:5.2f}%".format(x)) for x in rel]
+    return rel
+
+
+def mole_ratio_uncertainty(err_Q, err_R):
+    """
+    from Hinklel Young & Wheeler (2022), AJ, eqn. (20)
+    returns error on mole ratio Q/R
+    err_Q and err_R is half the total uncertainty (+/-) on [Q/H]_* and [R/H}_* in dex
+    """
+    return np.log(10) * np.sqrt(err_Q ** 2 + err_R ** 2)
+
+
+# print('delta_Mg/Si',mole_ratio_uncertainty(0.07, 0.05))
+
+def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_wtpt=None, **kwargs):
     """
     Convert stellar abundances directly to bulk mantle composition in terms of wt% oxides. Requires file parameters.py
     definining molar masses of each desired element in g/mol; e.g. M_Mg = 24.305
@@ -94,7 +123,10 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs)
 
     print('wt.% oxides\n-----------')
     for chem, val in zip(oxide_list, wt_oxides):
-        print("{0:<7}".format(chem), "{:5.2f}%".format(val))
+        try:
+            print("{0:<7}".format(chem), "{:5.2f}%".format(val))
+        except TypeError:
+            print('oxide_list', oxide_list, '\n wt_oxides', wt_oxides)
 
     # put in dict
     wt_oxides_dict = {k: v for k, v in zip(oxide_list, wt_oxides)}
@@ -113,9 +145,6 @@ def o2_molar_ratio(n_FeO, X_ferric=0.05, **kwargs):
 
     # print('n_Fe2+', n_ferrous, 'n_O2', n_O2, 'n_Fe3+', n_ferric, 'r', X_ferric)
     return n_O2
-
-
-# o2_molar_ratio(10, 0.05)
 
 
 def test_ferric_ratio_from_O2(m_FeOstar, m_O2):
@@ -255,7 +284,62 @@ def get_element_ratio(ratio_str, wt_oxides):
     return n[0] / n[1]
 
 
+def total_refractory_O(wt_oxides_dict):
+    # renormalise
+    factor = 100 / sum(wt_oxides_dict.values())
+    for k in wt_oxides_dict:
+        wt_oxides_dict[k] = wt_oxides_dict[k] * factor
 
+    # get mass of refractory oxygen in bulk silicate planet (out of 100 g)
+    m_O_tot = 0
+    # if 'Fe2O3' in wt_oxides_dict:  # this has no O2..?
+    for k, mass in wt_oxides_dict.items():
+        cat, n_O = k.split('O')
+        # print('\n', k, 'cat', cat, 'n_o', n_O)
+
+        # get oxygen mass
+        if not n_O:
+            n_O = 1  # 1 oxygen per molecule
+        else:
+            n_O = int(n_O)
+        m_O = n_O * p.M_O
+        # print('m_O', m_O)
+
+        # get cation mass
+        if not cat:  # just O2
+            m_cat = 0
+        else:
+            try:
+                n_cat = int(cat[2])
+            except (IndexError, TypeError):
+                n_cat = 1
+            m_cat = n_cat * eval('p.M_' + cat[:2])
+        # print('m_cat', m_cat)
+
+        # fraction of mass of molecule that is O
+        frac_m_O = m_O / (m_O + m_cat)
+        # print('frac_m_O', frac_m_O)
+
+        # accumulate total
+        m_O_tot += frac_m_O * mass
+
+    return m_O_tot
+
+
+# wt_oxides_MD95 = {'SiO2': 45.0, 'MgO': 37.8, 'CaO': 3.55, 'Al2O3': 4.45, 'FeO': 8.05}
+# wt_oxides1 = update_MgSi(1.6, wt_oxides_MD95)
+#
+# wt_oxides1 = insert_o2_from_wt_comp(wt_oxides1, X_ferric=0.03)
+# wt_oxides2 = update_MgSi(0.8, wt_oxides1)
+#
+# print('Mg/Si = 0.8, O (wt%) =', total_refractory_O(wt_oxides2))
+# print('Mg/Si = 1.5, O (wt%) =', total_refractory_O(wt_oxides1))
+#
+#
+# M_Mg2SiO4 = (2 * p.M_Mg) + (p.M_Si) + (4 * p.M_O)
+# M_MgSiO3 = (p.M_Mg) + (p.M_Si) + (3 * p.M_O)
+# print('M Mg2SiO4', M_Mg2SiO4, 'g', ', frac O', (4 * p.M_O) / M_Mg2SiO4)
+# print('M MgSiO3', M_MgSiO3, 'g', ', frac O', (3 * p.M_O) / M_MgSiO3)
 
 # dmm = {'SiO2': 44.71, 'Al2O3':3.98, 'FeO': 8.008 + 0.191, 'MgO': 38.73, 'CaO': 3.17}
 # test_ferric_ratio(8.008, 0.191)

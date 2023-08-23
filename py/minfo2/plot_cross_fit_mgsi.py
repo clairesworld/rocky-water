@@ -11,10 +11,8 @@ import py.bulk_composition as bulk
 from matplotlib import rc
 import datetime
 from matplotlib.ticker import FormatStrFormatter, PercentFormatter, FuncFormatter
-from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import cmcrameri
-
 
 today = str(datetime.date.today())
 # rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
@@ -22,13 +20,49 @@ rc('text', usetex=True)
 
 """ make cross plot of oxides / elements"""
 
+
+def fit_with_outliers(x, y):
+    from sklearn.linear_model import HuberRegressor
+    from sklearn.preprocessing import StandardScaler
+
+    # # Huber Regressor
+    # # standardize
+    # x_scaler, y_scaler = StandardScaler(), StandardScaler()
+    # x_train = x_scaler.fit_transform(np.array(x)[..., None])
+    # y_train = y_scaler.fit_transform(np.array(y)[..., None])
+    #
+    # # fit model
+    # try:
+    #     mdl = HuberRegressor(epsilon=1)
+    #     m = mdl.fit(x_train, y_train.ravel())
+    #     coef = [m.coef_[0], m.intercept_]
+    # except ValueError:
+    #     # HuberRegregressor failed, probably bad fit anyways
+    #     coef = np.polyfit(x, np.array(y), deg=1, cov=False)
+
+    coef = np.polyfit(np.array(x), np.array(y), deg=1, cov=False)
+
+    o = np.poly1d(coef)
+    xp = np.linspace(np.min(x), np.max(x), 100)
+    yp = o(xp)
+
+    print('fitted to x, y:', np.shape(x), np.shape(y))
+
+    # do some predictions
+    # yp = y_scaler.inverse_transform(
+    #     mdl.predict(x_scaler.transform(xp[..., None]))
+    # )
+
+    return coef, xp, yp
+
+
 def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='logfo2',
                   output_parent_path=fo2plt.output_parent_px, output_parent_path_melts=fo2plt.output_parent_mlt_earth,
                   fig=None, axes=[], fformat='.png', ax_histy=None, nbins=None, x_str_format=None,
                   ylim=(-11.5, -7), model='melts', ylabel=r'log($f_{{\rm O}_2}$)', xlim=None, xlabels=None,
                   labelsize=16, ticksize=14, save=True, fname=None, z_name=None, fig_path=fo2plt.figpath,
                   make_legend=True, verbose=False, exclude_names=[], exclude_silica=True, make_hist=False,
-                  **sc_kwargs):
+                  fit=True, **sc_kwargs):
     """ plot fo2 vs. wt% of some component at pressure of interest (in GPa)
     components can be bulk oxides or mineral phase proportion """
 
@@ -196,10 +230,10 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
                             all_y[ii].append(y)
                             all_names[ii].append(name)
 
-                            # sanity
-                            if (p_of_interest == 4) and (model == 'melts'):
-                                if name in (fit_exclude_4GPa_melts):
-                                    ax.scatter(x, y, c='g', s=markersize)
+                            # # sanity
+                            # if (p_of_interest == 4) and (model == 'melts'):
+                            #     if name in (fit_exclude_4GPa_melts):
+                            #         ax.scatter(x, y, c='g', s=markersize)
 
                             # print(dat.name, '(x, y) =', x, y)
 
@@ -212,6 +246,46 @@ def element_xplot(p_of_interest=1, T_of_interest=None, components=[], y_name='lo
             elif verbose:
                 print(sub, 'is empty')
         once = False
+
+    if fit:
+        fit_c = 'xkcd:light green blue'  # 'xkcd:purple/pink' #'xkcd:pistachio'
+        for ii, (xii, yii, namesii) in enumerate(zip(all_x, all_y, all_names)):
+            if components[ii] == 'Mg/Si':
+                print(components[ii], 'p =', p_of_interest)
+                print('xii =')
+                print(repr(xii))
+                print('yii =')
+                print(repr(yii))
+                print('names')
+                print(repr(namesii))
+
+                # filter
+                if model == 'melts' and p_of_interest == 1:
+                    exclude = fit_exclude_1GPa_melts
+                elif model == 'melts' and p_of_interest == 4:
+                    exclude = fit_exclude_4GPa_melts
+                elif model == 'perplex' and p_of_interest == 1:
+                    exclude = fit_exclude_1GPa_perplex
+                elif model == 'perplex' and p_of_interest == 4:
+                    exclude = fit_exclude_4GPa_perplex
+
+                xfit, yfit, nfit = [], [], []
+                for x0, y0, n0 in zip(xii, yii, namesii):
+                    if (n0 not in exclude) and (x0 <= xmax_fit):
+                        xfit.append(x0)
+                        yfit.append(y0)
+                        nfit.append(n0)
+                    else:
+                        print('excluding', n0, '(x={:.2f}, y={:.2f})'.format(x0, y0))
+                        # axes[ii].scatter(x0, y0, c=(0, 0, 0, 0), edgecolors='b', s=markersize)
+                        axes[ii].scatter(x0, y0, c=(0, 0, 0, 0.5), marker='x', s=markersize)
+
+                coef, xp, yp = fit_with_outliers(np.array(xfit), np.array(yfit))
+                print(components[ii], 'fit:', coef)
+
+                # sanity
+                axes[ii].plot(xp, yp, ls='--', c=fit_c, lw=1.5)
+                axes[ii] = cornertext(axes[ii], 'm = {:.2f}'.format(coef[0]), pos='bottom right', c='k')
 
     # make hist
     if make_hist:
@@ -250,13 +324,13 @@ def xplot_p_grid(model, components, pressures):
             ylims = [(-2.5, 1.5), (-1.5, 2.5)]  # delta QFM
             # yticks = [-1, 0, 1, 2]
             mec = 'xkcd:midnight blue'
-            title = r'$f_{{\rm O}_2}$ distribution with pMELTS'
+            title = r'pMELTS'
         elif model == 'perplex':
             source = fo2plt.output_parent_px
             # ylims = [(-13.5, -8.7), (-10, -6.5)]  # 1 GPa, 4 GPa - for logfO2 axis
             ylims = [(-5.1, 0.5), (-4.4, 1.1)]  # delta QFM
             mec = 'xkcd:midnight blue'
-            title = r'$f_{{\rm O}_2}$ distribution with Perple_X'
+            title = r'Perple_X'
 
         output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
 
@@ -276,7 +350,7 @@ def xplot_p_grid(model, components, pressures):
                                  save=False, fig=fig, axes=axes,
                                  model=model, verbose=False,
                                  z_name='X_Fe3_Opx', vmin=vmin, vmax=vmax, cmap=cmap,
-                                 ax_histy=ax_histy, make_hist=True, nbins=35,
+                                 ax_histy=ax_histy, make_hist=make_hist, nbins=35,
                                  exclude_silica=exclude_silica, fformat=fformat)
 
         # print('ylim', axs[0].get_ylim())
@@ -285,8 +359,7 @@ def xplot_p_grid(model, components, pressures):
             plt.setp(axs[0].get_yticklabels()[-1], visible=False)
 
         axs[0] = cornertext(axs[0], str(p_of_interest) + ' GPa', size=labelsize, pos='top left')
-        axs[1].set_xticks([0.05, 0.1, 0.15])  # Al/Si
-        # axs[1].set_xticks([0.075, 0.125, 0.175])  # Fe/Si
+
         if jj < nrows - 1:
             for ax in axs:
                 ax.set_xticks([])
@@ -295,14 +368,14 @@ def xplot_p_grid(model, components, pressures):
         if jj == 0:
             # make colorbar top row
             dum = np.linspace(vmin, vmax)
-            im = axs[-2].scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
+            im = axs[0].scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
             cax = inset_axes(
-                axs[-2],
+                axs[0],
                 width="50%",  # width: 50% of parent_bbox width
                 height="5%",  # height: 5%
                 loc="lower right",
                 bbox_to_anchor=(1, 1.05, 1, 1),
-                bbox_transform=axs[-2].transAxes,
+                bbox_transform=axs[0].transAxes,
                 borderpad=0,
             )
 
@@ -321,7 +394,7 @@ def xplot_p_grid(model, components, pressures):
             # ax.yaxis.set_major_formatter(PercentFormatter())
 
     fig.suptitle(title, fontsize=labelsize, y=0.93)
-    fig.savefig(fo2plt.figpath + 'crossplot_xtra_' + model + today + fformat, bbox_inches='tight')
+    fig.savefig(fo2plt.figpath + 'crossplot_mgsifit_' + model + today + fformat, bbox_inches='tight')
     print('saved figure')
 
     # plt.show()
@@ -342,16 +415,11 @@ T_of_interest = 1373
 exclude_silica = True
 y_name = 'delta_qfm'
 ylabel = r'$\Delta$FMQ'
-# model = 'melts'
-# model = 'perplex'
-# components = ['Mg/Si', 'Fe/Si', 'Al/Si', 'Ca/Si']
-# xlims = [(0.8, 1.65), (0.05, 0.2), (0, 0.18), (0.025, 0.13)]
-components = ['Mg/Si', 'Al/Si', 'Fe/H', 'O_total']
+components = ['Mg/Si']
 pressures = (1, 4)
-# xlims = [(0.75, 1.75), (0, 0.19), (-5.4, -3.9), (41.7, 47.3)]
-xlims = [(0.75, 1.75), (0, 0.19), (-5.4, -3.9), (43.1, 47.3)]
-x_labels = ['Mg/Si', 'Al/Si', r'[Fe/H]$_{\star}$', r'Total O$_{\rm rock}$ (wt.\%)']
-x_str_format = ['%.1f', '%.2f', '%.1f', '%.0f']
+xlims = [(0.75, 1.75)]
+x_labels = ['Mg/Si']
+x_str_format = ['%.1f']
 markersize = 40
 labelsize = 16
 legsize = 12
@@ -360,75 +428,61 @@ alpha = 0.3
 vmin, vmax = 0, 0.8
 mec = 'xkcd:midnight blue'
 cmap = cmcrameri.cm.hawaii
-fformat = '.pdf'
-make_hist = True
-fit = False
+fformat = '.png'
+make_hist = False
+
+fit = True
+xmax_fit = 10  # 1.5  # Mg/Si max
+
+# 0.05 chisqr diff
+# fit_exclude_1GPa_melts = np.array(['1M_88Ceff_2MASS19394601-2544539_999K_3,0fer'], dtype='<U48')
+
+# 0.01 chisqr diff
+fit_exclude_1GPa_melts = np.array(['1M_88Ceff_2MASS19451246+5040203_999K_3,0fer',
+                                   '1M_88Ceff_2MASS04215269+5749018_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19064452+4705535_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19004386+4349519_999K_3,0fer',
+                                   '1M_88Ceff_HIP63510_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19403794+4053558_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19283611+3938152_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19250148+4915322_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19422610+3844086_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19394601-2544539_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19470525+4145199_999K_3,0fer',
+                                   '1M_88Ceff_HIP48331_999K_3,0fer', '1M_88Ceff_HIP15578_999K_3,0fer',
+                                   '1M_88Ceff_HIP77838_999K_3,0fer'], dtype='<U48')
+
+# 0.05 chisqr diff
+fit_exclude_4GPa_melts = np.array(['1M_88Ceff_2MASS19394601-2544539_999K_3,0fer',
+                                   '1M_88Ceff_2MASS19191922+5035104_999K_3,0fer',
+                                   '1M_88Ceff_HIP28941_999K_3,0fer', '1M_88Ceff_HIP61028_999K_3,0fer'],
+                                  dtype='<U48')
+
+# 0.01 chisqr diff
+fit_exclude_1GPa_perplex = np.array(['1M_88Ceff_2MASS04215269+5749018_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19064452+4705535_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19411202+4033237_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19422610+3844086_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19231995+3811036_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19443633+5005449_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19191922+5035104_999K_3,0fer',
+                                     '1M_88Ceff_HIP77838_999K_3,0fer', '1M_88Ceff_HIP17054_999K_3,0fer',
+                                     '1M_88Ceff_HIP28941_999K_3,0fer', '1M_88Ceff_HIP61028_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19490218+4650354_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19211746+4402089_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19213437+4321500_999K_3,0fer',
+                                     '1M_88Ceff_2MASS14474655+0103538_999K_3,0fer'], dtype='<U48')
+
+fit_exclude_4GPa_perplex = np.array(['1M_88Ceff_2MASS04215269+5749018_999K_3,0fer',
+                                     '1M_88Ceff_HIP58374_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19064452+4705535_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19125618+4031152_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19490218+4650354_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19211746+4402089_999K_3,0fer',
+                                     '1M_88Ceff_2MASS19213437+4321500_999K_3,0fer',
+                                     '1M_88Ceff_2MASS14474655+0103538_999K_3,0fer'], dtype='<U48')
 
 fig1 = xplot_p_grid('melts', components, pressures)
 fig2 = xplot_p_grid('perplex', components, pressures)
 
-
 # plt.show()
-
-
-""" other phase abundances """
-
-# if p_of_interest == 1:
-#     ylim = (-14, -9)
-#     phcomps = ['Ol', 'Opx', 'Cpx', 'Sp']
-# elif p_of_interest == 4:
-#     ylim = (-11.5, -7)
-#     phcomps = ['Ol', 'Opx', 'Cpx', 'Gt']
-# if not exclude_silica:
-#     phcomps.append('q')
-# fo2plt.element_xplot(p_of_interest=p_of_interest, components=phcomps,
-#                      output_parent_path=output_parent_path,
-#                      ylim=ylim, linec='k', labelsize=16, save=True, fname='crossplot_phases_' + str(p_of_interest),
-#                      model=model, verbose=True,
-#                      exclude_silica=exclude_silica)
-
-
-# """ test Al """
-# core_eff = 88
-# Xf = 3
-# T_of_interest = 1373
-# p_of_interest = 1
-# # model = 'melts'
-# model = 'perplex'
-# components = ['X_Sp', 'X_Ol', 'X_Opx', 'X_Fe3_Opx', 'X_Fe3_Cpx', 'X_Fe3_Sp']
-#
-# if model == 'melts':
-#     source = fo2plt.output_parent_mlt_earth
-#     if p_of_interest == 1:
-#         xlim = [(0, 7), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (1, 5)]
-#     elif p_of_interest == 4:
-#         xlim = [(0, 20), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (1, 5)]
-# elif model == 'perplex':
-#     source = fo2plt.output_parent_px
-#     if p_of_interest == 1:
-#         xlim = [(0, 7), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (1, 5)]
-#     elif p_of_interest == 4:
-#         xlim = [(0, 20), (0, 70), (0, 80), (0.1, 0.7), (0.1, 1), (0, 1)]
-#
-# output_parent_path = source + 'hypatia_' + str(core_eff) + 'coreeff_' + str(Xf) + 'ferric_ext/'
-#
-# fig, axes = element_xplot(p_of_interest=p_of_interest, components=components, T_of_interest=T_of_interest,
-#               xlim=xlim,
-#               y_name='Al/Si', ylabel='Al/Si',
-#               output_parent_path=output_parent_path,
-#               ylim=(0, 0.2),
-#               labelsize=16, save=True, fname='crossplot_Al_' + str(p_of_interest) + 'GPa_' + model,
-#               edgecolors='xkcd:midnight blue',
-#               model=model, exclude_silica=True)
-#
-#
-# plt.show()
-#
-# element_xplot(p_of_interest=4, components=components,
-#               xlim=[(30, 45), (43, 57), (1, 5), (3, 10), (1, 5)],
-#               y_name='X_Opx', ylabel='Opx abundance (wt%)',
-#               output_parent_path=output_parent_path,
-#               ylim=(0, 80),
-#               linec='k', labelsize=16, save=True, fname='crossplot_opx_' + str(p_of_interest),
-#               model='melts', verbose=False,
-#               exclude_silica=exclude_silica)

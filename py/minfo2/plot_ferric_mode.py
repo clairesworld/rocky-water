@@ -21,6 +21,7 @@ from matplotlib import rc
 import pickle
 from matplotlib import gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import cmcrameri
 
 """ scatter plot of where Fe3+ is on ternary diagram """
 
@@ -228,27 +229,29 @@ def ternary_scatter(p_of_interest=None, T_of_interest=None, core_eff=88, Xf=3.0,
 xoffset, offset = 0.1, 0.15  # for matplotlib default
 fontsize = 42  # for latex sansserif
 ticksize = 22  # for latex sansserif
+titlepad = 70
 # fig, axes = plt.subplots(2, 2, figsize=(20, 20))
 
 # set up gridspec
 fig = plt.figure(figsize=(20, 20))
-gs0 = gridspec.GridSpec(1, 2, width_ratios=(30, 1), wspace=0.2, figure=fig)
-gs00 = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=gs0[0], height_ratios=(1, 1), width_ratios=(1, 1))
-ax00 = fig.add_subplot(gs00[0, 0])
-ax10 = fig.add_subplot(gs00[1, 0])
-ax01 = fig.add_subplot(gs00[0, 1])
-ax11 = fig.add_subplot(gs00[1, 1])
+# gs0 = gridspec.GridSpec(1, 2, width_ratios=(30, 1), wspace=0.2, figure=fig)
+# gs00 = gridspec.GridSpecFromSubplotSpec(2, 2, subplot_spec=gs0[0], height_ratios=(1, 1), width_ratios=(1, 1))
+gs0 = gridspec.GridSpec(2, 2, width_ratios=(1, 1), height_ratios=(1, 1), wspace=0.06, hspace=0.15, figure=fig)
+ax00 = fig.add_subplot(gs0[0, 0])
+ax10 = fig.add_subplot(gs0[1, 0])
+ax01 = fig.add_subplot(gs0[0, 1])
+ax11 = fig.add_subplot(gs0[1, 1])
 
+vmin, vmax = 0.8, 1.7
 mec = 'xkcd:midnight blue'
-cmap = 'viridis'
-vmin, vmax = 0.69, 1.6
+cmap = cmcrameri.cm.bamako_r
 
 # alphamelts column
 ax00.text(0.05, 0.9, '1 GPa', transform=ax00.transAxes, size=fontsize, )
 fig, tax0 = ternary_scatter(p_of_interest=1, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3',
                             v_var='mgsi', model='melts', cmap=cmap, vmin=vmin, vmax=vmax,
                             fontsize=fontsize, xoffset=xoffset, offset=offset, ticksize=ticksize,
-                            phases=phases_1GPa, title='Fe$_2$O$_3$ modality in pMELTS',
+                            phases=phases_1GPa, title='Fe$_2$O$_3$ distribution in pMELTS', titlepad=titlepad,
                             show_cmap=False, save=True, mec=mec, lw=1.5, fname='ternary-tmp', fig=fig,
                             ax=ax00, pickle_from=fig_path + 'data/ternary0.p')
 
@@ -256,7 +259,7 @@ ax10.text(0.05, 0.9, '4 GPa', transform=ax10.transAxes, size=fontsize, )
 fig, tax1 = ternary_scatter(p_of_interest=4, T_of_interest=1373.15, core_eff=88, Xf=3.0, component='Fe2O3',
                             v_var='mgsi', model='melts', cmap=cmap, vmin=vmin, vmax=vmax,
                             fontsize=fontsize, xoffset=xoffset, offset=offset, ticksize=ticksize,
-                            phases=phases_1GPa, show_cmap=False, save=True, mec=mec, lw=1.5,
+                            phases=phases_4GPa, show_cmap=False, save=True, mec=mec, lw=1.5,
                             fname='ternary-tmp', fig=fig,
                             ax=ax10, pickle_from=fig_path + 'data/ternary1.p')
 
@@ -265,7 +268,8 @@ fig, tax2 = ternary_scatter(p_of_interest=1, T_of_interest=1373, core_eff=88, Xf
                             model='perplex', cmap=cmap, vmin=vmin, vmax=vmax,
                             fontsize=fontsize, xoffset=xoffset, offset=offset, ticksize=ticksize,
                             phases=[mfug.map_to_px_phase[ph] for ph in phases_1GPa], marker='s',
-                            title='Fe$_2$O$_3$ modality in Perple_x', show_cmap=False, save=True, mec=mec, lw=1.5,
+                            title='Fe$_2$O$_3$ distribution in Perple_X',  titlepad=titlepad,
+                            show_cmap=False, save=True, mec=mec, lw=1.5,
                             fname='ternary-tmp', fig=fig, ax=ax01,
                             pickle_from=fig_path + 'data/ternary2.p')
 
@@ -278,8 +282,8 @@ fig, tax3 = ternary_scatter(p_of_interest=3.9, T_of_interest=1373, core_eff=88, 
 
 # fig.suptitle("Fe$^{3+}$ modality", fontsize=fontsize, y=0.9)
 
-# adjust spacing between subplots?? might be superfluous given call to gridspec
-plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.06, hspace=0.15)
+# # adjust spacing between subplots?? might be superfluous given call to gridspec
+# plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.06, hspace=0.15)
 
 # add colorbar
 dum = np.linspace(vmin, vmax)
@@ -291,30 +295,20 @@ im = ax00.scatter(dum, dum, c=dum, cmap=cmap, s=0, vmin=vmin, vmax=vmax)
 # cbar.ax.set_ylabel('Mg/Si', rotation=270, fontsize=fontsize, labelpad=50)
 # cbar.ax.tick_params(axis="y", labelsize=ticksize)
 
-# cax = inset_axes(
-#     ax01,
-#     width="40%",  # width: 5% of parent_bbox width
-#     height="5%",  # height: 50%
-#     loc="upper left",
-#     bbox_to_anchor=(1.05, 0.5, 1, 1),
-#     bbox_transform=ax01.transAxes,
-#     borderpad=0,
-# )
-
-
 cax = inset_axes(
     ax01,
     width="40%",  # width: 50% of parent_bbox width
-    height="5%",  # height: 5%
-    # loc="upper right",
-    borderpad=0,  #-5,
-    loc="lower right",
-    bbox_to_anchor=(1, 1.05, 1, 1),
+    height="3%",  # height: 5%
+    loc="upper right",
+    borderpad=-4,
+    # borderpad=0,
+    # loc="lower right",
+    # bbox_to_anchor=(1, 1.05, 1, 1),
 )
 cax.xaxis.set_ticks_position("bottom")
-cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", )
-cbar.ax.set_xlabel('Mg/Si', fontsize=ticksize, labelpad=10)
-cbar.ax.tick_params(axis="x", labelsize=ticksize)
+cbar = fig.colorbar(im, cax=cax, orientation="horizontal", format="%.1f", ticks=[vmin, 1.0, vmax])
+cbar.ax.set_xlabel('Mg/Si', fontsize=ticksize+2, labelpad=-1)
+cbar.ax.tick_params(axis="x", labelsize=ticksize-2)
 
 fig.savefig(fig_path + 'ternary_subplots' + str(date) + ftype)
 # for some reason this only saves axis labels if individual subplots save=True

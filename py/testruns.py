@@ -13,14 +13,27 @@ import matplotlib.colors
 tol = 1e-4  # better
 n = 'auto'  # better
 
+# get earth-scaled density
+perplex_path = '/home/claire/Works/perple_x/'
+for ii, Mp in enumerate([1.31, 1.37, 1.04, 0.69, 1.32, 4.91, 4.36, 0.39, 6.38, 4.13]):
+    if ii != 8:
+        pl = rw.build_planet(M_p=Mp * p.M_E, name=str(ii), test_CMF=0.325, Tp=1600, star='sun',  tol=1e-4, n='auto',
+                             plot_all=False, get_saturation=False, verbose=True, clean=True,
+                             perplex_path=perplex_path,
+                             output_parent_path=perplex_path + 'output/random_coreeff/',
+                             )
+        print('earth-scaled bulk density', pl.M_p / (np.pi * 4/3 * pl.R_p**3))
+
+
+
 """ one-off variations """
 Mp = 1
 Tp = 1600
 
-""" test random stars """
-pl = rw.build_planet(M_p=Mp * p.M_E, core_efficiency=0.88, Tp=Tp, star='HIP 21850',  # tol=1e-4, n='auto',
-                      plot_all=False, get_saturation=True, verbose=True, clean=False,
-                      )
+# """ test random stars """
+# pl = rw.build_planet(M_p=Mp * p.M_E, core_efficiency=0.88, Tp=Tp, star='HIP 21850',  # tol=1e-4, n='auto',
+#                       plot_all=False, get_saturation=True, verbose=True, clean=False,
+#                       )
 
 
 wt_oxides_MD95 = {'SiO2': 45.0, 'MgO': 37.8, 'CaO': 3.55, 'Al2O3': 4.45, 'FeO': 8.05}  # McDonough & Sun 1995 BSE
@@ -37,6 +50,10 @@ test_oxides = {'MgO': 38.27887621 , 'SiO2': 45.57002469 ,
 
 
 
+
+
+
+
 #test_oxides = rw.update_MgSi(1.4, px.wt_oxides_MD95)
 # pl = rw.build_planet(M_p=Mp * p.M_E, core_efficiency=0.88, Tp=Tp,
 #                       test_oxides=test_oxides,
@@ -47,7 +64,7 @@ test_oxides = {'MgO': 38.27887621 , 'SiO2': 45.57002469 ,
 #                       )
 
 # test stellar iron effect on mineralogy
-oxides = ['MgO', 'SiO2', 'CaO', 'Al2O3', 'FeO']
+# oxides = ['MgO', 'SiO2', 'CaO', 'Al2O3', 'FeO']
 
 """ fixed core eff, vary stellar Fe"""
 # pl0 = rw.build_planet(M_p=Mp * p.M_E, core_efficiency=0.88, Tp=Tp,

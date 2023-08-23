@@ -258,7 +258,8 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
             # print(sub + name + '_results.csv')
             # print(os.path.exists(sub + name + '_results.csv'))
 
-            if (len(os.listdir(sub)) > 1) and (os.path.exists(sub + '/' + name + '_results.csv')):  # 1 if contains nH_star e.g.
+            if (len(os.listdir(sub)) > 1) and (
+            os.path.exists(sub + '/' + name + '_results.csv')):  # 1 if contains nH_star e.g.
 
                 if name not in exclude_names:
                     if model == 'perplex':
@@ -316,11 +317,12 @@ def multicomp_xsection(output_parent_path=output_parent_px, fig=None, ax=None, s
 
 
 def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, p_max=None, title=None, fname=None,
-                    save=True, fig=None, axes=None, exclude_silica=True, phase_mode='stacked', verbose=True, **kwargs):
+                    save=True, fig=None, axes=None, exclude_silica=True, phase_mode='stacked', verbose=True,
+                    T_of_interest=1373, **kwargs):
     if fname is None:
         fname = name + '_fo2_subplot'
 
-    df = pd.read_csv(output_parent_path + name + '/' + name + '_results.csv', sep='\t', index_col=0)
+    df = pd.read_csv(output_parent_path + name + '/' + name + '_results' + str(int(T_of_interest)) + '.csv', sep='\t', index_col=0)
     if not df['logfo2'].isnull().all():
         if verbose:
             print('\nloaded:\n', df.head(), '\nfrom', output_parent_path + name + '/' + name + '_results.csv')
@@ -330,7 +332,8 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
 
         if fig is None:
             fig, axes = plt.subplots(2, 1, figsize=(6, 8))
-        fig, axes[0] = fo2_xsection(df=df, fig=fig, ax=axes[0], save=False, name=name, output_parent_path=output_parent_path, **kwargs)
+        fig, axes[0] = fo2_xsection(df=df, fig=fig, ax=axes[0], save=False, name=name,
+                                    output_parent_path=output_parent_path, **kwargs)
 
         if phase_mode == 'stacked':
             fig, axes[1] = single_composition(df, phases=['Gt', 'Cpx', 'Opx', 'Ol', 'Plag'], fig=fig, ax=axes[1],
@@ -353,114 +356,6 @@ def stolper_subplot(name=None, output_parent_path=output_parent_px, p_min=None, 
     if save:
         fig.savefig(figpath + fname + '.png')
     return fig, axes
-
-
-
-
-def compare_pop_hist(dirs, x_var, z_var=None, z_val=None,x_scale=1, z_scale=1, fname=None, figpath=figpath, save=True,
-                     exclude_names=[], exclude_silica=True, model='perplex', hilite=None, figsize=(7, 5), fig=None, ax=None,
-                     ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12,
-                     bins=20, ticksize=12, labelpad=None, x_shift=0, legloc=None, alpha=0.5,
-                     hist_kwargs={}, legtitle=None, **kwargs):
-    """ z_var is the colour/linestyle coding, must be consistent across all runs in dir[n] """
-    if cmap and (not vmin or not vmax):
-        raise NotImplementedError('Cannot colour-code without explicit vmin and vmax')
-    if cmap:
-        # get normalised cmap
-        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
-        colours = cm.ScalarMappable(norm=norm, cmap=cmap)
-    if fname is None:
-        fname = 'compare_pop_hist'
-    if xlabel is None:
-        xlabel = x_var
-    if legtitle is None:
-        legtitle = z_var
-
-    if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=figsize)
-    for jj, opp in enumerate(dirs):
-        spl = os.path.dirname(opp).split('/')[-1].split('_')
-        X_ferric = None
-        core_eff = None
-        for sp in spl:
-            if 'ferric' in sp:
-                X_ferric = int(''.join(filter(str.isdigit, sp)))
-            if 'coreeff' in sp:
-                core_eff = int(''.join(filter(str.isdigit, sp))) / 100
-
-        # get directory names in folder
-        subfolders = rw.get_run_dirs(output_path=opp)
-        once = True
-        x = []
-        if subfolders:  # nonzero
-            for ii, sub in enumerate(subfolders):
-                if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
-                    name = os.path.basename(sub)
-                    if name not in exclude_names:
-                        if model == 'perplex':
-                            dat = pfug.init_from_results(name, X_ferric=X_ferric, #core_eff=core_eff,
-                                                         output_parent_path=opp,
-                                                         load_results_csv=True, **kwargs)
-                        elif model == 'melts':
-                            dat = mfug.init_from_results(name, X_ferric=X_ferric, core_eff=core_eff, output_parent_path=opp,
-                                                         load_results_csv=True, **kwargs)
-                        if dat is not None:
-                            if exclude_silica:
-                                dat.data = filter_silica_sat(dat.data)
-                                if dat.data.logfo2.isnull().values.any():
-                                    continue
-                            try:
-                                ans = eval('dat.' + x_var) * x_scale
-                                if ans > 1.5:
-                                    print(dat.name)
-                                    print(dat.data.columns)
-                                    print(dat.data.tail())
-                                x.append(eval('dat.' + x_var) * x_scale - x_shift)
-                            except TypeError as e:
-                                print(e)
-                                print('    error reading ', name, '\n', dat.data.head())
-                            except AttributeError as e:
-                                print(e)
-            print(opp, 'n_runs =', len(x))
-
-            if not z_val:
-                z = eval('dat.' + z_var) * z_scale  # only need 1 (last in this case)
-            else:
-                z = z_val
-            if cmap:
-                c = colours.to_rgba(z)  # i.e., override input c
-            else:
-                c = c
-            if iterable_not_string(ls):
-                linestyle = ls[jj]
-            else:
-                linestyle = ls
-
-            if exclude_silica:
-                sd = np.nanstd(x)  # because otherwise some fo2 results set to nan
-            else:
-                sd = np.std(x)
-            c_alpha = list(c)
-            c_alpha[3] = alpha
-            if hilite is not None and (jj == hilite):
-                ax.hist(x, ec=c, fc=c_alpha, ls=linestyle, histtype='stepfilled',
-                        label='{:.0f}%'.format(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
-                    bins=bins, density=True, **hist_kwargs)
-            else:
-                ax.hist(x, color=c, alpha=0.5, ls=linestyle, histtype='step',
-                    label='{:.0f}%'.format(z) + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
-                    bins=bins, density=True, **hist_kwargs)
-
-    ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=labelpad)
-    ax.set_title(title, fontsize=labelsize)
-    ax.tick_params(axis='both', labelsize=ticksize)
-    leg = ax.legend(title=legtitle, fontsize=legsize, frameon=False, loc=legloc)
-    leg.get_title().set_fontsize(legsize)  # legend 'Title' fontsize
-
-    if save:
-        fig.savefig(figpath + fname + '.png')
-    return fig, ax
-
 
 
 def single_composition(df, phases=['Plag', 'Gt', 'Cpx', 'Opx', 'Ol'],
@@ -554,6 +449,172 @@ def single_composition(df, phases=['Plag', 'Gt', 'Cpx', 'Opx', 'Ol'],
         fig.savefig(fig_path + filename + extension, bbox_inches='tight')
     if show:
         plt.show()
+    return fig, ax
+
+
+def pop_hist(dirs=None, x_var=None, z_var=None, z_val=None, x_scale=1, z_scale=1, fname=None, figpath=figpath,
+             save=True, make_legend=False, T_of_interest=1373, z_labels=None,
+             exclude_names=[], exclude_silica=True, model='perplex', hilite=None, figsize=(7, 5), fig=None,
+             ax=None, show_sd='corner', xlim=None, ylim=None,
+             ls='-', cmap=None, c='k', vmin=None, vmax=None, xlabel=None, title=None, labelsize=16, legsize=12,
+             nbins=20, ticksize=12, labelpad=None, x_shift=0, legloc=None, alpha=0.5,
+             hist_kwargs={}, legtitle=None, verbose=True, **kwargs):
+    """ z_var is the colour/linestyle coding, must be consistent across all runs in dir[n] """
+    if cmap and (not vmin or not vmax):
+        raise NotImplementedError('Cannot colour-code without explicit vmin and vmax')
+    if cmap:
+        # get normalised cmap
+        norm = mpl.colors.Normalize(vmin=vmin, vmax=vmax)
+        colours = cm.ScalarMappable(norm=norm, cmap=cmap)
+        # print('vmin, vmax', vmin, vmax)
+    if fname is None:
+        fname = 'pop_hist'
+    if xlabel is None:
+        xlabel = x_var
+    if legtitle is None:
+        legtitle = z_var
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+    for jj, opp in enumerate(dirs):
+        spl = os.path.dirname(opp).split('/')[-1].split('_')
+        X_ferric = None
+        core_eff = None
+        for sp in spl:
+            if 'ferric' in sp:
+                X_ferric = int(''.join(filter(str.isdigit, sp)))
+            if 'coreeff' in sp:
+                core_eff = int(''.join(filter(str.isdigit, sp))) / 100
+
+        # get directory names in folder
+        subfolders = rw.get_run_dirs(output_path=opp)
+        once = True
+        x = []
+        n_qtz = 0
+        if subfolders:  # nonzero
+            # print('subfolders', subfolders)
+            for ii, sub in enumerate(subfolders):  # loop over stars
+                if len(os.listdir(sub)) > 1:  # 1 if contains nH_star e.g.
+                    name = os.path.basename(sub)
+                    if name not in exclude_names:
+                        if model == 'perplex':
+                            dat = pfug.init_from_results(name, X_ferric=X_ferric,  # core_eff=core_eff,
+                                                         output_parent_path=opp, T_iso=T_of_interest,
+                                                         load_results_csv=True, verbose=False, **kwargs)
+                            if exclude_silica and (dat is not None) and (T_of_interest != 1373) and \
+                                    ~set(['X_Ol', 'X_Opx']).issubset(dat.data.columns):
+                                # didn't load composition in some temps
+                                dat1373 = pfug.init_from_results(name, X_ferric=X_ferric,  # core_eff=core_eff,
+                                                                 output_parent_path=opp, T_iso=1373,
+                                                                 load_results_csv=True, verbose=False, **kwargs)
+                                if 'X_q' in dat1373.data.columns:  # don't print quartz saturation cases
+                                    n_qtz += 1
+                                    if verbose:
+                                        print('dropping case with quartz:', dat.name)
+                                    continue
+                        elif model == 'melts':
+                            # print('T_of_interest', T_of_interest)
+                            dat = mfug.init_from_results(name, X_ferric=X_ferric, core_eff=core_eff,
+                                                         output_parent_path=opp, T_final=T_of_interest,
+                                                         load_results_csv=True, verbose=False, **kwargs)
+                        if dat is not None:
+                            if exclude_silica:
+                                if 'X_q' in dat.data.columns:  # don't print quartz saturation cases
+                                    n_qtz += 1
+                                    if verbose:
+                                        print('dropping case with quartz:', dat.name)
+                                    continue
+                            try:
+                                ans = eval('dat.' + x_var) * x_scale
+                                # if ans > 1.5:
+                                #     print(dat.name)
+                                #     print(dat.data.columns)
+                                #     print(dat.data.tail())
+                                x.append(eval('dat.' + x_var) * x_scale - x_shift)
+                                # x.append(10**(eval('dat.' + x_var) * x_scale - x_shift))
+                            except TypeError as e:
+                                print(e)
+                                print('excluding', name, eval('dat.' + x_var))
+                            except AttributeError as e:
+                                print(e)
+                                print('excluding', name, ': missing attribute', x_var)
+
+                            # get colour (do this here because final dat could be None
+                            if not z_val:
+                                z = eval('dat.' + z_var) * z_scale  # only need 1 (last in this case)
+                            else:
+                                z = z_val
+            print(os.path.basename(os.path.normpath(opp)), 'n_runs =', len(x), '......................(dropped', n_qtz, 'cases with silica phase)')
+            # n_qtz : 30 - 164 in melts from 70-99 ceff (i.e. iron stabilises
+            # " "   : 31 - 162
+            # 75
+
+            if cmap:
+                c = colours.to_rgba(z)  # i.e., override input c
+                # print('z', z)
+                try:
+                    c_alpha = list(c)
+                    c_alpha[3] = alpha
+                except IndexError as e:
+                    print('c', c)
+                    print('z', z)
+                    print('failed to get list of colours, no runs..?')
+                    raise e
+            else:
+                c_alpha = c
+            if iterable_not_string(ls):
+                linestyle = ls[jj]
+            else:
+                linestyle = ls
+
+            if exclude_silica:
+                sd = np.nanstd(x)  # because otherwise some fo2 results set to nan
+            else:
+                sd = np.std(x)
+
+            if z_labels is None:
+                z_label = '{:.0f}%'.format(z)  # + r' ($\sigma =$ ' + '{:.2f})'.format(sd),
+            else:
+                z_label = z_labels[jj]
+            if (hilite is not None and (jj == hilite)) or hilite is None:
+                print('z_label', z_label, 'c_alpha', c_alpha)
+                ax.hist(x, ec=c, fc=c_alpha, ls=linestyle, histtype='stepfilled',
+                        label=z_label, bins=nbins, density=True, **hist_kwargs)
+            else:
+                ax.hist(x, color=c, alpha=0.5, ls=linestyle, histtype='step',
+                        label=z_label,  bins=nbins, density=True, **hist_kwargs)
+
+            if show_sd and ((hilite is not None and (jj == hilite)) or hilite is None):  # turn off for non-highlighted if multi
+                if show_sd == 'corner':
+                    xt, yt = 0.99, 0.9  # put text in upper right corner
+                    transform = ax.transAxes
+                    ha, va = 'right', 'top'
+                elif show_sd == 'leftcorner':
+                    xt, yt = 0.01, 0.9  # put text in upper right corner
+                    transform = ax.transAxes
+                    ha, va = 'left', 'top'
+                elif show_sd == 'above':
+                    xt, yt = np.median(x), 0.9 * ylim[1]  # put text above hist centre, ylim0 = 0 for hist
+                    # xt, yt = np.median(x), 0.85 * ylim[1]   # put text above hist centre, ylim0 = 0 for hist
+                    transform = ax.transData
+                    ha, va = 'left', 'top'
+                ax.text(xt, yt, r'$\sigma =$ ' + '{:.2f}'.format(sd), c=c_alpha[:3], alpha=1, fontsize=legsize,
+                        ha=ha, va=va, transform=transform)
+                print(os.path.basename(os.path.normpath(opp)), 'sd =', sd)
+
+
+    ax.set_xlabel(xlabel, fontsize=labelsize, labelpad=labelpad)
+    ax.set_title(title, fontsize=labelsize)
+    ax.tick_params(axis='both', labelsize=ticksize)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+
+    if make_legend:
+        leg = ax.legend(title=legtitle, fontsize=legsize, frameon=False, loc=legloc)
+        leg.get_title().set_fontsize(legsize)  # legend 'Title' fontsize
+
+    if save:
+        fig.savefig(figpath + fname + '.png')
     return fig, ax
 
 
