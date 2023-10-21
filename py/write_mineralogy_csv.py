@@ -14,7 +14,7 @@ Tp = 1600
 
 
 def get_df_to_print(output_path, pressures, M_p=1, core_eff=88, Tp=1600, phase_columns=phase_columns,
-                   ox_columns=ox_columns, subsample=None):
+                   ox_columns=ox_columns, subsample=None, test_mode=False):
 
     dats = rw.read_dir(output_path, subsample=subsample, verbose=True, prevent_blank_dir=True)
 
@@ -89,11 +89,11 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_effs=[
             subsample = None
 
         df_list = get_df_to_print(output_path, pressures, M_p=M_p, core_eff=core_eff, Tp=Tp, phase_columns=phase_columns,
-                       ox_columns=ox_columns, subsample=subsample)
+                       ox_columns=ox_columns, subsample=subsample, test_mode=test_mode)
 
         if include_earthsun:
             df_earthsun_list = get_df_to_print(output_path_earthsun, pressures, M_p=M_p, core_eff=core_eff, Tp=Tp, phase_columns=phase_columns,
-                       ox_columns=ox_columns, subsample=subsample)
+                       ox_columns=ox_columns, subsample=subsample, test_mode=test_mode)
             df_list = [pd.concat([df_earthsun[ii], df_list[ii]], ignore_index=True) for ii in range(len(df_list))]
 
         # write csv
