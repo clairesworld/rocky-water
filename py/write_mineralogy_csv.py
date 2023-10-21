@@ -9,7 +9,7 @@ ox_columns = px.oxide_list_default
 location = 'apollo'
 pressures = [1]  # [1, 4, 30]
 M_p = 1
-core_effs = [88]
+core_effs = [70, 80, 88, 95, 99]
 Tp = 1600
 
 
