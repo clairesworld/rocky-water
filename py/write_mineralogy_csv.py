@@ -76,7 +76,6 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_effs=[
                    fname_base='hypatia_mineralogies', include_earthsun=True, output_path_earthsun='/home/claire/Works/perple_x/output/references/',**kwargs):
 
     for core_eff in core_effs:
-
         if output_path_override is None:
             output_path = output_parent_path + 'hypatia{:d}M_{:d}K_{:d}Fe_hires/'.format(M_p, Tp, core_eff)
         else:
@@ -98,7 +97,7 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_effs=[
 
         # write csv
         for z, pressure in enumerate(pressures):
-            fname = fname_base + '_{:d}GPa_{:d}K'.format(pressure, Tp)
+            fname = fname_base + '_{:d}GPa_{:d}K_{:d}core.csv'.format(pressure, Tp, core_eff)
             df_list[z].to_csv(write_path + fname, sep=sep)
             print('wrote to', write_path + fname)
 
