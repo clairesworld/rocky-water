@@ -9,6 +9,7 @@ from py import main as rw
 from scipy import interpolate
 from py import parameters as p
 from py.useful_and_bespoke import find_nearest_idx
+import pickle as pkl
 
 # import ask_hypatia as hyp
 
@@ -1075,6 +1076,9 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
     # logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, verbose=verbose, **kwargs)
     # if verbose:
     #     print('log fo2 of system:', logfo2)
+
+    with open(dat.output_path + "dat.pkl", "wb") as pfile:
+        pkl.dump(dat, pfile)
     return True
 
 
