@@ -127,7 +127,8 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_effs=[
 if location == 'apollo':
     output_parent_path = '/raid1/cmg76/perple_x/output/rocky-fo2/'
     write_from_dir(output_parent_path, '/home/cmg76/Works/rocky-water/csv/',
-                   fname_base='mantle_compositions_extended_',
+                   fname_base='mantle_compositions_extended',
+                   include_phases=False,
                    include_earthsun=False, pressures=pressures, M_p=M_p,
                    core_effs=core_effs, Tp=Tp)
 
