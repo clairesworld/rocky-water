@@ -138,6 +138,7 @@ if location == 'apollo':
     output_parent_path = '/raid1/cmg76/perple_x/output/rocky-fo2/'
     write_from_dir(output_parent_path, '/home/cmg76/Works/rocky-water/csv/',
                    fname_base='mantle_compositions_extended',
+                   ox_columns=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
                    include_phases=False,
                    include_earthsun=False, pressures=pressures, M_p=M_p,
                    core_effs=core_effs, Tp=Tp)
