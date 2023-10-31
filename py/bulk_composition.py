@@ -1,5 +1,5 @@
 import numpy as np
-import parameters as p
+import py.parameters as p
 
 
 def mass_ratio_to_mol_ratio(m_i, m_j, s_i='', s_j=''):
