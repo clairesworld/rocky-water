@@ -26,18 +26,19 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
 
     dats = rw.read_dir(output_path, subsample=subsample, verbose=True, prevent_blank_dir=True)
 
+    if include_phases:
+        columns = ['star', 'P(GPa)', 'T(K)', 'Tp(K)'] + [ph + '(wt%)' for ph in phase_columns] + ['M_p(M_E)', 'Fe_core/Fe_tot'] + [ox + '(wt%)' for ox in ox_columns]
+    else:
+        columns = ['star'] + ['Fe_core/Fe_tot'] + [ox + '(wt%)' for ox in ox_columns]
+
     # initialise list of dfs for each pressure
     df_list = []
     for pressure in pressures:
-        df_list.append(pd.DataFrame(columns=['star', 'P(GPa)', 'T(K)', 'Tp(K)']
-                                            + [ph + '(wt%)' for ph in phase_columns] + ['M_p(M_E)', 'Fe_core/Fe_tot']
-                                            + [ox + '(wt%)' for ox in ox_columns],
+        df_list.append(pd.DataFrame(columns=columns,
                                     index=range(len(dats))))
 
         # add constants
-        df_list[-1]['M_p(M_E)'] = M_p
         df_list[-1]['Fe_core/Fe_tot'] = core_eff
-        df_list[-1]['Tp(K)'] = Tp
         df_list[-1].fillna(0, inplace=True)
 
     # load data for this planet at all pressures
@@ -46,20 +47,25 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
         if dat.df_comp is not None:
             pass
         else:
-            print('dat.df_comp is None', dat.name)
+            print('dat.df_comp is None :', dat.name)
 
         for z, pressure in enumerate(pressures):
             flag = False
 
-            # find pressure
-            ii = dat.df_comp['P(bar)'].sub(pressure * 1e4).abs().idxmin()
-            ser = dat.df_comp.iloc[ii]
-
             df_list[z].loc[irow, 'star'] = dat.star
-            df_list[z].loc[irow, 'P(GPa)'] = ser['P(bar)'] / 1e4
-            df_list[z].loc[irow, 'T(K)'] = ser['T(K)']
 
             if include_phases:
+                # add constants
+                df_list[-1]['Tp(K)'] = Tp
+                df_list[-1]['M_p(M_E)'] = M_p
+
+                # find pressure series
+                ii = dat.df_comp['P(bar)'].sub(pressure * 1e4).abs().idxmin()
+                ser = dat.df_comp.iloc[ii]
+
+                df_list[z].loc[irow, 'P(GPa)'] = ser['P(bar)'] / 1e4
+                df_list[z].loc[irow, 'T(K)'] = ser['T(K)']
+
                 for ph in phase_columns:
                     try:
                         df_list[z].loc[irow, ph + '(wt%)'] = ser[ph]

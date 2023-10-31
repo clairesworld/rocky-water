@@ -244,7 +244,8 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
                 os.rename(dat.perplex_path + file, dat.output_path + file)
 
     else:
-        print('mgsi', dat.mgsi)
+        print('calculated bulk and mantle compositions only!')
+        print('Mg/Si', dat.mgsi)
         # return dat  # just calculated bulk composition
 
     # for now also save as pickle for laziness
