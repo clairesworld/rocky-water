@@ -8,10 +8,10 @@ except ModuleNotFoundError as e:
     raise e
 
 import os
-import py.saturation as sat
+from py import saturation as sat
 import time
-import py.perplexdata as px
-import py.ask_hypatia as hyp
+from py import perplexdata as px
+from py import ask_hypatia as hyp
 import pickle as pkl
 import random
 
