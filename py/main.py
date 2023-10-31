@@ -1,5 +1,12 @@
 import numpy as np
-from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, G, R_E, rho_E
+
+try:
+    from py.parameters import M_E, M_Fe, M_FeO, M_MgO, M_SiO2, G, R_E, rho_E
+except ModuleNotFoundError as e:
+    import sys
+    print('sys.path', sys.path)
+    raise e
+
 import os
 import py.saturation as sat
 import time
