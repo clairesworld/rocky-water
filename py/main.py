@@ -251,6 +251,8 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
 
     # for now also save as pickle for laziness
     with open(dat.output_path + "dat.pkl", "wb") as pfile:
+        print('writing dat.pkl to', dat.output_path)
+        print('contents:\n', dat.__dict__)
         pkl.dump(dat, pfile)
 
     time_end = time.time()
