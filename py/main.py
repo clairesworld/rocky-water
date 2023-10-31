@@ -12,6 +12,7 @@ from py import saturation as sat
 import time
 from py import perplexdata as px
 from py import ask_hypatia as hyp
+from py.minfo2 import perplexfugacitydata  # needed to load pickle .dat
 import pickle as pkl
 import random
 
