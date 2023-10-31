@@ -85,7 +85,7 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     print('     nH_star:', np.loadtxt(dat.output_path + 'nH_star.txt'))
-                pass
+                continue
 
             for ox in ox_columns:
                 try:
