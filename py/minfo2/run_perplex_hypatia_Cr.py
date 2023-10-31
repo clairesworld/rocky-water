@@ -38,7 +38,7 @@ skip_stars = ['2MASS 19141179+3833548']
 for T_of_interest in T_of_interests:
     for ce in core_eff:
         for Xf in X_ferric:
-            output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext_Cr/'
+            output_sub = 'hypatia_' + str(int(ce * 100)) + 'coreeff_' + str(int(Xf * 100)) + 'ferric_ext_Cr_comps/'
             output_parent_path = pf.output_parent_apollo + output_sub
 
             # only need to run this once to get build files (i.e., bulk composition) and vertex output files

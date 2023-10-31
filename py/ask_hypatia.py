@@ -1,10 +1,10 @@
 import numpy as np
-import requests
+# import requests
 import random
 import pickle as pkl
 import os
 
-import simplejson
+# import simplejson
 
 # Enter API key generated from https://www.hypatiacatalog.com/api
 key = '268b0ed895ac3b835ae70af6df4e5059'

@@ -63,9 +63,9 @@ class PerplexFugacityData(px.PerplexData):
         self.data = pd.DataFrame(columns=['P(bar)', 'T(K)', 'logfo2'])
 
         # remove TiO2 from bulk composition - no phase that incorporates it
-        if 'TiO2' in self.oxide_list:
-            self.oxide_list.remove('TiO2')
-            self.wt_oxides.pop('TiO2')
+        # if 'TiO2' in self.oxide_list:
+        #     self.oxide_list.remove('TiO2')
+        #     self.wt_oxides.pop('TiO2')
 
     def print_comp(self):
         print('wt.% oxides\n-----------')
@@ -1072,9 +1072,9 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
     dat = PerplexFugacityData(name=name, wt_oxides=pl.wt_oxides, verbose=verbose, output_parent_path=output_parent_path,
                               core_efficiency=core_efficiency, **kwargs)
 
-    logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, verbose=verbose, **kwargs)
-    if verbose:
-        print('log fo2 of system:', logfo2)
+    # logfo2 = dat.fo2_calc(p_min=p_min, p_max=p_max, T_min=T_min, T_max=T_max, verbose=verbose, **kwargs)
+    # if verbose:
+    #     print('log fo2 of system:', logfo2)
     return True
 
 

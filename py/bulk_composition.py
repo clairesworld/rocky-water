@@ -16,6 +16,8 @@ def mass_ratio_to_mol_ratio(m_i, m_j, s_i='', s_j=''):
 
 print(mass_ratio_to_mol_ratio(m_i=31.5, m_j=42.71, s_i='MgO', s_j='SiO2'))
 
+print(mass_ratio_to_mol_ratio(	59.86	, 30.08, s_i='MgO', s_j='SiO2'))
+
 NaTi_sol = 10 ** p.na_sol / 10 ** p.ti_sol
 NaTi_bse = mass_ratio_to_mol_ratio(0.36, 0.2, 'Na2O', 'TiO2')
 # print('NaTi_bse / NaTi_sol', NaTi_bse / NaTi_sol)
