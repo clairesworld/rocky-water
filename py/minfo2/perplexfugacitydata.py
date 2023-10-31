@@ -933,11 +933,14 @@ def read_qfm_os(T, P, perplex_path=px.perplex_path_default, fin='data_tables/fmq
 def fo2_from_hypatia(p_min, p_max, n_sample=5, core_efficiency=0.88, T_iso=None, planet_kwargs={},
                      output_parent_path=output_parent_default, skip_existing=True, names=None, **kwargs):
     planet_kwargs.update({'core_efficiency': core_efficiency, 'solve_interior': False})
+
+    # build planets and initialise PerplexData
     pl_list = rw.planets_from_hypatia(n_sample=n_sample, plot_all=False,
                                       get_saturation=False,
                                       stopafter=None, output_parent_path=output_parent_path,
                                       **planet_kwargs, **kwargs)
     print('\nfinished generating compositions\n')
+
     bad = []
     for pl in pl_list:
         if skip_existing and os.path.exists(pl.output_path + pl.name + '_results' + str(int(T_iso)) + '.csv'):
@@ -1077,8 +1080,8 @@ def fo2_from_oxides(name, p_min, p_max, T_min=1373, T_max=1900, pl=None,
     # if verbose:
     #     print('log fo2 of system:', logfo2)
 
-    with open(dat.output_path + "dat.pkl", "wb") as pfile:
-        pkl.dump(dat, pfile)
+    # with open(dat.output_path + "dat.pkl", "wb") as pfile:
+    #     pkl.dump(dat, pfile)
     return True
 
 
