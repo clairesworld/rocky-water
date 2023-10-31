@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import sys
 import os
+import warnings
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -80,7 +81,11 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
             # check composition was calcualted
             if dat.wt_oxides is None:
                 print(dat.star, ': bulk composition not calculated')
-                print('     nH_star:', np.loadtxt(dat.output_path + 'nH_star.txt'))
+                # try loading nH_star
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    print('     nH_star:', np.loadtxt(dat.output_path + 'nH_star.txt'))
+                pass
 
             for ox in ox_columns:
                 try:
