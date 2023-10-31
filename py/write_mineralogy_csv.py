@@ -18,7 +18,7 @@ ox_columns = px.oxide_list_default
 location = 'apollo'
 pressures = [1]  # [1, 4, 30]
 M_p = 1
-core_effs = [88]  # [70, 80, 88, 95, 99]
+core_effs = [70, 80, 88, 95, 99]
 Tp = 1600
 
 
@@ -45,17 +45,17 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
     # load data for this planet at all pressures
     for irow, dat in enumerate(dats):
 
-        if dat.df_comp is not None:
-            pass
-        else:
-            print('dat.df_comp is None :', dat.name)
-
         for z, pressure in enumerate(pressures):
             flag = False
 
             df_list[z].loc[irow, 'star'] = dat.star
 
             if include_phases:
+                if dat.df_comp is not None:
+                    pass
+                else:
+                    print('dat.df_comp is None :', dat.name)
+
                 # add constants
                 df_list[-1]['Tp(K)'] = Tp
                 df_list[-1]['M_p(M_E)'] = M_p
