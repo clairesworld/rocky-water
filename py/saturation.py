@@ -1,10 +1,10 @@
 import numpy as np
-import fugacity as fug
+import py.fugacity as fug
 from scipy.interpolate import interp1d, splev
-from useful_and_bespoke import find_nearest_idx, colorize, iterable_not_string
-from scipy import optimize
-import matplotlib.pyplot as plt
-import pandas as pd
+# from useful_and_bespoke import find_nearest_idx, colorize, iterable_not_string
+# from scipy import optimize
+# import matplotlib.pyplot as plt
+# import pandas as pd
 
 Rb = 8.31446261815324
 TO = 1.335e21  # kg
