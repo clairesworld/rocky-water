@@ -83,7 +83,7 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_effs=[
     for core_eff in core_effs:
         if output_path_override is None:
             # output_path = output_parent_path + 'hypatia{:d}M_{:d}K_{:d}Fe_hires/'.format(M_p, Tp, core_eff)
-            output_path = output_parent_path + 'hypatia_{:d}coreeff_{:d}ferric_ext/'.format(core_eff, xfer)
+            output_path = output_parent_path + 'hypatia_{:d}coreeff_{:d}ferric_ext_Cr_comps/'.format(core_eff, xfer)
         else:
             output_path = output_parent_path + output_path_override
 
@@ -111,7 +111,7 @@ def write_from_dir(output_parent_path, write_path, pressures, M_p=1, core_effs=[
 
 
 if location == 'apollo':
-    output_parent_path = '/raid1/cmg76/perple_x/output/rocky-water/'
+    output_parent_path = '/raid1/cmg76/perple_x/output/rocky-fo2/'
     write_from_dir(output_parent_path, '/home/cmg76/Works/rocky-water/csv/',
                    fname_base='mantle_compositions_extended_',
                    include_earthsun=False, pressures=pressures, M_p=M_p,
