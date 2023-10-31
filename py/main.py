@@ -249,6 +249,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         print('Mg/Si', dat.mgsi)
         # return dat  # just calculated bulk composition
 
+    print('here')
     # for now also save as pickle for laziness
     with open(dat.output_path + "dat.pkl", "wb") as pfile:
         print('writing dat.pkl to', dat.output_path)
@@ -374,5 +375,6 @@ def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
         pl = build_planet(star=star, M_p=M_p * M_E, plot_all=plot_all, **kwargs)
         pl.write_star_composition(fname='nH_star.txt',
                                   path=pl.output_path)  # save parameter nH_star (abundances) to file
+        print('wrote star composition to nH_star.txt')
         planets.append(pl)
     return planets
