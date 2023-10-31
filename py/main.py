@@ -255,6 +255,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         print('writing dat.pkl to', dat.output_path)
         print('contents:\n', dat.__dict__)
         pkl.dump(dat, pfile)
+        # this will always save a pickle file, even if it doesn't have all the info
 
     time_end = time.time()
     print('\n>>>>>> COMPLETED', dat.name, 'in', time_end - time_start, 's\n\n')

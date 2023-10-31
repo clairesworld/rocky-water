@@ -77,9 +77,12 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
                 if flag and test_mode:
                     print(ser)
 
+            # check composition was calcualted
+            if dat.wt_oxides is None:
+                print(dat.star, ': bulk composition not calculated')
+                print('     nH_star:', np.loadtxt(dat.output_path + 'nH_star.txt'))
+
             for ox in ox_columns:
-                print('dat wt_oxides', dat.wt_oxides)
-                print('dat', dat.__dict__)
                 try:
                     df_list[z].loc[irow, ox + '(wt%)'] = dat.wt_oxides[ox]
                 except KeyError as e:
