@@ -1,5 +1,5 @@
 import numpy as np
-# import requests
+import requests
 import random
 import pickle as pkl
 import os
@@ -175,6 +175,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
                     except IndexError:
                         print('caught indexerror')
                         if tried_once:
+                            print(star, ': nH_star has size 0')
                             return None
                         print('trying remote...')
                         nH_star = do_remote(tried_once=True)
@@ -264,7 +265,7 @@ def star_composition(oxide_list=None, star='sun', API_KEY=key, use_local_composi
         return nH_star
 
     if use_local_composition:
-        nH_star = do_local()
+        nH_star = do_local(tried_once=True)  # do not try again with download
 
     else:
         nH_star = do_remote()
