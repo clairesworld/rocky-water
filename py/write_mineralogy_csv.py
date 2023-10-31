@@ -78,6 +78,8 @@ def get_df_to_print_mineralogy(output_path, pressures, M_p=1, core_eff=88, Tp=16
                     print(ser)
 
             for ox in ox_columns:
+                print('dat wt_oxides', dat.wt_oxides)
+                print('dat', dat.__dict__)
                 try:
                     df_list[z].loc[irow, ox + '(wt%)'] = dat.wt_oxides[ox]
                 except KeyError as e:
