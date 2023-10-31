@@ -245,7 +245,7 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
 
     else:
         print('mgsi', dat.mgsi)
-        return dat  # just calculated bulk composition
+        # return dat  # just calculated bulk composition
 
     # for now also save as pickle for laziness
     with open(dat.output_path + "dat.pkl", "wb") as pfile:
