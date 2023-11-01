@@ -135,14 +135,14 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_w
     # print('Na/Ti planet', mass_ratio_to_mol_ratio(wt_oxides_dict['Na2O'], wt_oxides_dict['TiO2'], 'Na2O', 'TiO2'))
     return wt_oxides_dict
 
-print('2MASS 19414029+5111051')
-stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
-               nH_star=[-4.28, -4.33, -5.37999, -5.47, -4.31, -6.83999, -5.57, -6.14],
-               core_eff=0.88, )
-print('\n\nsun')
-stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
-               nH_star=[p.si_sol, p.mg_sol, p.ca_sol, p.al_sol, p.fe_sol, p.ti_sol, p.na_sol, p.cr_sol],
-               core_eff=0.88, )
+# print('2MASS 19414029+5111051')
+# stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
+#                nH_star=[-4.28, -4.33, -5.37999, -5.47, -4.31, -6.83999, -5.57, -6.14],
+#                core_eff=0.88, )
+# print('\n\nsun')
+# stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
+#                nH_star=[p.si_sol, p.mg_sol, p.ca_sol, p.al_sol, p.fe_sol, p.ti_sol, p.na_sol, p.cr_sol],
+#                core_eff=0.88, )
 
 def o2_molar_ratio(n_FeO, X_ferric=0.05, **kwargs):
     """ Given a ratio of Fe3+/total Fe, and the number of moles of Fe(II and III)O (=n_FeO), what is the molar abundance of O2?
