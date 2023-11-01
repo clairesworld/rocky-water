@@ -30,7 +30,7 @@ M_MgO = M_Mg + M_O
 M_Al2O3 = 2 * M_Al + 3 * M_O
 M_FeO = M_Fe + M_O
 M_Na2O = 2 * M_Na + M_O
-M_PO4 = M_P = 4 * M_O
+M_PO4 = M_P + 4 * M_O
 M_O2 = 2 * M_O
 M_Fe2O3 = 2 * M_Fe + 3 * M_O
 M_TiO2 = M_Ti + (2 * M_O)

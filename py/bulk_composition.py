@@ -14,13 +14,10 @@ def mass_ratio_to_mol_ratio(m_i, m_j, s_i='', s_j=''):
         n_j = 1
     return (m_i / eval('p.M_' + s_i) / n_i) / (m_j / eval('p.M_' + s_j) / n_j)
 
-print(mass_ratio_to_mol_ratio(m_i=31.5, m_j=42.71, s_i='MgO', s_j='SiO2'))
 
-print(mass_ratio_to_mol_ratio(	59.86	, 30.08, s_i='MgO', s_j='SiO2'))
-
-NaTi_sol = 10 ** p.na_sol / 10 ** p.ti_sol
-NaTi_bse = mass_ratio_to_mol_ratio(0.36, 0.2, 'Na2O', 'TiO2')
-# print('NaTi_bse / NaTi_sol', NaTi_bse / NaTi_sol)
+NaTi_sol = (10 ** p.na_sol) / (10 ** p.ti_sol)
+NaTi_bse = mass_ratio_to_mol_ratio(0.36, 0.201, 'Na2O', 'TiO2')
+# print('NaTi_bse', NaTi_bse, 'NaTi_sol', NaTi_sol, 'ratio', NaTi_bse / NaTi_sol)
 
 
 def get_stellar_percent_abundance(nH_star, which='moles', oxide_list=None):
@@ -50,6 +47,7 @@ def mole_ratio_uncertainty(err_Q, err_R):
 
 
 # print('delta_Mg/Si',mole_ratio_uncertainty(0.07, 0.05))
+
 
 def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_wtpt=None, **kwargs):
     """
@@ -87,14 +85,13 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_w
         raise Exception('missing molar mass in parameters.py :', e)
 
     wt_oxides = [1]  # give denomenator 1 for now
-    X_ratio_mol = [1]
+    X_ratio_mol = [1]  # molar ratios of oxides
     for ii, ox in enumerate(oxide_list):
         # print('calculating oxide', ox)
         if ii > 0:
-            if ox == 'AL2O3' or ox == 'Al2O3':
-                X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Al per 1 mol Al2O3
-            elif ox == 'NA2O' or ox == 'Na2O':
-                X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Na per 1 mol Na2O3
+            if ox[2] == '2':  # 2 moles cation per 1 mol oxide
+                # print(ox)
+                X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Na per 1 mol Na2O e.g.
             else:
                 X_ratio_mol.append(10 ** nH_star[ii] / 10 ** nH_star[0])  # cancel out H abundance
 
@@ -108,8 +105,9 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_w
                 # account for depletion: Na2O
                 try:
                     idx_Ti = oxide_list.index('TiO2')
-                    NaTi_star = X_ratio_mol[ii] / X_ratio_mol[idx_Ti]
-                    X_ratio_mol[ii] = depletion_NaTi * NaTi_star * X_ratio_mol[idx_Ti]
+                    NaTi_star = 10 ** nH_star[ii] / 10 ** nH_star[idx_Ti]  # molar ratio
+                    # print('Na/Ti_star', NaTi_star)
+                    X_ratio_mol[ii] = depletion_NaTi * NaTi_star * X_ratio_mol[idx_Ti] * 2
                 except ValueError:
                     raise NotImplementedError(
                         'ERROR: Can only define Na depletion with respect to Ti, must enter Ti first in oxide_list')
@@ -133,8 +131,18 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_w
 
     # put in dict
     wt_oxides_dict = {k: v for k, v in zip(oxide_list, wt_oxides)}
+    # print('Na depletion factor:', (mass_ratio_to_mol_ratio(wt_oxides_dict['Na2O'], wt_oxides_dict['TiO2'], 'Na2O', 'TiO2')) / NaTi_star, '(want', depletion_NaTi, ')')
+    # print('Na/Ti planet', mass_ratio_to_mol_ratio(wt_oxides_dict['Na2O'], wt_oxides_dict['TiO2'], 'Na2O', 'TiO2'))
     return wt_oxides_dict
 
+print('2MASS 19414029+5111051')
+stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
+               nH_star=[-4.28, -4.33, -5.37999, -5.47, -4.31, -6.83999, -5.57, -6.14],
+               core_eff=0.88, )
+print('\n\nsun')
+stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
+               nH_star=[p.si_sol, p.mg_sol, p.ca_sol, p.al_sol, p.fe_sol, p.ti_sol, p.na_sol, p.cr_sol],
+               core_eff=0.88, )
 
 def o2_molar_ratio(n_FeO, X_ferric=0.05, **kwargs):
     """ Given a ratio of Fe3+/total Fe, and the number of moles of Fe(II and III)O (=n_FeO), what is the molar abundance of O2?
