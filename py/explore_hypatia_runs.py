@@ -6,11 +6,17 @@ import plot_perplex as plotpx
 import saturation as sat
 import main as rw
 import matplotlib.pyplot as plt
+import pandas as pd
 from useful_and_bespoke import cornertext, colorize, colourbar, colourised_legend
 from UM_mass_scaling import um_mass_scaling
 import saturation as sat
 import matplotlib.lines as mlines
 import matplotlib.gridspec as gridspec
+import pickle as pkl
+from scipy import stats
+
+output_parent_path_aopp = '/home/g/guimond/Work/hypatia-compositions/'
+perplex_path_aopp = '/home/g/guimond/Work/perple_x/'
 
 # dat = rw.build_planet(M_p=1 * p.M_E, test_oxides=rw.update_MgSi(0.7244359600749921, px.wt_oxides_MD95),
 #                       maxIter=30, tol=1e-4,  # n=800,
@@ -23,15 +29,16 @@ import matplotlib.gridspec as gridspec
 # dat.werami_garnet_composition()
 
 """ get earth benchmark """
-Tp = 1600
-# earth = rw.build_planet(M_p=1 * p.M_E, test_oxides=px.wt_oxides_MD95,
-#                         maxIter=30, tol=1e-4, #n=800,
-#                         Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
-#                         plot_all=False, get_saturation=True, verbose=True, clean=True,
-#                         vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-#                         # name='Earth_Si_test', x_Si_core=9,
-#                         name='Earth300_' + str(Tp) + 'K',
-#                         )
+Tp = 1900
+for m in [1] : #[0.1, 0.3, 0.5, 2, 2.5, 3, 4, 5]:
+    earth = rw.build_planet(M_p=m * p.M_E, test_oxides=px.wt_oxides_MD95,
+                            maxIter=30, tol=1e-4, #n=800,
+                            Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
+                            plot_all=False, get_saturation=False, verbose=True, clean=True,
+                            vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+                            perplex_path=perplex_path_aopp, output_parent_path=output_parent_path_aopp,
+                            name='Earth_' + str(Tp) + 'K_' + str(m).replace('.', ',') + 'M',
+                            )
 # print('earth CMF', earth.CMF, 'core eff', earth.core_eff)
 # earth.find_lower_mantle()
 # print('earth mass um', earth.mass_um, 'kg')
@@ -214,73 +221,7 @@ Tp = 1600
 
 """ upper mantle water mass - histograms """
 
-
-# def hist_saturation_subfig(denominator='um', masses=None, xlim='default', bins=None, labelsize=14, cmap='rainbow', save=True,
-#                            show=True, earth=None, **kwargs):
-#     if masses is None:
-#         masses = [0.1, 0.5, 1, 2, 3, 4]
-#     if denominator == 'um':
-#         if xlim == 'default':
-#             xlim = (0.1, 4.0)
-#         key = 'mass_h2o_um'
-#         xlabel = 'Mantle water capacity (Earth oceans)'
-#         data_label = None
-#         ls = '-'
-#         fname = 'histsubplot-Mp_w_um'
-#     elif denominator == 'total':
-#         if xlim == 'default':
-#             xlim = (0.1, 8)
-#         key = 'mass_h2o_total'
-#         xlabel = 'UM water capacity (Earth oceans)'
-#         data_label = None
-#         ls = '-'
-#         fname = 'histsubplot-Mp_w_tot'
-#     elif denominator == 'both':
-#         if xlim == 'default':
-#             xlim = (0.1, 8)
-#         key = ['mass_h2o_um', 'mass_h2o_total']
-#         xlabel = 'Water capacity (Earth oceans)'
-#         data_label = ['Upper mantle', 'Whole mantle']
-#         ls = ['-', '--']
-#         fname = 'histsubplot-Mp_w_all'
-#
-#     fig, axes = plt.subplots(len(masses), 1)
-#     c = colorize(masses, cmap)[0]
-#     for ii, Mp in enumerate(masses):
-#         if isinstance(Mp, float):
-#             mass_str = str(Mp).replace('.', ',')
-#         elif isinstance(Mp, int):
-#             mass_str = str(Mp)
-#         else:
-#             print('MP is', type(Mp))
-#         planets = rw.read_dir(px.perplex_path_default + 'output/hypatia' + mass_str + 'M/')
-#         try:
-#             ax = axes[ii]
-#         except:
-#             ax = axes
-#         fig, ax = plotpx.pop_hist1D(planets, key, scale=p.TO ** -1, earth=None, xlabel='', c_hist=c[ii], ls_stats=ls,
-#                                     save=False, show=False, data_label=data_label, fig=fig, ax=ax, xlim=xlim,
-#                                     labelsize=labelsize, legsize=10, bins=bins, alpha=0.7, histtype='step', **kwargs)
-#         # add naive Earth scaling
-#         if earth is not None:
-#             w_um_earth = earth.mass_h2o_um / p.TO  # in earth oceans
-#             print('w UM earth', w_um_earth, 'scaled', w_um_earth * Mp)
-#         ax.axvline(w_um_earth * Mp, c='k', ls='--', lw=0.5, label=str(Mp) + r' $\times$ Earth value')
-#         ax.legend(fontsize=10, frameon=False)
-#         if ii == len(masses) - 1:
-#             ax.set_xlabel(xlabel)
-#         else:
-#             ax.set_xticks([])
-#         ax.set_yticks([])
-#         ax.set_ylabel(str(Mp) + ' $M_\oplus$', fontsize=labelsize)
-#     # fig.suptitle('Mantle wantle water capacities, $T_p$ = 1600')
-#     if save:
-#         fig.savefig(plotpx.fig_path + fname + '.png')
-#     if show:
-#         plt.show()
-
-
-# hist_saturation_subfig(denominator='um', masses=[0.1], xlim=(0, 1),
+# plotpx.hist_saturation_subfig(denominator='um', masses=[0.1], xlim=(0, 1),
 #                        bins=100, showmedian=True, show=False)
 
 def find_sd(nsd, dir_name, prop, dats=None):
@@ -325,7 +266,7 @@ def find_percentile(q, dir_name, prop, dats=None):
     return pcen
 
 
-folder = 'hypatia1M_1600K_80Fe'
+# folder = 'hypatia1M_1600K_80Fe'
 # print(find_percentile(2.27, folder, 'mgsi'))  # HIP 5643, 0.7244
 # print(find_percentile(10, folder, 'mgsi'))  # HIP 29295, 0.8912509381337477
 # print(find_percentile(48, folder, 'mgsi'))  # HIP 48455
@@ -414,7 +355,6 @@ folder = 'hypatia1M_1600K_80Fe'
 
 """ explain earth high water mass ? """
 
-
 # folder = 'hypatia1M_1600K_88Fe'
 # dats = rw.read_dir(px.perplex_path_default + 'output/' + folder + '/')
 # params = ['mass_um', 'mass_h2o_um', "wt_oxides['MgO']/dat.wt_oxides['FeO']", 'p_mtz', 'p_lm'] #]#, 'mgsi', 'femg_star']
@@ -479,7 +419,10 @@ def get_percentile_of_attr(target_dat=None, attr=None, x_target=None, dats=None,
 # plotpx.find_extrema('hypatia3,5M_1600K_88Fe', 'pressure[0]', get_min=False, get_max=True, n=1, output_base='output/', scale=1e-9)
 # plotpx.find_extrema('hypatia1M_1600K_65Fe', "wt_oxides['FeO']", get_min=False, get_max=True, n=1, output_base='output/')  # max FeO is 040%
 # plotpx.find_extrema('hypatia1M_1600K_99Fe', "mass_um", get_min=False, get_max=True, n=10, output_base='output/')
-
+# plotpx.find_extrema('coreSi5_coreeff0,88', "wt_oxides['CaO']", get_min=False, get_max=True, n=10,
+#                     perplex_path=perplex_path_aopp, output_base='output/')
+# plotpx.find_extrema('coreSi5_coreeff0,88', "wt_oxides['Al2O3']", get_min=False, get_max=True, n=10,
+#                     perplex_path=perplex_path_aopp, output_base='output/')
 
 """ find n richest planets """
 # plotpx.find_rich_planets(dir_name='hypatia3M', phase='st', n=10)
@@ -501,17 +444,117 @@ def get_percentile_of_attr(target_dat=None, attr=None, x_target=None, dats=None,
 
 
 """ depth to lm """
-dirs = [px.perplex_path_default + 'output/apollo/hypatia' + mp + 'M_1600K_88Fe_hires/' for mp in ['1', '2', '3', '4']]
-# for folder in dirs:
-#     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)
+# dirs = [px.perplex_path_default + 'output/apollo/hypatia' + mp + 'M_1600K_88Fe_hires/' for mp in ['1', '2', '3', '4']]
+# # for folder in dirs:
+# #     dats = rw.update_dir(folder, px.PerplexData.find_lower_mantle, store=True)
+#
+# fig, ax = plotpx.compare_pop_scatter(dirs, "M_p", 'z_lm', x_scale=p.M_E**-1,
+#                                      y_scale=1e-3,
+#                                      c='r', alpha=0.2, lw=0,
+#                                      xlabel='Mp', ylabel='z lm (km)', #fig=fig, ax=axes[1],
+#                                      save=False, show=False,# ylim=ylim,
+#                                      # earth=earth,
+#                                      )
 
-fig, ax = plotpx.compare_pop_scatter(dirs, "M_p", 'z_lm', x_scale=p.M_E**-1,
-                                     y_scale=1e-3,
-                                     c='r', alpha=0.2, lw=0,
-                                     xlabel='Mp', ylabel='z lm (km)', #fig=fig, ax=axes[1],
-                                     save=False, show=False,# ylim=ylim,
-                                     # earth=earth,
-                                     )
 
+""" mass of ringwoodite as a cross-plot with Mg/Si for different mantle iron partitionings """
+
+# dirs = [output_parent_path_aopp + 'hypatia1M_1600K_' + fe + 'Fe_hires/' for fe in ['70', '99']]
+# # for folder in dirs:
+# #     dats = rw.update_dir(folder, px.PerplexData.get_phase_masses, store=True)
+# fig, ax = None, None
+# for directory, colour, fe in zip(dirs, ['r', 'b'],['70', '99'] ):
+#     dats = rw.read_dir(directory, verbose=True)
+#     fig, ax = plotpx.pop_scatter(dats, "mgsi", "phase_mass['Ring']", x_scale=1, y_scale=(p.M_E**-1) * 1e2,
+#                                  xlabel='Mg/Si', ylabel='mass ring (wt pt of planet)', range_min=None, range_max=None,
+#                                  data_label=fe, fig=fig, ax=ax, xlim=None, ylim=None, save=False, show=False,
+#                                  c=colour, annotate_n=True, ms=50, )
+
+""" as above but ol/opx as a cross-plot with Fe/Si for different mantle iron partitionings - just at single pressure"""
+
+# dirs = ['/home/g/guimond/Work/perple_x/output/coreSi0_coreeff' + fe + '/' for fe in ['0,1', '0,5', '0,88', '0,999']]
+# # for folder in dirs:
+# #     dats = rw.update_dir(folder, px.PerplexData.get_femg_si_mantle, store=True)
+# fig, ax = None, None
+# fig2, ax2 = None, None
+# fig3, ax3 = None, None
+# for directory, colour, fe in zip(dirs, ['r', 'b', 'g', 'k'], ['10', '50', '70', '99'] ):
+#     dats = rw.read_dir(directory, verbose=True)
+#     fig, ax = plotpx.pop_scatter(dats, "fesi_planet", "df_comp['O']/dat.df_comp['Opx']", x_scale=1, y_scale=1,
+#                                  xlabel='Fe/Si', ylabel='Ol/Opx (mass)', range_min=None, range_max=None,
+#                                  data_label=fe, fig=fig, ax=ax, xlim=None, ylim=(0, 80), save=False, show=False,
+#                                  c=colour, annotate_n=True, ms=20, alpha=0.1 )
+#     fig2, ax2 = plotpx.pop_scatter(dats, "mgsi", "df_comp['O']/dat.df_comp['Opx']", x_scale=1, y_scale=1,
+#                                  xlabel='Mg/Si', ylabel='Ol/Opx (mass)', range_min=None, range_max=None,
+#                                  data_label=fe, fig=fig2, ax=ax2, xlim=None, ylim=(0, 80), save=False, show=False,
+#                                  c=colour, annotate_n=True, ms=20, alpha=0.1)
+#     fig3, ax3 = plotpx.pop_scatter(dats, "femg_si_mantle", "df_comp['O']/dat.df_comp['Opx']", x_scale=1, y_scale=1,
+#                                  xlabel='(Mg+Fe)/Si', ylabel='Ol/Opx (mass)', range_min=None, range_max=None,
+#                                  data_label=fe, fig=fig3, ax=ax3, xlim=None, ylim=(0, 80), save=False, show=False,
+#                                  c=colour, annotate_n=True, ms=20, alpha=0.1)
+
+""" trends in (Ca+Al)/Si """
+# dirs = ['/home/g/guimond/Work/perple_x/output/coreSi' + si + '_coreeff0,88/' for si in ['0', '5']]
+# # for folder in dirs:
+# #     dats = rw.update_dir(folder, px.PerplexData.get_minor_oxide_ratio, store=True)
+# fig2, ax2 = None, None
+# for directory, colour, fe in zip(dirs, ['g', 'k'], ['10%', '50%'] ):
+#     dats = rw.read_dir(directory, verbose=True)
+#     fig2, ax2 = plotpx.pop_scatter(dats, 'caal_si', "df_comp['Gt']", x_scale=1, y_scale=1,
+#                                  xlabel='(Ca+Al)/(Si)', ylabel='Gt (wt%)', range_min=None, range_max=None,
+#                                  data_label=fe, fig=fig2, ax=ax2, xlim=None, ylim=(0, 80), save=False, show=False,
+#                                  c=colour, annotate_n=True, ms=20, alpha=0.1)
+
+# folder = '/home/g/guimond/Work/hypatia-compositions/hypatia1M_1600K_88Fe_hires/'
+# # dats = rw.update_dir(folder, px.PerplexData.get_um_mass, store=True)
+# dats = rw.update_dir(folder, px.PerplexData.get_phase_masses, store=False, um_only=True)
+# fig2, ax2 = plotpx.pop_scatter(dats, 'caal_si', "phase_mass['Gt']/dat.mass_um", x_scale=1, y_scale=1e2,
+#                              xlabel='(Ca+Al)/(Si)', ylabel='Gt (wt% of UM)', range_min=None, range_max=None,
+#                               xlim=None, #ylim=(0, 80),
+#                                save=False, show=False,
+#                              c='k', annotate_n=True, ms=20, alpha=0.1)
+# hard to just look at total mass of garnet because also depends on mg/si (ol in transition zone)
+
+""" mineralogy of low mg/si planets """
+# directory = 'hypatia1M_1600K_70Fe_hires'
+# star = 'HIP57087'
+# plotpx.find_extrema(directory, "mgsi", get_min=True, get_max=False, n=20, output_base=output_parent_path_aopp, perplex_path='')
+# with open(output_parent_path_aopp + directory + '/1M_70Ceff_' + star + '_1600K/dat.pkl', 'rb') as f:
+#     dat = pkl.load(f)
+#     plotpx.single_composition(dat,
+#                        xlabel=None, ylabel=None, cmap='tab20', labelsize=16, p_max=35, title='Mg/Si = ' + str(dat.mgsi),
+#                               plot_phases_order=['Gt', 'Cpx', 'Opx', 'C2/c',  'O', 'Wad', 'Ring','Pv',
+#                                                  'qtz', 'coes','st', 'seif',
+#                                                  'Wus', 'ca-pv', 'Ppv', 'fapv'] ,
+#                               save=False, show=False)
+
+
+""" enquire C/O ratio"""
+def abundance_ratios_from_hypatia_tsv(path_to_tsv='/home/g/guimond/Work/hypatia-compositions/hypatia-04122023.tsv',
+                                      el1=None, el2=None, xlim=None, percentile_of=None):
+    df = pd.read_csv(path_to_tsv, sep='\t', header=0)
+    df.replace('', np.nan, inplace=True)  # first convert empty string to nan
+    df.dropna(subset=[el1, el2], inplace=True)
+
+    lognH_1 = df[el1]
+    lognH_2 = df[el2]
+
+    sol_val1 = eval('p.' + el1.lower() + '_sol')
+    sol_val2 = eval('p.' + el2.lower() + '_sol')
+
+    ratio = (10 ** (lognH_1 + sol_val1) / 10 ** (lognH_2 + sol_val2)).to_numpy()
+
+    plt.hist(ratio, histtype='step', bins=50, facecolor='k', edgecolor='k')
+    plt.xlabel(el1 + '/' + el2)
+    # plt.gca().set_xlim(xlim)
+
+    if percentile_of is not None:
+        p = stats.percentileofscore(ratio, percentile_of, 'rank')
+        count = len([i for i in ratio if i >= percentile_of])
+        print(percentile_of, 'is', p, 'percentile...', count, '/', len(ratio), '=', count/len(ratio)*100, '% have >= C/O')
+    return ratio
+
+
+# abundance_ratios_from_hypatia_tsv(el1='C', el2='O', xlim=(0, 1.4), percentile_of=0.9)
 
 plt.show()

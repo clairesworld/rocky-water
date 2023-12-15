@@ -43,7 +43,7 @@ class PerplexData:
         self.perplex_path = perplex_path
         self.output_path = output_parent_path + self.name + '/'
 
-        print('oxides', oxides)
+        # print('oxides', oxides)
 
         # ensure output_parent_px is a valid directory, create directory if it doesn't exist yet
         # if not os.path.isdir(self.output_path):
@@ -136,7 +136,8 @@ class PerplexData:
         # print('original phases list:', df.columns.values.tolist())
 
         # find repeating (e.g. Ppv in some cases)
-        dup_cols = [col for col in df.columns.values.tolist() if '.' in col]  # dot put there from pandas reading duplicate behaviour
+        dup_cols = [col for col in df.columns.values.tolist() if
+                    '.' in col]  # dot put there from pandas reading duplicate behaviour
         for col in dup_cols:
             print('dealing with duplicate', col)
             dup_sum = df[col] + df[col[:-2]]
@@ -160,7 +161,7 @@ class PerplexData:
     def load_adiabat(self, build_file_end='', fillnan=True, check_consistent=True, fix_nan=True, run_bad=False,
                      store=False, head=False, rho_m_av=None, **kwargs):
 
-        #file = self.perplex_path + self.name + build_file_end + '_thermo.tab'  --> OLD
+        # file = self.perplex_path + self.name + build_file_end + '_thermo.tab'  --> OLD
         file = self.output_path + self.name + build_file_end + '_thermo.tab'  # should have already moved to output folder (inefficient?)
 
         df = pd.read_csv(file, skiprows=8, index_col=None, sep=r"\s+",
@@ -240,55 +241,16 @@ class PerplexData:
         #     else:
         #         self.temperature_m = T
 
-            # self.alpha_m = alpha_m  # note upside down compared to full planet profile
-            # self.cp_m = cp_m
-            # self.rho_m = rho_m
+        # self.alpha_m = alpha_m  # note upside down compared to full planet profile
+        # self.cp_m = cp_m
+        # self.rho_m = rho_m
         return rho_m, alpha_m, cp_m, P, T
-
-    def core_mass_fraction(self):
-        """
-        Calculates core mass fraction given bulk FeO in mantle and the wt fraction of total FeO that ends up in core.
-        Doesn't require knowing the planet mass
-        core_eff = n_Fe_core / (n_FeO_mantle + n_Fe_core) = m_Fe_core / (m_Fe_mantle + m_Fe_core) as n_Fe = n_FeO in mtl
-        """
-        # todo: still might want to triple check this is consistent with stellar composition constraints
-
-        try:
-            x_Fe_mm = self.wt_oxides['FeO'] * (M_Fe / M_FeO)  # mass fraction Fe in mantle wrt total mantle mass
-        except KeyError:
-            raise Exception(
-                'ERROR: cmf is undefined for a given molar core efficiency if no FeO in bulk mantle. try fixing input cmf instead.')
-
-        if self.core_eff == 1:
-            # TODO
-            x_Fe_cm = 1 - x_Fe_mm  # mass fraction Fe in core wrt total mantle mass
-        else:
-            x_Fe_cm = -x_Fe_mm * self.core_eff / (self.core_eff - 1)  # mass fraction Fe in core wrt total mantle mass
-        mantle_mass_fraction = 100 / (100 + x_Fe_cm)
-
-        # scale by mass_mtl/M_p --> should be smaller than x_Fe_cm
-        x_Fe_c = x_Fe_cm * mantle_mass_fraction
-        # print('x_Fe_c wrt planet', x_Fe_c)
-        self.CMF = x_Fe_c / 100
-
-        self.Fe_mass_fraction = x_Fe_c + x_Fe_mm * mantle_mass_fraction  # store bulk planet Fe fraction for posterity
-        # print('x_Fe_pl', x_Fe_pl)
-
-        print('\ncore mass fraction = {:5.3f}\n'.format(self.CMF))
-        return self.CMF
-
-    def core_eff_from_cmf(self):
-        M_c = self.CMF * self.M_p  # core mass in kg
-        M_m = self.M_p - M_c  # mantle mass in kg
-        n_Fe_mtl = self.wt_oxides['FeO'] / 100 * M_m / M_FeO  # n_Fe = n_FeO
-        n_Fe_core = M_c / M_Fe  # pure Fe core
-        self.core_eff = n_Fe_core / (n_Fe_core + n_Fe_mtl)
-        return self.core_eff
 
     def get_star_compositon(self, **kwargs):
         if self.star == 'sun':
             from parameters import ca_sol, fe_sol, al_sol, mg_sol, si_sol, na_sol
-            solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol, 'na_sol': na_sol}
+            solar = {'ca_sol': ca_sol, 'fe_sol': fe_sol, 'al_sol': al_sol, 'mg_sol': mg_sol, 'si_sol': si_sol,
+                     'na_sol': na_sol}
             self.nH_star = [solar[ox[:2].lower() + '_sol'] for ox in self.oxide_list if ox != 'O2']
         else:
             if 'oxide_list' in kwargs:
@@ -325,28 +287,66 @@ class PerplexData:
         return self.mg_number
 
     def get_femg_star(self):
-        X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[self.oxide_list.index('MgO')]
+        X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[
+            self.oxide_list.index('MgO')]
         self.femg_star = X_ratio_mol
 
     def get_fesi_star(self):
-        X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[self.oxide_list.index('SiO2')]
+        X_ratio_mol = 10 ** self.nH_star[self.oxide_list.index('FeO')] / 10 ** self.nH_star[
+            self.oxide_list.index('SiO2')]
         self.fesi_star = X_ratio_mol
 
-    def get_phase_masses(self):
-        self.phase_mass = {ph: np.sum(self.df_comp[ph]*1e-2 * self.df_all['mass(kg)']) for ph in self.phases_px}
+    def get_fesi_mantle(self):
+        n_FeO = self.wt_oxides['FeO'] / M_FeO  # convert to moles
+        # todo Fe2O3
+        n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2
+        self.fesi_mantle = n_FeO / n_SiO2  # n_Mg = n_MgO etc
+        return self.fesi_mantle
+
+    def get_femg_si_mantle(self):
+        n_MgO = self.wt_oxides['MgO'] / M_MgO  # convert to moles
+        n_FeO = self.wt_oxides['FeO'] / M_FeO  # convert to moles
+        # todo Fe2O3
+        n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2
+        self.femg_si_mantle = (n_FeO + n_MgO) / n_SiO2  # n_Mg = n_MgO etc
+        return self.femg_si_mantle
+
+    def get_minor_oxide_ratio(self):
+        n_CaO = self.wt_oxides['CaO'] / M_CaO  # convert to moles
+        n_Al2O3 = self.wt_oxides['Al2O3'] / M_Al2O3
+        n_MgO = self.wt_oxides['MgO'] / M_MgO
+        n_FeO = self.wt_oxides['FeO'] / M_FeO
+        n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2
+        self.caal_femg = (n_CaO + n_Al2O3) / (n_MgO + n_FeO)  # n_Mg = n_MgO etc
+        self.caal_si = (n_CaO + n_Al2O3) / (n_SiO2)  # n_Mg = n_MgO etc
+        return self.caal_femg, self.caal_si
+
+    def get_phase_masses(self, um_only=False):
+        if um_only:
+            comp_tmp = self.df_comp.iloc[0:self.i_um_base]
+            all_tmp = self.df_all.iloc[0:self.i_um_base]
+            self.phase_mass = {ph: np.sum(comp_tmp[ph] * 1e-2 * all_tmp['mass(kg)']) for ph in self.phases_px}
+        else:
+            self.phase_mass = {ph: np.sum(self.df_comp[ph] * 1e-2 * self.df_all['mass(kg)']) for ph in self.phases_px}
         return self.phase_mass
 
     def get_um_mass(self):
         from saturation import total_water_mass
-        i_um_base = self.find_lower_mantle() - 1  # base of upper mantle
-        # print('pressure at um base', self.data['P(bar)'][i_um_base], 'bar')
-        self.mass_um = np.sum(self.df_all['mass(kg)'][:i_um_base + 1])
+        self.i_um_base = self.find_lower_mantle() - 1  # base of upper mantle
+        # print('pressure at um base', self.data['P(bar)'][self.i_um_base], 'bar')
+        self.mass_um = np.sum(self.df_all['mass(kg)'][:self.i_um_base + 1])
 
         try:
-            self.mass_h2o_um = total_water_mass(self.df_all, i_min=0, i_max=i_um_base)
+            self.mass_h2o_um = total_water_mass(self.df_all, i_min=0, i_max=self.i_um_base)
         except KeyError:
             pass
         return self.mass_um
+
+    def get_lm_mass(self):
+        self.i_um_base = self.find_lower_mantle() - 1  # base of upper mantle
+        self.mass_lm = np.sum(self.df_all['mass(kg)'][self.i_um_base + 1:])
+        self.mass_frac_lm = self.mass_lm / (self.M_p * (1 - self.CMF))
+        return self.mass_lm
 
     def star_to_oxide(self, **kwargs):
         """ get the bulk oxide compositon of the mantle (core Fe will have been extracted from returned dict) """
@@ -399,14 +399,18 @@ class PerplexData:
 
             s = s + 'begin thermodynamic component list\n'
             for el, wt in self.wt_oxides.items():
-                dig = len(str(int(wt)))
+                try:
+                    dig = len(str(int(wt)))
+                except ValueError as e:
+                    print(self.name, self.wt_oxides)
+                    raise e
                 if vertex_data == 'hp622ver':
                     el_database = el
                 else:
                     el_database = el.upper()
                 s = s + el_database.ljust(6) + '1'.ljust(3) + "{value:{width}.{precision}f}".format(value=float(wt),
-                                                                                                   width=7,
-                                                                                                   precision=6 - dig)
+                                                                                                    width=7,
+                                                                                                    precision=6 - dig)
                 s = s + '      0.00000      0.00000     mass  amount\n'
             s = s + 'end thermodynamic component list\n\n\n'
 
@@ -429,19 +433,19 @@ class PerplexData:
                 s = s + "   {value:{width}.{precision}f}".format(value=float(p_max), width=7,
                                                                  precision=7 - len(str(int(p_max))))[
                         :-1] + "        {value:{width}.{precision}f}".format(value=float(T_max), width=7,
-                                                                 precision=7 - len(str(int(T_max))))[
-                        :-1] + '         0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
+                                                                             precision=7 - len(str(int(T_max))))[
+                               :-1] + '         0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
             except ValueError as e:  # not enough digits
                 s = s + "   {value:{width}.{precision}f}".format(value=float(p_max), width=10,
                                                                  precision=10 - len(str(int(p_max))))[
                         :-1] + "        {value:{width}.{precision}f}".format(value=float(T_max), width=10,
-                                                                 precision=10 - len(str(int(T_max))))[
-                        :-1] + '        0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
+                                                                             precision=10 - len(str(int(T_max))))[
+                               :-1] + '        0.00000        0.00000        0.00000     max p, t, xco2, mu_1, mu_2\n'
             s = s + "   {value:{width}.{precision}f}".format(value=float(p_min), width=7,
                                                              precision=7 - len(str(int(p_min))))[
                     :-1] + "        {value:{width}.{precision}f}".format(value=float(T_min), width=7,
-                                                                 precision=7 - len(str(int(T_min))))[
-                        :-1] + '        0.00000        0.00000        0.00000     min p, t, xco2, mu_1, mu_2\n'
+                                                                         precision=7 - len(str(int(T_min))))[
+                           :-1] + '        0.00000        0.00000        0.00000     min p, t, xco2, mu_1, mu_2\n'
             s = s + '   0.00000        0.00000        0.00000        0.00000        0.00000     unused place holder post 06\n\n'
             s = s + ' 1  2  4  5  3   indices of 1st & 2nd independent & sectioning variables'
 
@@ -534,12 +538,13 @@ class PerplexData:
                     #           self.perplex_path + self.name + build_file_end + fend)
                     os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
                                                self.perplex_path + self.name + build_file_end + fend))
-                print('All vertex output files already exist for', self.name, ', skipping to werami for', werami_command_end)
+                print('All vertex output files already exist for', self.name, ', skipping to werami for',
+                      werami_command_end)
 
         # print('run_vertex', run_vertex)
         if run_vertex:  # this takes longer so if you kept files (clean=False) might not need to run again
             # create vertex command file
-            print('Running vertex!')
+            # print('Running vertex!')
             vertex_command_file = self.name + build_file_end + '_vertex_command.txt'
             with open(self.perplex_path + vertex_command_file, 'w') as file:
                 s = vertex_command_text_fn(build_file_end=build_file_end)
@@ -564,10 +569,11 @@ class PerplexData:
                         os.popen('cp {} {}'.format(self.output_path + self.name + build_file_end + fend,
                                                    self.perplex_path + self.name + build_file_end + fend))
                     else:
-                        raise Exception('trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
+                        raise Exception(
+                            'trying to run werami but original vertex files not found in ' + self.output_path + self.name + build_file_end + fend)
 
         print('\n----------------------------\nStarting werami calculations...')
-        print('using run_vertex =', run_vertex)
+        # print('using run_vertex =', run_vertex)
         # create werami command file
         werami_command_file = self.name + build_file_end + werami_command_end
         with open(self.perplex_path + werami_command_file, 'w') as file:
@@ -587,11 +593,17 @@ class PerplexData:
             os.rename(self.perplex_path + self.name + build_file_end + '_1.tab',
                       self.output_path + self.name + build_file_end + output_file_end)
         except FileNotFoundError as e:
-            print('\n-------\n', e, '\nERROR: werami did not complete, try running again with suppress_output=False ?\n-------')
-            print('Deleting matching run files in perplex_path:')
-            for f in pathlib.Path(self.perplex_path).glob(self.name + "*"):
-                print('        ', f)
-                os.remove(f)
+            print('number of files:', len([name for name in os.listdir('.') if os.path.isfile(name)]))
+            print('\n-------\n', e,
+                  '\nERROR: werami did not complete, try running again with suppress_output=False ?\n-------')
+            print('scandir output:')
+            for entry in os.scandir('.'):
+                if entry.is_file():
+                    print(entry.name)
+            # print('Deleting matching run files in perplex_path:')
+            # for f in pathlib.Path(self.perplex_path).glob(self.name + "*"):
+            #     print('        ', f)
+            #     os.remove(f)
             # something probably went wrong with vertex or werami, run again with full output
             # os.system('./vertex < ' + vertex_command_file)
             # os.system('./werami < ' + werami_command_file)
@@ -604,7 +616,8 @@ class PerplexData:
                 if os.path.isfile(self.perplex_path + self.name + build_file_end + fend):
                     os.rename(self.perplex_path + self.name + build_file_end + fend,
                               self.output_path + self.name + build_file_end + fend)
-                    print('moved', self.perplex_path + self.name + build_file_end + fend, '>>>', self.output_path + self.name + build_file_end + fend)
+                    print('moved', self.perplex_path + self.name + build_file_end + fend, '>>>',
+                          self.output_path + self.name + build_file_end + fend)
                 else:
                     print('could not find', self.perplex_path + self.name + build_file_end + fend)
         if clean:
@@ -744,9 +757,9 @@ class PerplexData:
 
         if n == 'auto':
             if M / M_E <= 1:
-                n = 1200 #300  # n = 200 saves about 7 sec per run, misses a little Aki phase
+                n = 1200  # 300  # n = 200 saves about 7 sec per run, misses a little Aki phase
             elif M / M_E <= 2:
-                n = 1200 #500
+                n = 1200  # 500
             elif M / M_E <= 2.5:
                 n = 1200
             else:
@@ -765,7 +778,7 @@ class PerplexData:
         alpha_c = 0.00001  # guess for core thermal expansion ceoff. in 1/K
         alpha_m = 0.000025  # guess for mantle thermal expansion ceoff. in 1/K
         Rp = 1e3 * (7030 - 1840 * x_Fe) * (
-                    M / M_E) ** 0.282  # initial guesss, Noack & Lasbleis 2020 (5) ignoring mantle Fe
+                M / M_E) ** 0.282  # initial guesss, Noack & Lasbleis 2020 (5) ignoring mantle Fe
         if self.CMF > 0:
             Rc = 1e3 * 4850 * x_Fe ** 0.328 * (M / M_E) ** 0.266  # initial guess, hot case, ibid. (9)
             rho_c_av = x_Fe * M / (4 / 3 * np.pi * Rc ** 3)
@@ -821,7 +834,7 @@ class PerplexData:
         pressure, temperature = eos.pt_profile(n, radius, density, gravity, alpha, cp, Psurf, Tp, i_cmb, deltaT_cmb)
         p_cmb = pressure[i_cmb]  # the pressure (at cell top edge) of the cell that Rc passes through
         p_cmb_guess = np.mean(gravity[i_cmb + 1:]) * rho_m_av * (
-                    Rp - Rc)  # not used but neat that it can be not far off
+                Rp - Rc)  # not used but neat that it can be not far off
         p_mantle_bar = pressure[i_cmb + 1:][::-1] * 1e-5  # convert Pa to bar and invert
         T_mantle = temperature[i_cmb + 1:][::-1]
         print('initial guesses | p_cen =', pressure[0] * 1e-9, 'GPa | p_cmb =', p_cmb * 1e-9, 'GPa | Rp =', Rp / R_E,
@@ -914,7 +927,7 @@ class PerplexData:
             # update mass and radius - 1st mass entry never changes
             for i in range(2, n + 1):  # goes to i = n-1
                 mass[n - i] = mass[n - i + 1] - M / n  # such that it never goes to 0 (would cause numerical errors)
-            radius[0] = 0  #np.cbrt(mass[0] / density[0] / (4 * np.pi / 3))
+            radius[0] = 0  # np.cbrt(mass[0] / density[0] / (4 * np.pi / 3))
             # print('radius[0]', radius[0])
             for i in range(1, n):
                 dmass = mass[i] - mass[i - 1]
@@ -1036,7 +1049,7 @@ class PerplexData:
         except KeyError:
             print('      no Wad phase found! Defining TZ at base of opx')
             return len(self.df_comp)
-        self.p_mtz = self.df_comp['P(bar)'].iloc[i_mtz] * 1e5   # Pa
+        self.p_mtz = self.df_comp['P(bar)'].iloc[i_mtz] * 1e5  # Pa
         return i_mtz
 
     def get_obm_water(self):
@@ -1052,7 +1065,7 @@ class PerplexData:
         self.mass_h2o_lm = total_water_mass(self.df_all, i_min=i_lm)
 
     def setup_interior(self, test_CMF=None, test_oxides=None, oxides=None, x_Si_core=None, test_nH_star=None,
-                     parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
+                       parameterise_lm=True, p_max_perplex=200e9 * 1e-5, solve_interior=True, **kwargs):
         """ procedure for setting up interior composition and structure of planet """
 
         # first, get oxide bulk composition and CMF (skip if input a testing value)
@@ -1089,11 +1102,12 @@ class PerplexData:
             if test_CMF == 0:
                 test_CMF = 1e-10  # can't be 0 for analytical reasons???
             self.CMF = test_CMF
+        if self.core_eff is None:
             self.core_eff_from_cmf()
 
         # pull some Si out of mantle into core - not self-consistently doing core EoS with Si though
-        if x_Si_core is not None:
-            self.partition_core_Si(x_Si_core)
+        # if x_Si_core is not None:
+        #     self.partition_core_Si(x_Si_core)
 
         if solve_interior:
             # iterate perplex to get interior structure and geotherm
@@ -1155,10 +1169,6 @@ class PerplexData:
         self.wt_oxides = {k: self.wt_oxides[k] / sum_wt_oxides * 100 for k in self.oxide_list}
         self.get_mgsi()
         print('new mg/si', self.mgsi)
-
-
-
-
 
 
 def read_from_input(star_name, which='oxide_list', output_path=output_parent_default, oxide_list=None, **kwargs):

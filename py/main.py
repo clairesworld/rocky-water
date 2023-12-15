@@ -99,7 +99,7 @@ def update_MgFe(MgFe=None, oxides=px.wt_oxides_Earth):
     return oxides
 
 
-def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None,
+def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, test_oxides=None, suffix=None, core_Si_wtpt=None,
              **kwargs):
     mass_str = str(int(np.round(M_p / M_E))) + 'M'
     if test_CMF is not None:
@@ -119,7 +119,11 @@ def get_name(M_p=None, star=None, core_efficiency=None, Tp=None, test_CMF=None, 
         temp_str = str(int(Tp)) + 'K'
     else:
         raise NotImplementedError('no temperature scenario input (need Tp or profile name)')
-    name = mass_str + '_' + cmf_str + '_' + comp_str + '_' + temp_str
+    if core_Si_wtpt is not None:
+        core_comp_str = '_' + str(core_Si_wtpt).replace('.', ',') + 'coreSi'
+    else:
+        core_comp_str = ''
+    name = mass_str + '_' + cmf_str + '_' + comp_str + '_' + temp_str + core_comp_str
     if suffix is not None:
         name = name + '_' + suffix
     name = name.replace('.', ',')  # dots will crash file i/o
@@ -229,6 +233,8 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         # calculate some other simple things - only here because you thought of this later but should be done inside class
         if not hasattr(dat, 'mass_um') or dat.mass_um is None:  # needs to be here because data not created in class
             dat.get_um_mass()
+        if not hasattr(dat, 'mass_lm') or dat.mass_um is None:  # needs to be here because data not created in class
+            dat.get_lm_mass()
         if not hasattr(dat, 'mgsi') or dat.mgsi is None:
             dat.get_mgsi()
         if not hasattr(dat, 'mg_number') or dat.mg_number is None:
@@ -249,11 +255,11 @@ def build_planet(name=None, get_saturation=True, plot_all=False, plot_kwargs=Non
         print('Mg/Si', dat.mgsi)
         # return dat  # just calculated bulk composition
 
-    print('here')
+    # print('here')
     # for now also save as pickle for laziness
     with open(dat.output_path + "dat.pkl", "wb") as pfile:
         print('writing dat.pkl to', dat.output_path)
-        print('contents:\n', dat.__dict__)
+        # print('contents:\n', dat.__dict__)
         pkl.dump(dat, pfile)
         # this will always save a pickle file, even if it doesn't have all the info
 
@@ -336,6 +342,7 @@ def read_name(output_path, name=None, star=None, M_p=None, core_efficiency=None,
 def update_dir(output_path, func, store=False, **func_args):
     """ if you need to redo some analysis or add something """
     dats = read_dir(output_path)
+    print('updating', func)
     new_dats = []
     for dat in dats:
         func(dat, **func_args)
@@ -346,6 +353,17 @@ def update_dir(output_path, func, store=False, **func_args):
                 pkl.dump(dat, pfile)
     return new_dats
 
+
+def update_single(output_path, name, func, store=False, **func_args):
+    """ if you need to redo some analysis or add something """
+    dat = read_name(output_path, name=name)
+    print('updating', func)
+    func(dat, **func_args)
+    if store:
+        # for now save as pickle for laziness
+        with open(output_path + dat.name + "/dat.pkl", "wb") as pfile:
+            pkl.dump(dat, pfile)
+    return dat
 
 def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
                          stopafter=None, skip_stars=[], **kwargs):
@@ -379,3 +397,53 @@ def planets_from_hypatia(n_sample=-1, M_p=1, plot_all=False, restart=None,
         print('wrote star composition to nH_star.txt')
         planets.append(pl)
     return planets
+
+
+
+def phases_at_single_pt(pressure=4, temperature=1659, name=None, pickle=False, perplex_path=px.perplex_path_default, **kwargs):
+    import os
+
+    time_start = time.time()
+
+    # name object systematically
+    if name is None:
+        name = get_name(**kwargs)
+
+    print('>>>>>> STARTED', name)
+
+    # create class object
+    dat = px.PerplexData(name=name, perplex_path=perplex_path, **kwargs)
+    okay = True
+
+    # get bulk composition
+    okay = dat.setup_interior(solve_interior=False, **kwargs)
+
+    # run perplex with temporary adiabat file
+    # fd, ad_path = tempfile.mkstemp()
+    ad_path = perplex_path + name + '_adiabat.tmp'
+    f = open(ad_path, "w+")
+    f.write('{:.6E} {:.6E}'.format(pressure * 1e4, temperature))
+    f.close()
+
+    dat.write_build(adiabat_file=ad_path, p_min=(pressure * 1e4) - 1, p_max=(pressure * 1e4)+1, **kwargs)
+    dat.werami_composition(**kwargs)
+    dat.load_composition_px(**kwargs)
+    os.remove(ad_path)
+
+    # move perplex files to their own folder
+    for fend in ['_comp.tab', '.dat', '_WERAMI_options.txt', '_VERTEX_options.txt']:
+        file = dat.name + fend
+        if os.path.exists(dat.perplex_path + file):
+            os.rename(dat.perplex_path + file, dat.output_path + file)
+
+    # print(dat.df_comp.head())
+    if pickle:
+        with open(dat.output_path + "dat.pkl", "wb") as pfile:
+            print('writing dat.pkl to', dat.output_path)
+            # print('contents:\n', dat.__dict__)
+            pkl.dump(dat, pfile)
+
+    time_end = time.time()
+    print('\n>>>>>> COMPLETED', dat.name, 'in', time_end - time_start, 's\n\n')
+    return dat
+

@@ -49,7 +49,176 @@ def mole_ratio_uncertainty(err_Q, err_R):
 # print('delta_Mg/Si',mole_ratio_uncertainty(0.07, 0.05))
 
 
-def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_wtpt=None, **kwargs):
+def stellar_mantle_corelightelements(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_wtpt=None, verbose=True, **kwargs):
+    """
+    Convert stellar abundances directly to bulk mantle composition in terms of wt% oxides. Requires file parameters.py
+    definining molar masses of each desired element in g/mol; e.g. M_Mg = 24.305
+
+    Parameters
+    ----------
+    oxide_list : list
+        Names of oxides to include, items are case-insensitive; e.g., 'mgo', 'Al2O3'
+    nH_star : list
+        Absolute log10(N_X/N_H) for the star; must be in same order as oxide_list
+    core_eff : float
+        Mole fraction of Fe in core (instead of FeO in mantle) with respect to total bulk planet Fe
+    depletion_NaTi : float
+        Depletion of Na/Ti in Earth BSE with respect to solar
+
+    Returns
+    -------
+    wt_oxides_dict : dict
+        Dictionary where keys are from oxide_list and entries are the mantle's proportion of that oxide in weight
+        percent
+    """
+
+    if depletion_NaTi is None:
+        depletion_NaTi = NaTi_bse / NaTi_sol
+
+    # get molar masses
+    try:
+        M_oxides = [eval('p.M_' + ox) for ox in oxide_list]
+    except Exception as e:
+        print('oxide list', oxide_list)
+        for ox in oxide_list:
+            print(eval('p.M_' + ox))
+        raise Exception('missing molar mass in parameters.py :', e)
+
+    wt_oxides = [1]  # give denomenator 1 for now
+    X_ratio_mol = [1]  # molar ratios of oxides
+    mol_Fe_core = None  # for tracking moles of Fe in core wrt moles of bulk planet
+
+    for ii, ox in enumerate(oxide_list):
+        # print('calculating oxide', ox)
+        if ii > 0:
+            if ox[2] == '2':  # 2 moles cation per 1 mol oxide
+                # print(ox)
+                X_ratio_mol.append(0.5 * 10 ** nH_star[ii] / 10 ** nH_star[0])  # 2 mols Na per 1 mol Na2O e.g.
+            else:
+                X_ratio_mol.append(10 ** nH_star[ii] / 10 ** nH_star[0])  # cancel out H abundance
+
+            # now do special mods
+            if ox == 'FEO' or ox == 'FeO':
+                # some molar percentage of Fe goes to core instead of to mantle FeO
+                # this is the stage where core Fe is extracted from wt_oxides (being the bulk mantle composition)
+                mol_Fe_core = X_ratio_mol[ii] * core_eff  # how many moles of Fe in core wrt bulk planet
+                X_ratio_mol[ii] = X_ratio_mol[ii] * (1 - core_eff)  # update how many moles of Fe (as FeO) in mantle
+                # print('mol Fe mantle', X_ratio_mol[ii])
+                # print('mol_Fe_core', mol_Fe_core)
+
+            if ox == 'NA2O' or ox == 'Na2O':
+                # account for depletion: Na2O
+                try:
+                    idx_Ti = oxide_list.index('TiO2')
+                    NaTi_star = 10 ** nH_star[ii] / 10 ** nH_star[idx_Ti]  # molar ratio
+                    # print('Na/Ti_star', NaTi_star)
+                    X_ratio_mol[ii] = depletion_NaTi * NaTi_star * X_ratio_mol[idx_Ti] * 2
+                except ValueError:
+                    raise NotImplementedError(
+                        'ERROR: Can only define Na depletion with respect to Ti, must enter Ti first in oxide_list')
+
+    # adjust according to core light elements
+    if core_Si_wtpt is not None:
+        # calculate moles of Si needed in core
+        sife_molratio_core = (core_Si_wtpt / 100) / (1 - (core_Si_wtpt / 100)) * (p.M_Fe / p.M_Si)
+        # print('core_Si_wtpt', core_Si_wtpt, 'wt%')
+        # print('core_si_molefrac', sife_molratio_core)
+        mol_Si_core = mol_Fe_core * sife_molratio_core
+
+        # print('Si/Fe molar ratio core', sife_molratio_core)
+        # print('mol_Si_core', mol_Si_core)
+        # print('(p.M_Fe / p.M_Si)', (p.M_Fe / p.M_Si))
+
+        # calculate how many moles must be extracted from mantle
+        idx_Si = oxide_list.index('SiO2')
+        if verbose:
+            print('Mg/Si_bulk =', X_ratio_mol[oxide_list.index('MgO')] / X_ratio_mol[idx_Si])
+        mol_Si_mantle_postcore = X_ratio_mol[idx_Si] - mol_Si_core
+        X_ratio_mol[idx_Si] = mol_Si_mantle_postcore
+        if verbose:
+            print('Mg/Si_mantle =', X_ratio_mol[oxide_list.index('MgO')] / X_ratio_mol[idx_Si])
+
+    # print('mol ratio oxides\n-----------')
+    # for chem, val in zip(oxide_list, X_ratio_mol):
+    #     try:
+    #         print("{0:<7}".format(chem[:2]), "{:5.2f}".format(val*100))
+    #     except TypeError:
+    #         print('oxide_list', oxide_list, '\n wt_oxides', wt_oxides)
+
+    # adjust weight percents of mantle oxides
+    for ii, ox in enumerate(oxide_list):
+        if ii > 0:
+            # print('ii, ox', ii, ox)
+            M_ratio = M_oxides[ii] / M_oxides[0]
+            # print('M_ratio', M_ratio)
+            m_ratio = X_ratio_mol[ii] * M_ratio  # convert from mole ratio to mass ratio assuming all metals in oxides
+            # print('m_ratio', m_ratio)
+            wt_oxides.append(m_ratio)
+            # print('-')
+
+    mass_core_check = (mol_Fe_core * p.M_Fe / M_oxides[0]) + (mol_Si_core * p.M_Si / M_oxides[0])
+    # print('mass core', mass_core_check)
+    mass_mantle_check = sum(wt_oxides)
+    # print('mass mantle', mass_mantle_check)
+    # print('CMF', mass_core_check / (mass_mantle_check + mass_core_check))
+
+    # now have ratios in wt% 1:X1:X2:X3
+    wt_oxides = np.array(wt_oxides)
+    wt_oxides = wt_oxides / sum(wt_oxides) * 100  # normalise so total wt% is 100
+
+    if verbose:
+        print('wt.% oxides\n-----------')
+        for chem, val in zip(oxide_list, wt_oxides):
+            try:
+                print("{0:<7}".format(chem), "{:5.2f}%".format(val))
+            except TypeError:
+                print('oxide_list', oxide_list, '\n wt_oxides', wt_oxides)
+
+    # put in dict
+    wt_oxides_dict = {k: v for k, v in zip(oxide_list, wt_oxides)}
+    return wt_oxides_dict
+
+
+def core_mass_fraction(wt_oxides, core_eff, core_light_wtpt=None):
+    """
+    Calculates core mass fraction given bulk FeO in mantle and the wt fraction of total FeO that ends up in core.
+    Doesn't require knowing the planet mass
+    core_eff = n_Fe_core / (n_FeO_mantle + n_Fe_core) = m_Fe_core / (m_Fe_mantle + m_Fe_core) as n_Fe = n_FeO in mtl
+    core_light_wt: dict of core light element compositon in wt%
+    """
+    # todo: still might want to triple check this is consistent with stellar composition constraints
+
+    if core_light_wtpt is None:
+        core_light_wtpt = {'none': 0}
+
+    try:
+        x_Fe_mm = wt_oxides['FeO'] * (p.M_Fe / p.M_FeO)  # mass fraction Fe in mantle wrt total mantle mass (excluding O)
+        # print('x_Fe_m wrt mantle', x_Fe_mm)
+    except KeyError:
+        x_Fe_mm = 0
+
+    if core_eff == 1:
+        # TODO
+        x_core_m = None  # mass fraction Fe in core wrt total mantle mass
+    else:
+        x_Fe_cm = x_Fe_mm * core_eff / (1 - core_eff)  # mass fraction Fe in core wrt total mantle mass
+        x_core_m = x_Fe_cm * (100 + sum(core_light_wtpt.values())) / 100  # mass fraction total core wrt total mantle mass
+        # print('x_Fe_c wrt mantle', x_Fe_cm)
+
+    mantle_mass_fraction = 100 / (100 + x_core_m)
+    # print('mantle mass fraction', mantle_mass_fraction)
+
+    # scale by mass_mtl/M_p --> should be smaller than x_Fe_cm
+    x_core = x_core_m * mantle_mass_fraction
+    # print('x_core wrt planet', x_core)
+    CMF = x_core / 100
+
+    print('\ncore mass fraction = {:5.3f}\n'.format(CMF))
+    return CMF
+
+
+
+def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs):
     """
     Convert stellar abundances directly to bulk mantle composition in terms of wt% oxides. Requires file parameters.py
     definining molar masses of each desired element in g/mol; e.g. M_Mg = 24.305
@@ -134,15 +303,6 @@ def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, core_Si_w
     # print('Na depletion factor:', (mass_ratio_to_mol_ratio(wt_oxides_dict['Na2O'], wt_oxides_dict['TiO2'], 'Na2O', 'TiO2')) / NaTi_star, '(want', depletion_NaTi, ')')
     # print('Na/Ti planet', mass_ratio_to_mol_ratio(wt_oxides_dict['Na2O'], wt_oxides_dict['TiO2'], 'Na2O', 'TiO2'))
     return wt_oxides_dict
-
-# print('2MASS 19414029+5111051')
-# stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
-#                nH_star=[-4.28, -4.33, -5.37999, -5.47, -4.31, -6.83999, -5.57, -6.14],
-#                core_eff=0.88, )
-# print('\n\nsun')
-# stellar_mantle2(oxide_list=['SiO2', 'MgO', 'CaO', 'Al2O3', 'FeO', 'TiO2', 'Na2O', 'Cr2O3'],
-#                nH_star=[p.si_sol, p.mg_sol, p.ca_sol, p.al_sol, p.fe_sol, p.ti_sol, p.na_sol, p.cr_sol],
-#                core_eff=0.88, )
 
 def o2_molar_ratio(n_FeO, X_ferric=0.05, **kwargs):
     """ Given a ratio of Fe3+/total Fe, and the number of moles of Fe(II and III)O (=n_FeO), what is the molar abundance of O2?
@@ -335,6 +495,49 @@ def total_refractory_O(wt_oxides_dict):
         m_O_tot += frac_m_O * mass
 
     return m_O_tot
+
+
+def Fecore_mass_fraction(wt_oxides, core_eff):
+    """
+    Calculates core mass fraction given bulk FeO in mantle and the wt fraction of total FeO that ends up in core.
+    Doesn't require knowing the planet mass
+    core_eff = n_Fe_core / (n_FeO_mantle + n_Fe_core) = m_Fe_core / (m_Fe_mantle + m_Fe_core) as n_Fe = n_FeO in mtl
+    core_light_wt: dict of core light element compositon in wt%
+    """
+    # todo: still might want to triple check this is consistent with stellar composition constraints
+
+    try:
+        x_Fe_mm = wt_oxides['FeO'] * (p.M_Fe / p.M_FeO)  # mass fraction Fe in mantle wrt total mantle mass
+    except KeyError:
+        raise Exception(
+            'ERROR: cmf is undefined for a given molar core efficiency if no FeO in bulk mantle. try fixing input cmf instead.')
+
+    if core_eff == 1:
+        # TODO
+        x_Fe_cm = 1 - x_Fe_mm  # mass fraction Fe in core wrt total mantle mass
+    else:
+        x_Fe_cm = -x_Fe_mm * core_eff / (core_eff - 1)  # mass fraction Fe in core wrt total mantle mass
+    mantle_mass_fraction = 100 / (100 + x_Fe_cm)
+
+    # scale by mass_mtl/M_p --> should be smaller than x_Fe_cm
+    x_Fe_c = x_Fe_cm * mantle_mass_fraction
+    # print('x_Fe_c wrt planet', x_Fe_c)
+    CMF = x_Fe_c / 100
+
+    Fe_mass_fraction = x_Fe_c + x_Fe_mm * mantle_mass_fraction  # store bulk planet Fe fraction for posterity
+    # print('x_Fe_pl', x_Fe_pl)
+
+    print('\ncore mass fraction = {:5.3f}\n'.format(CMF))
+    return CMF
+
+
+def core_eff_from_cmf(CMF, M_p, wt_oxides, core_light_wt=None):
+    M_c = CMF * M_p  # core mass in kg
+    M_m = M_p - M_c  # mantle mass in kg
+    n_Fe_mtl = wt_oxides['FeO'] / 100 * M_m / p.M_FeO  # n_Fe = n_FeO
+    n_Fe_core = M_c / p.M_Fe  # pure Fe core
+    core_eff = n_Fe_core / (n_Fe_core + n_Fe_mtl)
+    return core_eff
 
 
 # wt_oxides_MD95 = {'SiO2': 45.0, 'MgO': 37.8, 'CaO': 3.55, 'Al2O3': 4.45, 'FeO': 8.05}

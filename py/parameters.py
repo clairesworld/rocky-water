@@ -36,7 +36,7 @@ M_Fe2O3 = 2 * M_Fe + 3 * M_O
 M_TiO2 = M_Ti + (2 * M_O)
 M_Cr2O3 = 2 * M_Cr + (3 * M_O)
 
-# solar composition from Lodders 09 in log10(N_X/N_H)
+# solar composition from Lodders 09 (Table 4) in log10(N_X/N_H)
 ca_sol = 6.33 - 12
 al_sol = 6.47 - 12
 fe_sol = 7.45 - 12
@@ -46,6 +46,9 @@ na_sol = 6.30 - 12
 ti_sol = 4.90 - 12
 cr_sol = 5.64 - 12
 p_sol = 5.46 - 12
+c_sol = 8.39 - 12
+o_sol = 8.73 -12
+
 #
 # print('mg_sol', mg_sol)
 # print('si_sol', si_sol)

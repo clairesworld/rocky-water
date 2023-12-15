@@ -320,3 +320,72 @@ def find_existing_directory(star_name, existing_dir='hypatia0,1M_1600K_88Fe/', e
             print('output_parent + existing', existing_output_parent + existing_dir)
             print('(missing forward slash?)')
             raise e
+
+
+
+def bulkcomp_from_hypatiatsv(restart=None, stopafter=None, skip_stars=[], n_from_top=-1,
+                             core_eff=0.88, core_Si_wtpt=5, oxide_list=None,
+                             path_to_tsv='/home/g/guimond/Work/hypatia-compositions/hypatia-04122023.tsv', **kwargs):
+    """ get bulk mantle compositions from input hypatia tsv file (offline). returns dict of relevant attributes with
+    which to initialise Planet object """
+    import pandas as pd
+    import bulk_composition as bulk
+    import main as rw
+    import parameters as p
+    import perplexdata as px
+
+    if oxide_list is None:
+        oxide_list = px.oxide_list_default
+
+    df = pd.read_csv(path_to_tsv, sep='\t', header=0)
+    # sample_names = [name.rstrip() for name in df.Name.to_numpy()]  # remove whitespace
+
+    # remove rows with no measurements
+    df.replace('', np.nan, inplace=True)  # first convert empty string to nan
+    df.dropna(subset=[ox[:2] for ox in oxide_list], inplace=True)
+
+    # # remove desired stars
+    # df = df[sample_names not in skip_stars]
+
+    if restart is not None:
+        ii_start = (df['Name'] == restart).idxmax()
+        df = df.loc[ii_start:]
+    if stopafter is not None:
+        ii_last = (df['Name'] == stopafter).idxmax()
+        df = df.loc[:ii_last + 1]
+
+    list_of_comp_dicts = []
+    for ii, star in enumerate([name.rstrip() for name in df.Name.to_numpy()]):
+        print(ii + 1, '/', len(df.Name))
+
+        # skip?
+        if star in skip_stars:
+            print(star, 'in skip_stars, removing from sample')
+            continue
+
+        name = rw.get_name(star=star, core_efficiency=core_eff, core_Si_wtpt=core_Si_wtpt,
+                           M_p=p.M_E, Tp=1600,  # need these for name but meaningless here
+                           **kwargs)
+
+        # read stellar abundances
+        nH_star = []
+        for metal in oxide_list:
+            el = metal[:2]
+            sol_val = eval('p.' + el.lower() + '_sol')
+            nH_star.append(df.iloc[ii][el] + sol_val)
+        # print(oxide_list, nH_star)
+
+        # get bulk mantle oxides and cmf
+        wt_oxides = bulk.stellar_mantle_corelightelements(oxide_list=oxide_list, nH_star=nH_star, core_eff=core_eff,
+                                                     core_Si_wtpt=core_Si_wtpt)
+        cmf = bulk.core_mass_fraction(wt_oxides, core_eff, core_light_wtpt={'Si': core_Si_wtpt})
+
+        list_of_comp_dicts.append({'nH_star': nH_star, 'wt_oxides': wt_oxides, 'CMF': cmf, 'core_efficiency': core_eff,
+                                   'star': star, 'name': name, 'core_Si_wtpt': core_Si_wtpt})
+        # print(list_of_comp_dicts[-1])
+
+        if (n_from_top > 0) and (len(list_of_comp_dicts) > n_from_top):
+            break
+
+    return list_of_comp_dicts
+

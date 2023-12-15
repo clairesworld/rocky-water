@@ -138,21 +138,29 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
     n_phases = len(phases)
     colours = [cmap_vals(j) for j in np.arange(0, n_phases) / n_phases]
 
+    # print(dat.df_comp)
+    print(dat.wt_oxides)
+
     for ii, phase in enumerate(phases):
         # loop over phases and either plot instantly (not stacked) or create stackplot matrix
         if modality_type == 'phase':
-            col = 'X_' + phase.lower()  # weight fraction of phase
+            col = 'X_' + phase  # weight fraction of phase
         elif modality_type == 'water':
-            col = 'frac_h2o_' + phase.lower()  # fraction of layer's water in this phase
+            col = 'frac_h2o_' + phase  # fraction of layer's water in this phase
         try:
             # dat.data[col].replace(0, np.nan, inplace=True)
             y = dat.data[col].to_numpy(dtype=float) * scale
-        except KeyError:
-            print(col, 'not found in data')
-            if plot_phases_order is not None:  # this should always be true...
-                y = np.zeros(len(dat.data), dtype=float)  # assign null value so phase order is retained
-            else:
-                raise Exception('phase name mismatch:', phase)
+        except AttributeError:
+            try:
+                col = col[2:]
+                scale=1
+                y = dat.df_comp[col].to_numpy(dtype=float) * scale
+            except KeyError:
+                print(col, 'not found in df_comp:', dat.df_comp.columns.values)
+                if plot_phases_order is not None:  # this should always be true...
+                    y = np.zeros(len(dat.df_comp), dtype=float)  # assign null value so phase order is retained
+                else:
+                    raise Exception('phase name mismatch:', phase)
         if comp_stacked:
             # add to array for stackplot
             if ii == 0:
@@ -202,7 +210,11 @@ def single_composition(dat, which='pressure', modality_type='phase', comp_stacke
 
 def set_independent_var(dat, var_name):
     if var_name in ('p', 'pressure', 'P'):
-        y = dat.data['P(bar)'].to_numpy(dtype=float)
+        try:
+            y = dat.data['P(bar)'].to_numpy(dtype=float)
+        except AttributeError:
+            y = dat.df_comp['P(bar)'].to_numpy(dtype=float)
+            print('y', y)
         label = 'Pressure (GPa)'
         scale = 1e-4  # bar to GPa
     elif var_name in ('T', 'temperature'):
@@ -464,6 +476,13 @@ def pop_scatter(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlabel=N
             except KeyError:
                 print(dat.name, 'does not have attribute', x_name, 'or', y_name)
 
+            except TypeError:
+                print('dat.' + x_name, '=')
+                print('eval', eval('dat.' + x_name))
+                print('dat.' + y_name)
+                print('dat.phase_mass["O"]', dat.phase_mass['O'])
+                print('dat.phase_mass["Opx"]', dat.phase_mass['Opx'])
+
     # create figure
     if ax is None:
         fig = plt.figure()
@@ -657,12 +676,78 @@ def pop_scatterhist(dats, x_name, y_name, x_scale=1, y_scale=1, title=None, xlab
     return fig, ax, ax_histx, ax_histy
 
 
+def hist_saturation_subfig(denominator='um', masses=None, xlim='default', bins=None, labelsize=14, cmap='rainbow', save=True,
+                           show=True, earth=None, **kwargs):
+    if masses is None:
+        masses = [0.1, 0.5, 1, 2, 3, 4]
+    if denominator == 'um':
+        if xlim == 'default':
+            xlim = (0.1, 4.0)
+        key = 'mass_h2o_um'
+        xlabel = 'Mantle water capacity (Earth oceans)'
+        data_label = None
+        ls = '-'
+        fname = 'histsubplot-Mp_w_um'
+    elif denominator == 'total':
+        if xlim == 'default':
+            xlim = (0.1, 8)
+        key = 'mass_h2o_total'
+        xlabel = 'UM water capacity (Earth oceans)'
+        data_label = None
+        ls = '-'
+        fname = 'histsubplot-Mp_w_tot'
+    elif denominator == 'both':
+        if xlim == 'default':
+            xlim = (0.1, 8)
+        key = ['mass_h2o_um', 'mass_h2o_total']
+        xlabel = 'Water capacity (Earth oceans)'
+        data_label = ['Upper mantle', 'Whole mantle']
+        ls = ['-', '--']
+        fname = 'histsubplot-Mp_w_all'
+
+    fig, axes = plt.subplots(len(masses), 1)
+    c = colorize(masses, cmap)[0]
+    for ii, Mp in enumerate(masses):
+        if isinstance(Mp, float):
+            mass_str = str(Mp).replace('.', ',')
+        elif isinstance(Mp, int):
+            mass_str = str(Mp)
+        else:
+            print('MP is', type(Mp))
+        planets = rw.read_dir(px.perplex_path_default + 'output/hypatia' + mass_str + 'M/')
+        try:
+            ax = axes[ii]
+        except:
+            ax = axes
+        fig, ax = pop_hist1D(planets, key, scale=p.TO ** -1, earth=None, xlabel='', c_hist=c[ii], ls_stats=ls,
+                                    save=False, show=False, data_label=data_label, fig=fig, ax=ax, xlim=xlim,
+                                    labelsize=labelsize, legsize=10, bins=bins, alpha=0.7, histtype='step', **kwargs)
+        # add naive Earth scaling
+        if earth is not None:
+            w_um_earth = earth.mass_h2o_um / p.TO  # in earth oceans
+            print('w UM earth', w_um_earth, 'scaled', w_um_earth * Mp)
+        ax.axvline(w_um_earth * Mp, c='k', ls='--', lw=0.5, label=str(Mp) + r' $\times$ Earth value')
+        ax.legend(fontsize=10, frameon=False)
+        if ii == len(masses) - 1:
+            ax.set_xlabel(xlabel)
+        else:
+            ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_ylabel(str(Mp) + ' $M_\oplus$', fontsize=labelsize)
+    # fig.suptitle('Mantle wantle water capacities, $T_p$ = 1600')
+    if save:
+        fig.savefig(fig_path + fname + '.png')
+    if show:
+        plt.show()
+
+
 def dict_across_pops(dirs, x_name, y_name, v_name=None, exclude_params=None, exclude_min=-1e50, exclude_max=1e50,
                      subsample=None, verbose=False, **kwargs):
     """ build dict for same planets across multiple datasets (e.g., changing mass) for use with next two fns """
     # get star names from first dir
     datsdict = {}  # will save each star as key, datsdict is dict of 2-tuples of lists
     dats0 = rw.read_dir(dirs[0], subsample=subsample)
+    # print('dats0', len(dats0))
     for dat in dats0:
         if (exclude_params is not None and exclude_points(dat, exclude_params, exclude_min, exclude_max)) or (
                 exclude_params is None):
@@ -676,6 +761,7 @@ def dict_across_pops(dirs, x_name, y_name, v_name=None, exclude_params=None, exc
     # load x, y values
     for dir_ in dirs:
         datsj = rw.read_dir(dir_)  # [:head]
+        print('loaded', len(datsj))
         for dat in datsj:
             # print('attempting', dat.star, 'in', dir_)
             if dat.star in datsdict:
@@ -704,9 +790,12 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
                             save=True, show=True, extension='.png', labelsize=12, show_med=True, c='xkcd:peach',
                             legsize=10, ticksize=12, earth=None, sun=None, head=-1, xlim=None, ylim=None, patch_kwargs=None,
                             line_kwargs=None, show_scaling_fn=None, figsize=(4, 4), scalinglabel=None, earth_real=None,
-                            dark=False, fig=None, ax=None, sigma=1, show_n=True, datalabel=None, legend=True, **kwargs):
+                            dark=False, fig=None, ax=None, sigma=1, show_n=True, datalabel=None, legend=True,
+                            return_data=False, x=None, y=None, **kwargs):
     """ for a list of directories containing runs with different x_name values, plot y_name vs. x_name as fillbetween
         dats to plot is taken from first entry in directory list (dirs) so make sure that dir is complete """
+
+
     if xlabel is None:
         xlabel = x_name
     if ylabel is None:
@@ -715,9 +804,10 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
         filename = 'pops_dist_' + x_name + '_' + y_name
     if datalabel is None:
         datalabel = str(sigma) + '$\sigma$ distribution'
-
-    print('x_name', x_name)
-    datsdict = dict_across_pops(dirs, x_name, y_name, **kwargs)
+    if patch_kwargs is None:
+        patch_kwargs = {'color': c, 'alpha': 0.5}
+    if line_kwargs is None:
+        line_kwargs = {'color': c, 'lw': 2}
 
     # plot
     if ax is None:
@@ -733,82 +823,97 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
                    marker='$\oplus$', s=200, zorder=100)
         print('earth:', y_name, eval('earth.' + y_name) * y_scale)
 
-
     if earth_real:
         ax.scatter(eval('earth.' + x_name) * x_scale, eval('earth.' + y_name) * y_scale, label='Earth (observed)',
                    c='xkcd:silver',
                    marker='$\oplus$', s=200, zorder=100)
 
-    # get into plotting format: y should be nested list of different runs' y-value at each x
-    x = datsdict[list(datsdict.keys())[0]][0]  # should be the same for all
-    print('x', x)
-    y = [[] for _ in range(len(x))]
-    for jj in range(len(x)):
-        for star in list(datsdict.keys()):
-            try:
-                y[jj].append(datsdict[star][1][jj])
-            except IndexError as e:
-                print(star, 'missing index', jj, ':', e)
+    def do_plot():
 
-    # get 1-sigma distribution of y
-    if patch_kwargs is None:
-        patch_kwargs = {'color': c, 'alpha': 0.5}
-    if line_kwargs is None:
-        line_kwargs = {'color': c, 'lw': 2}
 
-    if sigma == 1:
-        q = [0.16, 0.50, 0.84]  # percentiles of 1 standard deviation above and below mean
-    elif sigma == 2:
-        q = [0.0227, 0.50, 0.9773]  # percentiles of 2 standard deviation above and below mean
+        if sigma == 1:
+            q = [0.16, 0.50, 0.84]  # percentiles of 1 standard deviation above and below mean
+        elif sigma == 2:
+            q = [0.0227, 0.50, 0.9773]  # percentiles of 2 standard deviation above and below mean
+        else:
+            raise NotImplementedError('sigma level ' + str(sigma) + ' not implemented')
+
+        # get 1-sigma distribution of y
+        y_min, y_mid, y_max = [], [], []
+        for ys in y:
+            mini, midi, maxi = np.quantile(ys, q)
+            y_min.append(mini)
+            y_mid.append(midi)
+            y_max.append(maxi)
+
+        ax.fill_between(np.array(x) * x_scale, np.array(y_min) * y_scale, np.array(y_max) * y_scale,
+                        label=datalabel, **patch_kwargs)
+        if show_med:
+            ax.plot(np.array(x) * x_scale, np.array(y_mid) * y_scale, **line_kwargs)
+            print('med', [ys * y_scale for ys in y_mid])
+
+        # # define min and max
+        # ax.plot(np.array(x) * x_scale, np.array(y_min) * y_scale, lw=0.5, c=patch_kwargs['color'])
+        # ax.plot(np.array(x) * x_scale, np.array(y_max) * y_scale, lw=0.5, c=patch_kwargs['color'])
+        # # print('x\n', np.array(x) * x_scale)
+        # # print('\n\ny\n',  np.array(y_mid) * y_scale)
+
+        if show_scaling_fn:
+            # add naive scaling
+            xhat = np.linspace(np.min(x), np.max(x))
+            y_naive = show_scaling_fn(xhat)
+            ax.plot(xhat * x_scale, y_naive * y_scale, c='k', lw=1, ls=(0, (1, 8)), label=scalinglabel)
+
+        # finish plot labelling, axis limits etc
+        if show_n:
+            cornertext(ax, 'n = ' + str(len(list(datsdict.keys())[:head])), pos='top left', size=legsize, c='k')
+        if legend:
+            ax.legend(frameon=False, fontsize=legsize)
+        ax.set_xlabel(xlabel, fontsize=labelsize)
+        ax.set_ylabel(ylabel, fontsize=labelsize)
+        ax.set_title(title, fontsize=labelsize)
+        ax.tick_params(axis='both', which='major', labelsize=ticksize)
+        if xlog:
+            ax.set_xscale('log')
+        if ylog:
+            ax.set_yscale('log')
+        if xlim is not None:
+            ax.set_xlim(xlim)
+        if ylim is not None:
+            ax.set_ylim(ylim)
+
+    if x is None and y is None:
+        datsdict = dict_across_pops(dirs, x_name, y_name, **kwargs)
+        # get into plotting format: y should be nested list of different runs' y-value at each x
+
+        try:
+            x = datsdict[list(datsdict.keys())[0]][0]  # should be the same for all
+        except IndexError as e:
+            # dict is empty?
+            print('No entries found in datsdict, directories have no data files?')
+            print('datsdict', datsdict)
+            print('datsdict.keys', datsdict.keys())
+            raise e
+        # print('x', x)
+        y = [[] for _ in range(len(x))]
+        for jj in range(len(x)):
+            for star in list(datsdict.keys()):
+                try:
+                    y[jj].append(datsdict[star][1][jj])
+                except IndexError as e:
+                    print(star, 'missing index', jj, ':', e)
+        do_plot()
+
     else:
-        raise NotImplementedError('sigma level ' + str(sigma) + ' not implemented')
+        x, y = x, y
+        do_plot()
 
-    y_min, y_mid, y_max = [], [], []
-    for ys in y:
-        mini, midi, maxi = np.quantile(ys, q)
-        y_min.append(mini)
-        y_mid.append(midi)
-        y_max.append(maxi)
-
-    ax.fill_between(np.array(x) * x_scale, np.array(y_min) * y_scale, np.array(y_max) * y_scale,
-                    label=datalabel, **patch_kwargs)
-    if show_med:
-        ax.plot(np.array(x) * x_scale, np.array(y_mid) * y_scale, **line_kwargs)
-        print('med', [ys*y_scale for ys in y_mid])
-
-    # # define min and max
-    # ax.plot(np.array(x) * x_scale, np.array(y_min) * y_scale, lw=0.5, c=patch_kwargs['color'])
-    # ax.plot(np.array(x) * x_scale, np.array(y_max) * y_scale, lw=0.5, c=patch_kwargs['color'])
-    # # print('x\n', np.array(x) * x_scale)
-    # # print('\n\ny\n',  np.array(y_mid) * y_scale)
-
-    if show_scaling_fn:
-        # add naive scaling
-        xhat = np.linspace(np.min(x), np.max(x))
-        y_naive = show_scaling_fn(xhat)
-        ax.plot(xhat * x_scale, y_naive * y_scale, c='k', lw=1, ls=(0, (1, 8)), label=scalinglabel)
-
-    # finish plot labelling, axis limits etc
-    if show_n:
-        cornertext(ax, 'n = ' + str(len(list(datsdict.keys())[:head])), pos='top left', size=legsize, c='k')
-    if legend:
-        ax.legend(frameon=False, fontsize=legsize)
-    ax.set_xlabel(xlabel, fontsize=labelsize)
-    ax.set_ylabel(ylabel, fontsize=labelsize)
-    ax.set_title(title, fontsize=labelsize)
-    ax.tick_params(axis='both', which='major', labelsize=ticksize)
-    if xlog:
-        ax.set_xscale('log')
-    if ylog:
-        ax.set_yscale('log')
-    if xlim is not None:
-        ax.set_xlim(xlim)
-    if ylim is not None:
-        ax.set_ylim(ylim)
     if save:
         fig.savefig(fig_path + filename + extension, bbox_inches='tight', dpi=dpi)
     if show:
         plt.show()
+    if return_data:
+        return fig, ax, x, y
     return fig, ax
 
 
@@ -1006,12 +1111,12 @@ def find_rich_planets(dir_name, phase, n=1, output_base='output/', get_min=False
     return names_sorted[:n]
 
 
-def find_extrema(dir_name, attr, get_min=True, get_max=True, n=1, output_base='output/', scale=1, **kwargs):
+def find_extrema(dir_name, attr, get_min=True, get_max=True, n=1, output_base='output/', perplex_path=px.perplex_path_default, scale=1, **kwargs):
     """ find n planets with most extreme values """
     if get_min and get_max:
         raise NotImplementedError('find_extrema() can only take min or max at once')
 
-    dats = rw.read_dir(px.perplex_path_default + output_base + dir_name + '/')
+    dats = rw.read_dir(perplex_path + output_base + dir_name + '/')
     props = []
     names = []
     for dat in dats:
