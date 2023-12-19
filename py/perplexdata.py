@@ -6,7 +6,7 @@ import os
 import glob
 import pathlib
 import subprocess
-from py.bulk_composition import stellar_mantle
+from py.bulk_composition import stellar_mantle, core_mass_fraction
 import py.ask_hypatia as hyp
 
 perplex_path_default = '/home/claire/Works/perple_x/'  # path to perple_x installation (https://www.perplex.ethz.ch/)
@@ -28,7 +28,7 @@ class PerplexData:
     def __init__(self, name='test', core_efficiency=0.88, M_p=M_E, R_p=None,
                  oxides=None, solution_phases=None,
                  star='sun', perplex_path=perplex_path_default, output_parent_path=output_parent_default, verbose=False,
-                 **kwargs):
+                 core_light_wtpt=None, **kwargs):
         self.c_h2o_obm = None
         if solution_phases is None:
             solution_phases = solution_phases_default
@@ -40,6 +40,7 @@ class PerplexData:
         self.star = star
         self.M_p = M_p
         self.core_eff = core_efficiency
+        self.core_light_wtpt = core_light_wtpt
         self.perplex_path = perplex_path
         self.output_path = output_parent_path + self.name + '/'
 
@@ -86,6 +87,7 @@ class PerplexData:
         self.mass_h2o_um = None
         self.mass_h2o_obm = None
         self.c_h2o_mantle = None
+
 
         # if verbose:
         #     print('----------------------\ninitialising PerplexData object with M_p = {:.4e}%'.format(M_p), 'kg,',
@@ -353,6 +355,10 @@ class PerplexData:
         wt_oxides = stellar_mantle(self.oxide_list, self.nH_star, self.core_eff)
         self.wt_oxides = wt_oxides
         return wt_oxides
+
+    def core_mass_fraction(self):
+        self.CMF = core_mass_fraction(self.wt_oxides, self.core_eff, core_light_wtpt=self.core_light_wtpt)
+        return self.CMF
 
     def write_build(self, build_file_end='', title='Planet', p_min=10000, p_max=245000, adiabat_file='aerotherm.dat',
                     verbose=False, overwrite=True, vertex_data='stx21ver', option_file='perplex_option_claire',

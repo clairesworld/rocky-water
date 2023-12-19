@@ -29,21 +29,32 @@ perplex_path_aopp = '/home/g/guimond/Work/perple_x/'
 # dat.werami_garnet_composition()
 
 """ get earth benchmark """
-Tp = 1900
-for m in [1] : #[0.1, 0.3, 0.5, 2, 2.5, 3, 4, 5]:
-    earth = rw.build_planet(M_p=m * p.M_E, test_oxides=px.wt_oxides_MD95,
-                            maxIter=30, tol=1e-4, #n=800,
-                            Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
-                            plot_all=False, get_saturation=False, verbose=True, clean=True,
-                            vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
-                            perplex_path=perplex_path_aopp, output_parent_path=output_parent_path_aopp,
-                            name='Earth_' + str(Tp) + 'K_' + str(m).replace('.', ',') + 'M',
-                            )
+# Tp = 1900
+# for m in [1] : #[0.1, 0.3, 0.5, 2, 2.5, 3, 4, 5]:
+#     earth = rw.build_planet(M_p=m * p.M_E, test_oxides=px.wt_oxides_MD95,
+#                             maxIter=30, tol=1e-4, #n=800,
+#                             Tp=Tp, test_CMF=0.325, #core_efficiency=0.88,
+#                             plot_all=False, get_saturation=False, verbose=True, clean=True,
+#                             vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+#                             perplex_path=perplex_path_aopp, output_parent_path=output_parent_path_aopp,
+#                             name='Earth_' + str(Tp) + 'K_' + str(m).replace('.', ',') + 'M',
+#                             )
 # print('earth CMF', earth.CMF, 'core eff', earth.core_eff)
 # earth.find_lower_mantle()
 # print('earth mass um', earth.mass_um, 'kg')
 # print('earth mgsi', earth.mgsi)
 # earth.femg_star = 0.81
+
+Tp = 1600
+for m in [5] : #[0.1, 0.3, 0.5, 2, 2.5, 3, 4, 5]:
+    earth = rw.build_planet(M_p=m * p.M_E, star='sun',
+                            maxIter=30, tol=1e-5, #n=800,
+                            Tp=Tp, core_efficiency=0.999,
+                            plot_all=False, get_saturation=False, verbose=True, clean=True,
+                            vertex_data='stx21ver', option_file='perplex_option_claire', excluded_phases=[],
+                            perplex_path=perplex_path_aopp, output_parent_path=output_parent_path_aopp,
+                            name='Sun_' + str(Tp) + 'K_' + str(m).replace('.', ',') + 'M_MgSi1,0',
+                            )
 
 
 # Mp = 2.25

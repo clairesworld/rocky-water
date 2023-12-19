@@ -216,6 +216,7 @@ def core_mass_fraction(wt_oxides, core_eff, core_light_wtpt=None):
     print('\ncore mass fraction = {:5.3f}\n'.format(CMF))
     return CMF
 
+# core_mass_fraction(wt_oxides, core_eff, core_light_wtpt=None)
 
 
 def stellar_mantle(oxide_list, nH_star, core_eff, depletion_NaTi=None, **kwargs):

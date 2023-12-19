@@ -22,10 +22,15 @@ import matplotlib.gridspec as gridspec
 perplex_path_aopp = '/home/g/guimond/Work/perple_x/'
 fig_path_aopp = '/home/g/guimond/Work/rocky-water/figs_scratch/'
 
-perplex_path = '/raid1/cmg76/perple_x/'  # perplex_path_aopp
-fig_path = '/home/cmg76/Works/rocky-water/figs_scratch/'  # fig_path_aopp
+# perplex_path = '/raid1/cmg76/perple_x/'  # perplex_path_aopp
+# fig_path = '/home/cmg76/Works/rocky-water/figs_scratch/'  # fig_path_aopp
+# earth_output_path = perplex_path + 'output/earth/'
+# hypatia_output_path = '/raid1/cmg76/perple_x/output/rocky-water/'  # perplex_path_aopp + 'output/hypatia_full/'
+
+perplex_path = perplex_path_aopp
+fig_path = fig_path_aopp
 earth_output_path = perplex_path + 'output/earth/'
-hypatia_output_path = '/raid1/cmg76/perple_x/output/rocky-water/'  # perplex_path_aopp + 'output/hypatia_full/'
+hypatia_output_path = perplex_path_aopp + 'output/hypatia_full/'
 
 """ get earth benchmark """
 Tp = 1600
