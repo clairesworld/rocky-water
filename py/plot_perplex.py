@@ -791,10 +791,10 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
                             legsize=10, ticksize=12, earth=None, sun=None, head=-1, xlim=None, ylim=None, patch_kwargs=None,
                             line_kwargs=None, show_scaling_fn=None, figsize=(4, 4), scalinglabel=None, earth_real=None,
                             dark=False, fig=None, ax=None, sigma=1, show_n=True, datalabel=None, legend=True,
-                            return_data=False, x=None, y=None, **kwargs):
+                            return_data=False, x=None, y=None, fit_spine=False, **kwargs):
     """ for a list of directories containing runs with different x_name values, plot y_name vs. x_name as fillbetween
         dats to plot is taken from first entry in directory list (dirs) so make sure that dir is complete """
-
+    from scipy.interpolate import UnivariateSpline, splrep, BSpline
 
     if xlabel is None:
         xlabel = x_name
@@ -830,7 +830,6 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
 
     def do_plot():
 
-
         if sigma == 1:
             q = [0.16, 0.50, 0.84]  # percentiles of 1 standard deviation above and below mean
         elif sigma == 2:
@@ -846,7 +845,21 @@ def compare_pop_fillbetween(dirs, x_name, y_name, x_scale=1, y_scale=1, xlog=Fal
             y_mid.append(midi)
             y_max.append(maxi)
 
-        ax.fill_between(np.array(x) * x_scale, np.array(y_min) * y_scale, np.array(y_max) * y_scale,
+        if fit_spine:
+
+            tck_min = splrep(x, y_min)  # s=0
+            tck_max = splrep(x, y_max)  # s=0
+            xplot = np.linspace(min(list(x)), max(list(x)), 500)
+            yplot_min = BSpline(*tck_min)(xplot)
+            yplot_max = BSpline(*tck_max)(xplot)
+
+        else:
+
+            xplot = x
+            yplot_min = y_min
+            yplot_max = y_max
+
+        ax.fill_between(np.array(xplot) * x_scale, np.array(yplot_min) * y_scale, np.array(yplot_max) * y_scale,
                         label=datalabel, **patch_kwargs)
         if show_med:
             ax.plot(np.array(x) * x_scale, np.array(y_mid) * y_scale, **line_kwargs)

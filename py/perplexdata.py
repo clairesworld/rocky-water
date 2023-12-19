@@ -307,7 +307,7 @@ class PerplexData:
         n_MgO = self.wt_oxides['MgO'] / M_MgO  # convert to moles
         n_FeO = self.wt_oxides['FeO'] / M_FeO  # convert to moles
         # todo Fe2O3
-        n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2
+        n_SiO2 = self.wt_oxides['SiO2'] / M_SiO2f
         self.femg_si_mantle = (n_FeO + n_MgO) / n_SiO2  # n_Mg = n_MgO etc
         return self.femg_si_mantle
 
